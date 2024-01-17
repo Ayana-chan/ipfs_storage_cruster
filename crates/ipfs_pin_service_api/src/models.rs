@@ -1,3 +1,5 @@
+use axum::response::{IntoResponse, Response};
+//TODO 删除from string等方法试试
 
 /// Args to get pin list. For pagination and filtering.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
@@ -164,6 +166,12 @@ impl PinResults {
             count,
             results,
         }
+    }
+}
+
+impl IntoResponse for PinResults {
+    fn into_response(self) -> Response {
+        todo!()
     }
 }
 
