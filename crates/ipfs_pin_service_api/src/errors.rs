@@ -1,7 +1,7 @@
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
-use crate::convert_status_code;
+use crate::common::convert_status_code;
 
 pub enum ResponseErrorType {
     BadRequest,
