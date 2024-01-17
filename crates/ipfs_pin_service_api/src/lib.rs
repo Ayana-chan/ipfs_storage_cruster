@@ -41,13 +41,14 @@ pub trait IpfsPinServiceApi {
     ) -> Result<(), errors::ResponseError>;
 }
 
-pub fn generate_router(api: impl IpfsPinServiceApi) -> Router{
+pub fn generate_router<T>() -> Router
+where T: IpfsPinServiceApi{
     let ipfs_pin_service_app = Router::new()
-        .route("/", get(api.get_pins))
-        .route("/", post(api.add_pin))
-        .route("/:requestid", get(api.get_pin_by_request_id))
-        .route("/:requestid", post(api.get_pins))
-        .route("/:requestid", delete(api.get_pins));
+        .route("/", get(T::get_pins))
+        .route("/", post(T::add_pin))
+        .route("/:requestid", get(T::get_pin_by_request_id))
+        .route("/:requestid", post(T::get_pins))
+        .route("/:requestid", delete(T::get_pins));
 }
 
 /// convert u16 to http::StatusCode
