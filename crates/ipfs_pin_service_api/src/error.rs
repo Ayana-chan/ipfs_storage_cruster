@@ -1,3 +1,4 @@
+use axum::Json;
 use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
 
@@ -30,14 +31,14 @@ impl IntoResponse for ResponseError{
         let error_with_status = match self.err_type {
             ResponseErrorType::BadRequest => {
                 (400,
-                 GenericResponseError::new(
+                 GenericResponseError::new_json(
                      "BAD_REQUEST",
                      &self.detail.unwrap_or("Bad Request".into())
                  ))
             },
             ResponseErrorType::InsufficientFunds => {
                 (409,
-                 GenericResponseError::new(
+                 GenericResponseError::new_json(
                      "INSUFFICIENT_FUNDS",
                      "Unable to process request due to the lack of funds"
                  ))
@@ -59,14 +60,15 @@ struct GenericResponseError {
 }
 
 impl GenericResponseError {
-    pub fn new(reason: &str, detail: &str) -> Self{
+    pub fn new_json(reason: &str, detail: &str) -> Json<Self> {
         let err = ErrorContent{
             reason: reason.into(),
             details: detail.into()
         };
-        Self{
+        let ret = Self{
             error: err,
-        }
+        };
+        Json(ret)
     }
 }
 
