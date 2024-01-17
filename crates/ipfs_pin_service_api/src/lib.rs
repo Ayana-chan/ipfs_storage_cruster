@@ -1,22 +1,18 @@
-use async_trait::async_trait;
-use axum::http;
+// #![warn(missing_docs)]
 
-mod errors;
-mod models;
+use async_trait::async_trait;
+use axum::{http, Router};
+use axum::routing::{get, post, delete};
+
+pub mod errors;
+pub mod models;
 
 #[async_trait]
 pub trait IpfsPinServiceApi {
     /// List pin objects
     async fn get_pins(
         &self,
-        cid: Option<&Vec<String>>,
-        name: Option<String>,
-        r#match: Option<models::TextMatchingStrategy>,
-        status: Option<&Vec<models::Status>>,
-        before: Option<chrono::DateTime::<chrono::Utc>>,
-        after: Option<chrono::DateTime::<chrono::Utc>>,
-        limit: Option<i32>,
-        meta: Option<std::collections::HashMap<String, String>>,
+        get_pins_args: models::GetPinsArgs
     ) -> Result<models::PinResults, errors::ResponseError>;
 
     /// Add pin object
@@ -45,6 +41,16 @@ pub trait IpfsPinServiceApi {
     ) -> Result<(), errors::ResponseError>;
 }
 
+pub fn generate_router(api: impl IpfsPinServiceApi) -> Router{
+    let ipfs_pin_service_app = Router::new()
+        .route("/", get(api.get_pins))
+        .route("/", post(api.add_pin))
+        .route("/:requestid", get(api.get_pin_by_request_id))
+        .route("/:requestid", post(api.get_pins))
+        .route("/:requestid", delete(api.get_pins));
+}
+
+/// convert u16 to http::StatusCode
 fn convert_status_code(code: u16) -> http::StatusCode {
     http::StatusCode::from_u16(code).expect("Fatal: Invalid Http Status Code.")
 }

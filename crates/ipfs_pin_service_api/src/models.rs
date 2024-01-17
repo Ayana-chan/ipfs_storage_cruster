@@ -1,4 +1,18 @@
 
+/// Args to get pin list. For pagination and filtering.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+pub struct GetPinsArgs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cid: Option<Vec<String>>,
+    name: Option<String>,
+    r#match: Option<TextMatchingStrategy>,
+    status: Option<Vec<Status>>,
+    before: Option<chrono::DateTime::<chrono::Utc>>,
+    after: Option<chrono::DateTime::<chrono::Utc>>,
+    limit: Option<i32>,
+    meta: Option<std::collections::HashMap<String, String>>,
+}
+
 /// Pin object
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 pub struct Pin {
@@ -26,7 +40,6 @@ pub struct Pin {
     #[serde(rename = "meta")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub meta: Option<std::collections::HashMap<String, String>>,
-
 }
 
 impl Pin {
