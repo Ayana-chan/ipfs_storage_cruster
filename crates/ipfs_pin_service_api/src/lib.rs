@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use axum::http;
 use crate::models::PinStatus;
 
 mod errors;
@@ -43,4 +44,8 @@ pub trait IpfsPinServiceApi {
         &self,
         requestid: String,
     ) -> Result<(), errors::ResponseError>;
+}
+
+fn convert_status_code(code: u16) -> http::StatusCode {
+    http::StatusCode::from_u16(code).expect("Fatal: Invalid Http Status Code.")
 }

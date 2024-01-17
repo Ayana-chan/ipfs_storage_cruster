@@ -14,7 +14,7 @@ pub struct Pin {
     #[validate(
     length(max = 255),
     )]
-    #[serde(skip_serializing_if="Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
     /// Optional list of multiaddrs known to provide the data; see Provider Hints in the docs
@@ -22,19 +22,19 @@ pub struct Pin {
     #[validate(
     length(min = 0, max = 20),
     )]
-    #[serde(skip_serializing_if="Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub origins: Option<Vec<String>>,
 
     /// Optional metadata for pin object
     #[serde(rename = "meta")]
-    #[serde(skip_serializing_if="Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub meta: Option<std::collections::HashMap<String, String>>,
 
 }
 
 impl Pin {
     #[allow(clippy::new_without_default)]
-    pub fn new(cid: String, ) -> Pin {
+    pub fn new(cid: String) -> Pin {
         Pin {
             cid,
             name: None,
@@ -50,19 +50,14 @@ impl Pin {
 impl std::string::ToString for Pin {
     fn to_string(&self) -> String {
         let params: Vec<Option<String>> = vec![
-
             Some("cid".to_string()),
             Some(self.cid.to_string()),
-
-
             self.name.as_ref().map(|name| {
                 [
                     "name".to_string(),
                     name.to_string(),
                 ].join(",")
             }),
-
-
             self.origins.as_ref().map(|origins| {
                 [
                     "origins".to_string(),
@@ -71,7 +66,6 @@ impl std::string::ToString for Pin {
             }),
 
             // Skipping meta in query parameter serialization
-
         ];
 
         params.into_iter().flatten().collect::<Vec<_>>().join(",")
@@ -155,7 +149,7 @@ pub struct PinResults {
 
 impl PinResults {
     #[allow(clippy::new_without_default)]
-    pub fn new(count: u32, results: Vec<PinStatus>, ) -> PinResults {
+    pub fn new(count: u32, results: Vec<PinStatus>) -> PinResults {
         PinResults {
             count,
             results,
@@ -169,12 +163,10 @@ impl PinResults {
 impl std::string::ToString for PinResults {
     fn to_string(&self) -> String {
         let params: Vec<Option<String>> = vec![
-
             Some("count".to_string()),
             Some(self.count.to_string()),
 
             // Skipping results in query parameter serialization
-
         ];
 
         params.into_iter().flatten().collect::<Vec<_>>().join(",")
@@ -256,7 +248,7 @@ pub struct PinStatus {
 
     /// Optional info for PinStatus response
     #[serde(rename = "info")]
-    #[serde(skip_serializing_if="Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub info: Option<std::collections::HashMap<String, String>>,
 
 }
@@ -264,7 +256,7 @@ pub struct PinStatus {
 
 impl PinStatus {
     #[allow(clippy::new_without_default)]
-    pub fn new(requestid: String, status: Status, created: chrono::DateTime::<chrono::Utc>, pin: Pin, delegates: Vec<String>, ) -> PinStatus {
+    pub fn new(requestid: String, status: Status, created: chrono::DateTime::<chrono::Utc>, pin: Pin, delegates: Vec<String>) -> PinStatus {
         PinStatus {
             requestid,
             status,
@@ -282,7 +274,6 @@ impl PinStatus {
 impl std::string::ToString for PinStatus {
     fn to_string(&self) -> String {
         let params: Vec<Option<String>> = vec![
-
             Some("requestid".to_string()),
             Some(self.requestid.to_string()),
 
@@ -297,7 +288,6 @@ impl std::string::ToString for PinStatus {
             Some(self.delegates.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(",")),
 
             // Skipping info in query parameter serialization
-
         ];
 
         params.into_iter().flatten().collect::<Vec<_>>().join(",")
