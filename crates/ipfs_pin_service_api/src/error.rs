@@ -1,30 +1,8 @@
 use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
-struct ErrorContent {
-    reason: String,
-    details: String,
-}
-
-#[derive(Serialize)]
-struct GenericResponseError {
-    error: ErrorContent
-}
-
-impl GenericResponseError {
-    pub fn new(reason: &str, detail: &str) -> Self{
-        let err = ErrorContent{
-            reason: reason.into(),
-            details: detail.into()
-        };
-        Self{
-            error: err,
-        }
-    }
-}
-
 pub enum ResponseErrorType {
+    BadRequest,
     InsufficientFunds,
 }
 
@@ -50,17 +28,45 @@ impl ResponseError {
 impl IntoResponse for ResponseError{
     fn into_response(self) -> Response {
         let error_with_status = match self.err_type {
-            ResponseError::InsufficientFunds => {
+            ResponseErrorType::BadRequest => {
+                (400,
+                 GenericResponseError::new(
+                     "BAD_REQUEST",
+                     &self.detail.unwrap_or("Bad Request".into())
+                 ))
+            },
+            ResponseErrorType::InsufficientFunds => {
                 (409,
                  GenericResponseError::new(
                      "INSUFFICIENT_FUNDS",
-                     &self.detail.unwrap_or("Unable to process request due to the lack of funds".into())
+                     "Unable to process request due to the lack of funds"
                  ))
-            }
+            },
         };
         error_with_status.into_response()
     }
 }
 
+#[derive(Serialize)]
+struct ErrorContent {
+    reason: String,
+    details: String,
+}
 
+#[derive(Serialize)]
+struct GenericResponseError {
+    error: ErrorContent
+}
+
+impl GenericResponseError {
+    pub fn new(reason: &str, detail: &str) -> Self{
+        let err = ErrorContent{
+            reason: reason.into(),
+            details: detail.into()
+        };
+        Self{
+            error: err,
+        }
+    }
+}
 
