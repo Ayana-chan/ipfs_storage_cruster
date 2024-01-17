@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use axum::http;
-use crate::models::PinStatus;
 
 mod errors;
 mod models;

@@ -1,6 +1,6 @@
-use axum::{http, Json};
+use axum::Json;
 use axum::response::{IntoResponse, Response};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use crate::convert_status_code;
 
 pub enum ResponseErrorType {
@@ -25,24 +25,37 @@ impl ResponseError {
         self.detail = Some(detail.into());
         self
     }
+
+    fn obtain_detail(&mut self, default_detail: Option<&str>) -> Option<&str> {
+        if self.detail == None{
+            self.detail = default_detail.map(String::from);
+        }
+        self.detail.as_deref()
+    }
 }
 
 impl IntoResponse for ResponseError {
-    fn into_response(self) -> Response {
+    fn into_response(mut self) -> Response {
         let error_with_status = match self.err_type {
             ResponseErrorType::BadRequest => {
-                (convert_status_code(400),
-                 GenericResponseError::new_json(
-                     "BAD_REQUEST",
-                     &self.detail.unwrap_or("Bad Request".into()),
-                 ))
+                (
+                    convert_status_code(400),
+                    GenericResponseError::new_json(
+                        "BAD_REQUEST",
+                        self.obtain_detail(None),
+                    )
+                )
             }
             ResponseErrorType::InsufficientFunds => {
-                (convert_status_code(409),
-                 GenericResponseError::new_json(
-                     "INSUFFICIENT_FUNDS",
-                     "Unable to process request due to the lack of funds",
-                 ))
+                (
+                    convert_status_code(409),
+                    GenericResponseError::new_json(
+                        "INSUFFICIENT_FUNDS",
+                        self.obtain_detail(Some(
+                            "Unable to process request due to the lack of funds"
+                        )),
+                    )
+                )
             }
         };
         error_with_status.into_response()
@@ -53,7 +66,7 @@ impl IntoResponse for ResponseError {
 struct ErrorContent {
     reason: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    details: String,
+    details: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -62,10 +75,10 @@ struct GenericResponseError {
 }
 
 impl GenericResponseError {
-    pub fn new_json(reason: &str, detail: &str) -> Json<Self> {
+    pub fn new_json(reason: &str, detail: Option<&str>) -> Json<Self> {
         let err = ErrorContent {
             reason: reason.into(),
-            details: detail.into(),
+            details: detail.map(String::from),
         };
         let ret = Self {
             error: err,

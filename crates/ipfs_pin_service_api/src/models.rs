@@ -1,6 +1,3 @@
-#![allow(unused_qualifications)]
-
-use validator::Validate;
 
 /// Pin object
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
