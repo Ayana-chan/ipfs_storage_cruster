@@ -1,29 +1,11 @@
 use async_trait::async_trait;
+use crate::models::PinStatus;
 
 mod errors;
 mod models;
 
 #[async_trait]
-pub trait ApiNoContext {
-
-    /// Add pin object
-    async fn add_pin(
-        &self,
-        pin: models::Pin,
-    ) -> Result<AddPinResponse, ApiError>;
-
-    /// Remove pin object
-    async fn delete_pin_by_request_id(
-        &self,
-        requestid: String,
-    ) -> Result<DeletePinByRequestIdResponse, ApiError>;
-
-    /// Get pin object
-    async fn get_pin_by_request_id(
-        &self,
-        requestid: String,
-    ) -> Result<GetPinByRequestIdResponse, ApiError>;
-
+pub trait IpfsPinServiceApi {
     /// List pin objects
     async fn get_pins(
         &self,
@@ -35,12 +17,30 @@ pub trait ApiNoContext {
         after: Option<chrono::DateTime::<chrono::Utc>>,
         limit: Option<i32>,
         meta: Option<std::collections::HashMap<String, String>>,
-    ) -> Result<GetPinsResponse, ApiError>;
+    ) -> Result<models::PinResults, errors::ResponseError>;
+
+    /// Add pin object
+    async fn add_pin(
+        &self,
+        pin: models::Pin,
+    ) -> Result<models::PinStatus, errors::ResponseError>;
+
+    /// Get pin object
+    async fn get_pin_by_request_id(
+        &self,
+        requestid: String,
+    ) -> Result<models::PinStatus, errors::ResponseError>;
 
     /// Replace pin object
     async fn replace_pin_by_request_id(
         &self,
         requestid: String,
         pin: models::Pin,
-    ) -> Result<ReplacePinByRequestIdResponse, ApiError>;
+    ) -> Result<models::PinStatus, errors::ResponseError>;
+
+    /// Remove pin object
+    async fn delete_pin_by_request_id(
+        &self,
+        requestid: String,
+    ) -> Result<(), errors::ResponseError>;
 }
