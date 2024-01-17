@@ -1,9 +1,9 @@
 [package]
-name = "ifps_storage_cruster_app"
+name = "ipfs_storage_cruster_app"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ipfs_pin_service_api = { path = "../ipfs_pin_service_api"}
+ipfs_pin_service_axum_api = { path = "../ipfs_pin_service_axum_api" }

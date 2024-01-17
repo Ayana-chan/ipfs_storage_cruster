@@ -16,7 +16,7 @@ pub trait IpfsPinServiceApi {
 
     /// Add pin object
     async fn add_pin(
-        pin: Json<models::Pin>,
+        Json(pin): Json<models::Pin>,
     ) -> ApiResponse<models::PinStatus>;
 
     /// Get pin object
@@ -73,7 +73,7 @@ mod tests {
     #[tokio::test]
     #[ignore]
     #[allow(warnings)]
-    async fn get_test() {
+    async fn test_get() {
         struct MyApi {}
         #[async_trait]
         impl IpfsPinServiceApi for MyApi {
