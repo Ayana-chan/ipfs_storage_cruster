@@ -3,7 +3,6 @@
 use async_trait::async_trait;
 use axum::{http, Json, Router};
 use axum::routing::{get, post, delete};
-use axum::response::{IntoResponse, Response};
 use crate::models::PinStatus;
 
 pub mod errors;
@@ -82,6 +81,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
+    #[allow(warnings)]
     async fn get_test() {
         struct MyApi{}
         #[async_trait]
