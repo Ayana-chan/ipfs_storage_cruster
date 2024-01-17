@@ -51,6 +51,7 @@ impl IntoResponse for ResponseError{
 #[derive(Serialize)]
 struct ErrorContent {
     reason: String,
+    #[serde(skip_serializing_if="Option::is_none")]
     details: String,
 }
 

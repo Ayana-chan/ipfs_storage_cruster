@@ -12,6 +12,7 @@ tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_i
 axum = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+validator = { version = "0.16", features = ["derive"] }
 
 [dev-dependencies]
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 
-pub mod error;
+mod errors;
+mod models;
 
 #[async_trait]
 pub trait ApiNoContext {
