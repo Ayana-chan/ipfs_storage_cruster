@@ -1,4 +1,4 @@
-use axum::{Json, Router};
+use axum::{extract, http, Json, middleware, response, Router};
 use axum::routing::{get, post, delete};
 use async_trait::async_trait;
 use crate::errors::{ResponseError, ResponseErrorType};
@@ -41,6 +41,8 @@ pub trait IpfsPinServiceApi {
     async fn delete_pin_by_request_id(
         requestid: String,
     ) -> ApiResponse<()>;
+
+    async fn verify_token(token :&str) -> bool;
 }
 
 pub fn generate_router<T>() -> Router
@@ -58,6 +60,27 @@ pub fn generate_router<T>() -> Router
     let ipfs_pin_service_app = ipfs_pin_service_app.fallback(handle_404);
 
     ipfs_pin_service_app
+}
+
+async fn auth<T>(
+    headers: http::HeaderMap,
+    request: extract::Request,
+    next: middleware::Next,
+) -> Result<response::Response, ResponseError>
+    where T: IpfsPinServiceApi + 'static{
+    match get_token(&headers) {
+        Some(token) if T::verify_token(token).await => {
+            let response = next.run(request).await;
+            Ok(response)
+        }
+        _ => {
+            Err(ResponseError::new(ResponseErrorType::Unauthorized))
+        }
+    }
+}
+
+fn get_token(headers: &http::HeaderMap) -> Option<&str> {
+    None
 }
 
 async fn handle_404() -> ResponseError {
@@ -111,6 +134,10 @@ mod tests {
             }
 
             async fn delete_pin_by_request_id(requestid: String) -> ApiResponse<()> {
+                todo!()
+            }
+
+            async fn verify_token(token: &str) -> bool {
                 todo!()
             }
         }
