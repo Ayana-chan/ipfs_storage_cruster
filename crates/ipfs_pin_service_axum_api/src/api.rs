@@ -18,10 +18,12 @@ pub type ApiResponse<T> = Result<Json<T>, ResponseError>;
 /// AuthenticatedUser: **User information** type, which is obtained through **auth token**.
 /// Should be `'static`.
 #[async_trait]
-pub trait IpfsPinServiceApi<A> {
+pub trait IpfsPinServiceApi {
+    type A: Debug;
+
     /// List pin objects.
     async fn get_pins(
-        auth_context: AuthContext<A>,
+        auth_context: AuthContext<Self>,
         Json(get_pins_args): Json<models::GetPinsArgs>,
     ) -> ApiResponse<models::PinResults>;
 
@@ -53,12 +55,12 @@ pub trait IpfsPinServiceApi<A> {
     ) -> ApiResponse<()>;
 
     /// Function to verify the token and get corresponding user information
-    async fn verify_token(token: &str) -> Result<A, ()>;
+    async fn verify_token(token: &str) -> Result<Self::A, ()>;
 }
 
 /// Generate axum router by type impl `IpfsPinServiceApi`.
-pub fn generate_router<T, A>() -> Router
-    where T: IpfsPinServiceApi<A> + 'static {
+pub fn generate_router<T>() -> Router
+    where T: IpfsPinServiceApi + 'static {
     let ipfs_pin_service_app = Router::new()
         .route("/", get(T::get_pins));
     // .route("/", post(T::add_pin))
@@ -94,17 +96,12 @@ impl<A> AuthContext<A>
     pub fn token(&self) -> &str {
         &self.token
     }
-
-    pub fn authed_user(&self) -> &A {
-        &self.authed_user
-    }
 }
 
 #[async_trait]
-impl<S, T, A> FromRequestParts<S> for AuthContext<A>
+impl<S, T> FromRequestParts<S> for AuthContext<T>
     where S: Send + Sync,
-          T: IpfsPinServiceApi<A>,
-          A: Debug {
+          T: IpfsPinServiceApi {
     type Rejection = response::Response;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
@@ -192,8 +189,10 @@ mod tests {
             id: String,
         }
         #[async_trait]
-        impl<A> IpfsPinServiceApi<A> for MyApi {
-            async fn get_pins(auth_context: AuthContext<A>, Json(get_pins_args): Json<GetPinsArgs>) -> ApiResponse<PinResults> {
+        impl IpfsPinServiceApi for MyApi {
+            type A = MyAuthedUser;
+
+            async fn get_pins(auth_context: AuthContext<Self>, Json(get_pins_args): Json<GetPinsArgs>) -> ApiResponse<PinResults> {
                 println!("get_pins: {:?}", get_pins_args);
                 println!("get_pins auth: {:?}", auth_context.authed_user());
                 Ok(Json::from(PinResults::new(0, vec![])))
@@ -215,14 +214,14 @@ mod tests {
                 todo!()
             }
 
-            async fn verify_token(token: &str) -> Result<A, ()> {
+            async fn verify_token(token: &str) -> Result<Self::A, ()> {
                 println!("verify_token: {}", token);
                 Ok(Self::AuthenticatedUser {
                     id: "miku114514".to_string()
                 })
             }
         }
-        let app = generate_router::<MyApi, MyAuthedUser>();
+        let app = generate_router::<MyApi>();
         let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
         axum::serve(listener, app).await.unwrap();
     }
