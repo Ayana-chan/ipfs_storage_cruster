@@ -30,7 +30,11 @@ pub struct Pin {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
-    /// Optional list of multiaddrs known to provide the data; see Provider Hints in the docs
+    /// A list of known sources (providers) of the data.
+    /// Sent by a client in a pin request.
+    /// Pinning service will try to connect to them to speed up data transfer. \
+    /// Addresses provided in origins list are relevant only during the initial pinning,
+    /// and don't need to be persisted by the pinning service.
     #[serde(rename = "origins")]
     #[validate(
     length(min = 0, max = 20),
@@ -257,7 +261,9 @@ pub struct PinStatus {
     #[serde(rename = "pin")]
     pub pin: Pin,
 
-    /// List of multiaddrs designated by pinning service that will receive the pin data; see Provider Hints in the docs
+    /// A list of temporary destination (retrievers) for the data.
+    /// Returned by pinning service in a response for a pin request.
+    /// These peers are provided by a pinning service for the purpose of fetching data about to be pinned.
     #[serde(rename = "delegates")]
     #[validate(
     length(min = 1, max = 20),
@@ -376,8 +382,15 @@ impl std::str::FromStr for PinStatus {
     }
 }
 
-/// Status a pin object can have at a pinning service
-/// Enumeration of values.
+/// Status a pin object can have at a pinning service. \
+/// - `queued` is passive: the pin was added to the queue but the service isn't consuming any resources to retrieve it yet. \
+/// - `pinning` is active: the pinning service is trying to retrieve the CIDs by finding providers for all involved CIDs, connect to these providers and download data from them. \
+///
+/// When a new pin object is created it typically starts in a `queued` state.
+/// Once the pinning service actively seeks to retrieve the file it changes to `pinning`.
+/// `pinning` typically means that the data behind `Pin.cid` was not found on the pinning service and is being fetched from the IPFS network at large, which may take time.
+/// In either case, the user can periodically check pinning progress via `GET /pins/{requestid}` until pinning is successful,
+/// or the user decides to remove the pending pin. \
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub enum Status {
@@ -417,7 +430,6 @@ impl std::str::FromStr for Status {
 }
 
 /// Alternative text matching strategy
-/// Enumeration of values.
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub enum TextMatchingStrategy {

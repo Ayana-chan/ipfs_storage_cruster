@@ -1,3 +1,5 @@
+//! `api::ApiResponse<T>` is more recommended to use, which is declared as `Result<Json<T>, ResponseError>`.
+
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;

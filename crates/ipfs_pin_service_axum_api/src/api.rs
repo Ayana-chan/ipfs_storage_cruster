@@ -6,31 +6,38 @@ use crate::models;
 
 pub type ApiResponse<T> = Result<Json<T>, ResponseError>;
 
-/// Should be 'static
+/// `impl IpfsPinServiceApi for your_struct` to create an API implementation. \
+/// Should be `'static`.
 #[async_trait]
 pub trait IpfsPinServiceApi {
-    /// List pin objects
+    /// List pin objects.
     async fn get_pins(
         Json(get_pins_args): Json<models::GetPinsArgs>,
     ) -> ApiResponse<models::PinResults>;
 
-    /// Add pin object
+    /// Add pin object.
     async fn add_pin(
         Json(pin): Json<models::Pin>,
     ) -> ApiResponse<models::PinStatus>;
 
-    /// Get pin object
+    /// Get pin object.
     async fn get_pin_by_request_id(
         requestid: String,
     ) -> ApiResponse<models::PinStatus>;
 
-    /// Replace pin object
+    /// Replace pin object. \
+    /// This is a shortcut for removing a pin object identified by requestid
+    /// and creating a new one in a single API call
+    /// that protects against undesired garbage collection of blocks common to both pins.
+    /// Useful when updating a pin representing a huge dataset where most of blocks did not change.
+    /// The new pin object requestid is returned in the PinStatus response.
+    /// The old pin object is deleted automatically.
     async fn replace_pin_by_request_id(
         requestid: String,
         pin: models::Pin,
     ) -> ApiResponse<models::PinStatus>;
 
-    /// Remove pin object
+    /// Remove pin object.
     async fn delete_pin_by_request_id(
         requestid: String,
     ) -> ApiResponse<()>;
