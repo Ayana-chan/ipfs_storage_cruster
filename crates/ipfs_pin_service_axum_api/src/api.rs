@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use axum::{extract, http, Json, middleware, response, Router};
+use axum::{http, Json, response, Router};
 use axum::routing::{get, post, delete};
 use async_trait::async_trait;
 use axum::extract::FromRequestParts;
@@ -72,9 +72,9 @@ pub fn generate_router<T>() -> Router
 }
 
 /// Intermediary of auth
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 pub struct AuthContext{
-    token: String,
+    pub token: String,
 }
 
 impl AuthContext{

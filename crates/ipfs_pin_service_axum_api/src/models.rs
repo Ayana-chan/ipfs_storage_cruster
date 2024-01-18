@@ -1,19 +1,19 @@
 use axum::response::{IntoResponse, Response};
 // TODO 删除from string等方法试试
 // TODO getter
+// TODO 所有response的状态码
 
 /// Args to get pin list. For pagination and filtering.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 pub struct GetPinsArgs {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    cid: Option<Vec<String>>,
-    name: Option<String>,
-    r#match: Option<TextMatchingStrategy>,
-    status: Option<Vec<Status>>,
-    before: Option<chrono::DateTime::<chrono::Utc>>,
-    after: Option<chrono::DateTime::<chrono::Utc>>,
-    limit: Option<i32>,
-    meta: Option<std::collections::HashMap<String, String>>,
+    pub cid: Option<Vec<String>>,
+    pub name: Option<String>,
+    pub r#match: Option<TextMatchingStrategy>,
+    pub status: Option<Vec<Status>>,
+    pub before: Option<chrono::DateTime::<chrono::Utc>>,
+    pub after: Option<chrono::DateTime::<chrono::Utc>>,
+    pub limit: Option<i32>,
+    pub meta: Option<std::collections::HashMap<String, String>>,
 }
 
 /// Pin object
