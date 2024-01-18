@@ -1,4 +1,7 @@
-//! `api::ApiResponse<T>` is more recommended to use, which is declared as `Result<Json<T>, ResponseError>`.
+//! Errors for API's response. \
+//! Use [`api::ApiResponse<T>`](crate::api::ApiResponse) as return type is more convenient,
+//! which is declared as `Result<Json<T>, ResponseError>`. \
+//! Look at [`ResponseError`] for more usage.
 
 use axum::Json;
 use axum::response::{IntoResponse, Response};
@@ -7,6 +10,7 @@ use crate::common::convert_status_code;
 
 pub enum ResponseErrorType {
     BadRequest,
+    NotFound,
     InsufficientFunds,
 }
 
@@ -45,6 +49,17 @@ impl IntoResponse for ResponseError {
                     GenericResponseError::new_json(
                         "BAD_REQUEST",
                         self.obtain_detail(None),
+                    )
+                )
+            }
+            ResponseErrorType::NotFound => {
+                (
+                    convert_status_code(404),
+                    GenericResponseError::new_json(
+                        "NOT_FOUND",
+                        self.obtain_detail(Some(
+                            "The specified resource was not found"
+                        )),
                     )
                 )
             }

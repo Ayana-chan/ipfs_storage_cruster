@@ -1,4 +1,4 @@
-//! Official API doc: [pinning-services-api-spec](https://ipfs.github.io/pinning-services-api-spec)
+//! Official API doc: [pinning-services-api-spec](https://ipfs.github.io/pinning-services-api-spec).
 //!
 //! ## About `requestid`
 //! [Here the original](https://ipfs.github.io/pinning-services-api-spec/#section/Provider-hints/Optimizing-for-speed-and-connectivity). \

@@ -1,7 +1,7 @@
 use axum::{Json, Router};
 use axum::routing::{get, post, delete};
 use async_trait::async_trait;
-use crate::errors::ResponseError;
+use crate::errors::{ResponseError, ResponseErrorType};
 use crate::models;
 
 pub type ApiResponse<T> = Result<Json<T>, ResponseError>;
@@ -52,7 +52,16 @@ pub fn generate_router<T>() -> Router
     // .route("/:requestid", post(T::replace_pin_by_request_id))
     // .route("/:requestid", delete(T::delete_pin_by_request_id));
 
-    Router::new().nest("/pins", ipfs_pin_service_app)
+    // add pins prefix
+    let ipfs_pin_service_app = Router::new().nest("/pins", ipfs_pin_service_app);
+    // add global 404 handler
+    let ipfs_pin_service_app = ipfs_pin_service_app.fallback(handle_404);
+
+    ipfs_pin_service_app
+}
+
+async fn handle_404() -> ResponseError {
+    ResponseError::new(ResponseErrorType::NotFound)
 }
 
 #[cfg(test)]
