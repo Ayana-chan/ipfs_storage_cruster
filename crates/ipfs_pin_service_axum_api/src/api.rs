@@ -19,11 +19,9 @@ pub type ApiResponse<T> = Result<Json<T>, ResponseError>;
 /// Should be `'static`.
 #[async_trait]
 pub trait IpfsPinServiceApi {
-    type A: Debug;
-
     /// List pin objects.
     async fn get_pins(
-        auth_context: AuthContext<Self>,
+        token: AuthContext,
         Json(get_pins_args): Json<models::GetPinsArgs>,
     ) -> ApiResponse<models::PinResults>;
 
@@ -53,9 +51,6 @@ pub trait IpfsPinServiceApi {
     async fn delete_pin_by_request_id(
         requestid: String,
     ) -> ApiResponse<()>;
-
-    /// Function to verify the token and get corresponding user information
-    async fn verify_token(token: &str) -> Result<Self::A, ()>;
 }
 
 /// Generate axum router by type impl `IpfsPinServiceApi`.
@@ -78,18 +73,14 @@ pub fn generate_router<T>() -> Router
 
 /// Intermediary of auth
 #[derive(Debug)]
-pub struct AuthContext<A>
-    where A: Debug {
+pub struct AuthContext{
     token: String,
-    authed_user: A,
 }
 
-impl<A> AuthContext<A>
-    where A: Debug {
-    pub fn new(token: &str, authed_user: A) -> Self {
+impl AuthContext{
+    pub fn new(token: &str) -> Self {
         Self {
             token: token.to_string(),
-            authed_user,
         }
     }
 
@@ -99,9 +90,8 @@ impl<A> AuthContext<A>
 }
 
 #[async_trait]
-impl<S, T> FromRequestParts<S> for AuthContext<T>
-    where S: Send + Sync,
-          T: IpfsPinServiceApi {
+impl<S> FromRequestParts<S> for AuthContext
+    where S: Send + Sync {
     type Rejection = response::Response;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
@@ -120,38 +110,9 @@ impl<S, T> FromRequestParts<S> for AuthContext<T>
         }
         let token = token.unwrap();
 
-        // verify token
-        let authed_user = T::verify_token(token).await;
-        if authed_user.is_err() {
-            // verify failed
-            return Err(ResponseError::new(ResponseErrorType::Unauthorized).into_response());
-        }
-        let authed_user = authed_user.unwrap();
-
-        Ok(AuthContext::new(token, authed_user))
+        Ok(AuthContext::new(token))
     }
 }
-
-// async fn auth<T>(
-//     headers: http::HeaderMap,
-//     request: extract::Request,
-//     next: middleware::Next,
-// ) -> Result<response::Response, ResponseError>
-//     where T: IpfsPinServiceApi + 'static {
-//     match get_token(&headers) {
-//         Some(token) if T::verify_token(token).await => {
-//             let response = next.run(request).await;
-//             Ok(response)
-//         }
-//         _ => {
-//             Err(ResponseError::new(ResponseErrorType::Unauthorized))
-//         }
-//     }
-// }
-//
-// fn get_token(headers: &http::HeaderMap) -> Option<&str> {
-//     None
-// }
 
 async fn handle_404() -> ResponseError {
     ResponseError::new(ResponseErrorType::NotFound)
@@ -180,7 +141,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
+    // #[ignore]
     #[allow(warnings)]
     async fn test_basic() {
         struct MyApi {}
@@ -190,12 +151,10 @@ mod tests {
         }
         #[async_trait]
         impl IpfsPinServiceApi for MyApi {
-            type A = MyAuthedUser;
-
-            async fn get_pins(auth_context: AuthContext<Self>, Json(get_pins_args): Json<GetPinsArgs>) -> ApiResponse<PinResults> {
+            async fn get_pins(token: AuthContext, Json(get_pins_args): Json<GetPinsArgs>) -> ApiResponse<PinResults> {
                 println!("get_pins: {:?}", get_pins_args);
-                println!("get_pins auth: {:?}", auth_context.authed_user());
-                Ok(Json::from(PinResults::new(0, vec![])))
+                println!("get_pins auth: {:?}", token.token());
+                Ok(Json::from(PinResults::new(token.token().len() as u32, vec![])))
             }
 
             async fn add_pin(Json(pin): Json<Pin>) -> ApiResponse<PinStatus> {
@@ -212,13 +171,6 @@ mod tests {
 
             async fn delete_pin_by_request_id(requestid: String) -> ApiResponse<()> {
                 todo!()
-            }
-
-            async fn verify_token(token: &str) -> Result<Self::A, ()> {
-                println!("verify_token: {}", token);
-                Ok(Self::AuthenticatedUser {
-                    id: "miku114514".to_string()
-                })
             }
         }
         let app = generate_router::<MyApi>();
