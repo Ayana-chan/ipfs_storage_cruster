@@ -6,7 +6,7 @@ use axum::extract::{FromRequestParts, Query};
 use axum::http::request::Parts;
 use axum::response::IntoResponse;
 use crate::errors::{ResponseError, ResponseErrorType};
-use crate::{models, vo};
+use crate::{EnhancedQuery, models, vo};
 
 /// The **key** of access-token in request header
 pub const AUTH_KEY: &str = "Authorization";
@@ -22,7 +22,7 @@ pub trait IpfsPinServiceApi {
     /// List pin objects.
     async fn get_pins(
         token: AuthContext,
-        get_pins_args: Query<vo::GetPinsArgs>
+        EnhancedQuery(get_pins_args): EnhancedQuery<vo::GetPinsArgs>
     ) -> ApiResponse<vo::GetPinsResponse>;
 
     /// Add pin object.
@@ -104,6 +104,8 @@ impl<S> FromRequestParts<S> for AuthContext
         // get token from http header
         let token = headers.get(AUTH_KEY);
         if token.is_none() {
+            // here to decide return empty token or refuse request
+            return Ok(AuthContext::new(""));
             return Err(ResponseError::new(ResponseErrorType::Unauthorized).into_response());
         }
         let token = token.unwrap().to_str();
@@ -154,8 +156,7 @@ mod tests {
         }
         #[async_trait]
         impl IpfsPinServiceApi for MyApi {
-            async fn get_pins(token: AuthContext, get_pins_args: Query<GetPinsArgs>) -> ApiResponse<GetPinsResponse> {
-                let Query(get_pins_args) = get_pins_args;
+            async fn get_pins(token: AuthContext, EnhancedQuery(get_pins_args): EnhancedQuery<GetPinsArgs>) -> ApiResponse<GetPinsResponse> {
                 println!("get_pins: {:?}", get_pins_args);
                 println!("get_pins auth: {:?}", token.token());
                 Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
