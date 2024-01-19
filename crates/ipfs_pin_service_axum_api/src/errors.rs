@@ -28,7 +28,6 @@ pub enum ResponseErrorType {
 /// ```
 ///
 /// ## Low Reusability
-/// All [error types](ResponseErrorType) and their status code and default content are hard-coded. \
 /// Only support one response format: \
 /// ```json
 /// # "reason" is required and "details" is optional
@@ -39,7 +38,7 @@ pub enum ResponseErrorType {
 ///     }
 /// }
 /// ```
-/// So think twice before reusing this module in **other parts** of your code.
+/// Think twice before reusing this module in **other parts** of your code.
 pub struct ResponseError {
     err_type: ResponseErrorType,
     detail: Option<String>,
