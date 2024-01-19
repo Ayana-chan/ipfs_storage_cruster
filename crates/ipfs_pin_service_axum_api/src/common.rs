@@ -12,7 +12,7 @@ pub(crate) fn convert_status_code(code: u16) -> http::StatusCode {
 }
 
 /// Query depend on [serde qs](https://docs.rs/serde_qs/0.12.0/serde_qs).
-/// Able to get nested urlencoded queries.
+/// Able to get complex urlencoded queries.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct EnhancedQuery<T>(pub T);
 
@@ -32,6 +32,7 @@ impl<T> EnhancedQuery<T>
     where
         T: DeserializeOwned,
 {
+    /// Get query params from uri, and then parse it into `T`
     pub fn try_from_uri(value: &Uri) -> Result<Self, errors::ResponseError> {
         let query = value.query().unwrap_or_default();
         let params =

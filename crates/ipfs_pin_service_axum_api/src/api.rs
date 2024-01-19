@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use axum::{http, Json, response, Router};
 use axum::routing::{get, post, delete};
 use async_trait::async_trait;
-use axum::extract::{FromRequestParts, Query};
+use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum::response::IntoResponse;
 use crate::errors::{ResponseError, ResponseErrorType};
@@ -105,7 +105,7 @@ impl<S> FromRequestParts<S> for AuthContext
         let token = headers.get(AUTH_KEY);
         if token.is_none() {
             // here to decide return empty token or refuse request
-            return Ok(AuthContext::new(""));
+            // return Ok(AuthContext::new(""));
             return Err(ResponseError::new(ResponseErrorType::Unauthorized).into_response());
         }
         let token = token.unwrap().to_str();

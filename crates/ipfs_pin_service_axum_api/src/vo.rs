@@ -2,7 +2,6 @@
 //! - Each response is specified which a fixed status code. \
 //! - Each response impls `IntoResponse` trait.
 
-use axum::extract::FromRequestParts;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use crate::{common, models};
