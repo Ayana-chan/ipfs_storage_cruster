@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use axum::{http, Json, response, Router};
 use axum::routing::{get, post, delete};
 use async_trait::async_trait;
-use axum::extract::FromRequestParts;
+use axum::extract::{FromRequestParts, Query};
 use axum::http::request::Parts;
 use axum::response::IntoResponse;
 use crate::errors::{ResponseError, ResponseErrorType};
@@ -22,7 +22,7 @@ pub trait IpfsPinServiceApi {
     /// List pin objects.
     async fn get_pins(
         token: AuthContext,
-        Json(get_pins_args): Json<vo::GetPinsArgs>,
+        get_pins_args: Query<vo::GetPinsArgs>
     ) -> ApiResponse<vo::GetPinsResponse>;
 
     /// Add pin object.
@@ -154,11 +154,11 @@ mod tests {
         }
         #[async_trait]
         impl IpfsPinServiceApi for MyApi {
-            async fn get_pins(token: AuthContext, Json(get_pins_args): Json<GetPinsArgs>) -> ApiResponse<GetPinsResponse> {
+            async fn get_pins(token: AuthContext, get_pins_args: Query<GetPinsArgs>) -> ApiResponse<GetPinsResponse> {
+                let Query(get_pins_args) = get_pins_args;
                 println!("get_pins: {:?}", get_pins_args);
                 println!("get_pins auth: {:?}", token.token());
-                Ok(PinResults::new(token.token().len() as u32, vec![]).into())
-                // Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
+                Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
             }
 
             async fn add_pin(Json(pin): Json<Pin>) -> ApiResponse<AddPinResponse> {
