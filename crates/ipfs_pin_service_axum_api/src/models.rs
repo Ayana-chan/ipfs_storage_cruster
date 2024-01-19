@@ -1,19 +1,5 @@
 use axum::response::{IntoResponse, Response};
 // TODO 删除from string等方法试试
-// TODO 所有response的状态码，去掉ApiResponse里面的JSON
-
-/// Args to get pin list. For pagination and filtering.
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
-pub struct GetPinsArgs {
-    pub cid: Option<Vec<String>>,
-    pub name: Option<String>,
-    pub r#match: Option<TextMatchingStrategy>,
-    pub status: Option<Vec<Status>>,
-    pub before: Option<chrono::DateTime::<chrono::Utc>>,
-    pub after: Option<chrono::DateTime::<chrono::Utc>>,
-    pub limit: Option<i32>,
-    pub meta: Option<std::collections::HashMap<String, String>>,
-}
 
 /// Pin object
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]

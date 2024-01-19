@@ -6,13 +6,13 @@ use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum::response::IntoResponse;
 use crate::errors::{ResponseError, ResponseErrorType};
-use crate::models;
+use crate::{models, vo};
 
 /// The **key** of access-token in request header
 pub const AUTH_KEY: &str = "Authorization";
 
 /// A type wrap for API's response
-pub type ApiResponse<T> = Result<Json<T>, ResponseError>;
+pub type ApiResponse<T> = Result<T, ResponseError>;
 
 /// `impl IpfsPinServiceApi for your_struct` to create an API implementation. \
 /// AuthenticatedUser: **User information** type, which is obtained through **auth token**.
@@ -22,18 +22,18 @@ pub trait IpfsPinServiceApi {
     /// List pin objects.
     async fn get_pins(
         token: AuthContext,
-        Json(get_pins_args): Json<models::GetPinsArgs>,
-    ) -> ApiResponse<models::PinResults>;
+        Json(get_pins_args): Json<vo::GetPinsArgs>,
+    ) -> ApiResponse<vo::GetPinsResponse>;
 
     /// Add pin object.
     async fn add_pin(
         Json(pin): Json<models::Pin>,
-    ) -> ApiResponse<models::PinStatus>;
+    ) -> ApiResponse<vo::AddPinResponse>;
 
     /// Get pin object.
     async fn get_pin_by_request_id(
         requestid: String,
-    ) -> ApiResponse<models::PinStatus>;
+    ) -> ApiResponse<vo::GetPinByRequestIdResponse>;
 
     /// Replace pin object. \
     /// This is a shortcut for removing a pin object identified by requestid
@@ -41,16 +41,18 @@ pub trait IpfsPinServiceApi {
     /// that protects against undesired garbage collection of blocks common to both pins.
     /// Useful when updating a pin representing a huge dataset where most of blocks did not change.
     /// The new pin object requestid is returned in the PinStatus response.
-    /// The old pin object is deleted automatically.
+    /// The old pin object is deleted automatically. \
+    /// **NOTE**: **Replace pin** and **Add pin** are basically equivalent in response to business needs,
+    /// so `replace_pin_by_request_id` returns `vo::AddPinResponse`
     async fn replace_pin_by_request_id(
         requestid: String,
         pin: models::Pin,
-    ) -> ApiResponse<models::PinStatus>;
+    ) -> ApiResponse<vo::AddPinResponse>;
 
     /// Remove pin object.
     async fn delete_pin_by_request_id(
         requestid: String,
-    ) -> ApiResponse<()>;
+    ) -> ApiResponse<vo::DeletePinByRequestIdResponse>;
 }
 
 /// Generate axum router by type impl `IpfsPinServiceApi`.
@@ -121,6 +123,7 @@ async fn handle_404() -> ResponseError {
 #[cfg(test)]
 mod tests {
     use crate::models::*;
+    use crate::vo::{AddPinResponse, DeletePinByRequestIdResponse, GetPinByRequestIdResponse, GetPinsArgs, GetPinsResponse};
     use super::*;
 
     #[test]
@@ -151,26 +154,26 @@ mod tests {
         }
         #[async_trait]
         impl IpfsPinServiceApi for MyApi {
-            async fn get_pins(token: AuthContext, Json(get_pins_args): Json<GetPinsArgs>) -> ApiResponse<PinResults> {
+            async fn get_pins(token: AuthContext, Json(get_pins_args): Json<GetPinsArgs>) -> ApiResponse<GetPinsResponse> {
                 println!("get_pins: {:?}", get_pins_args);
                 println!("get_pins auth: {:?}", token.token());
-                Ok(Json::from(PinResults::new(token.token().len() as u32, vec![])))
+                Ok(PinResults::new(token.token().len() as u32, vec![]).into())
                 // Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
             }
 
-            async fn add_pin(Json(pin): Json<Pin>) -> ApiResponse<PinStatus> {
+            async fn add_pin(Json(pin): Json<Pin>) -> ApiResponse<AddPinResponse> {
                 todo!()
             }
 
-            async fn get_pin_by_request_id(requestid: String) -> ApiResponse<PinStatus> {
+            async fn get_pin_by_request_id(requestid: String) -> ApiResponse<GetPinByRequestIdResponse> {
                 todo!()
             }
 
-            async fn replace_pin_by_request_id(requestid: String, pin: Pin) -> ApiResponse<PinStatus> {
+            async fn replace_pin_by_request_id(requestid: String, pin: Pin) -> ApiResponse<AddPinResponse> {
                 todo!()
             }
 
-            async fn delete_pin_by_request_id(requestid: String) -> ApiResponse<()> {
+            async fn delete_pin_by_request_id(requestid: String) -> ApiResponse<DeletePinByRequestIdResponse> {
                 todo!()
             }
         }

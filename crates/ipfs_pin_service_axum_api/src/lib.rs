@@ -30,5 +30,5 @@
 mod common;
 pub mod errors;
 pub mod models;
+pub mod vo;
 pub mod api;
-

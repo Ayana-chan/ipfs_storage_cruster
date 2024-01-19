@@ -1,6 +1,6 @@
 //! Errors for API's response. \
 //! Use [`api::ApiResponse<T>`](crate::api::ApiResponse) as return type is more convenient,
-//! which is declared as `Result<Json<T>, ResponseError>`. \
+//! which is declared as `Result<T, ResponseError>`. \
 //! Look at [`ResponseError`] for more usage.
 
 use axum::Json;
