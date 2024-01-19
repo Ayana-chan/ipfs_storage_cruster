@@ -14,8 +14,9 @@ pub enum ResponseErrorType {
     Unauthorized,
     NotFound,
     InsufficientFunds,
+    /// Include a custom status code
+    CustomError(u16),
 }
-// TODO 定制error
 
 /// Structure to generate error object to response (by [`IntoResponse`] trait). \
 /// Just returning `ResponseError` in handler is ok. For example: \
@@ -60,7 +61,7 @@ impl ResponseError {
     }
 
     fn obtain_detail(&mut self, default_detail: Option<&str>) -> Option<&str> {
-        if self.detail == None{
+        if self.detail == None {
             self.detail = default_detail.map(String::from);
         }
         self.detail.as_deref()
@@ -107,6 +108,15 @@ impl IntoResponse for ResponseError {
                         self.obtain_detail(Some(
                             "Unable to process request due to the lack of funds"
                         )),
+                    )
+                )
+            }
+            ResponseErrorType::CustomError(status_code) => {
+                (
+                    convert_status_code(status_code),
+                    GenericResponseError::new_json(
+                        "CUSTOM_ERROR_CODE_FOR_MACHINES",
+                        self.obtain_detail(None),
                     )
                 )
             }

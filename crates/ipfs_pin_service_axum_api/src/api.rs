@@ -154,7 +154,8 @@ mod tests {
             async fn get_pins(token: AuthContext, Json(get_pins_args): Json<GetPinsArgs>) -> ApiResponse<PinResults> {
                 println!("get_pins: {:?}", get_pins_args);
                 println!("get_pins auth: {:?}", token.token());
-                Ok(Json::from(PinResults::new(token.token().len() as u32, vec![])))
+                // Ok(Json::from(PinResults::new(token.token().len() as u32, vec![])))
+                Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
             }
 
             async fn add_pin(Json(pin): Json<Pin>) -> ApiResponse<PinStatus> {
