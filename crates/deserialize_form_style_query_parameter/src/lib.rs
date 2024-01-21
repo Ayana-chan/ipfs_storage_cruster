@@ -2,14 +2,14 @@
 //! from **query parameters** in http GET request. \
 //!
 //! # Able to Deserialize
-//! 1. **Form style simple array**(`/users?id=3,4,5`), whose elements' type T impls `FromStr` trait.
-//! 2. **Form style object** that impls `FromStr` trait in a certain way (a little complex).
+//! 1. **Form style simple array** (`/users?id=3,4,5`), whose elements' type T impls `FromStr` trait.
+//! 2. **Form style object** (`/users?id=role,admin,firstName,Alex`) that impls `FromStr` trait in a certain way (a little complex).
 //!
 //! # Sample Code
 //!
 //! ## Deserialize Vec<T>
 //! ```
-//! use deserialize_form_array_in_query_parameter::{form_vec_deserialize, option_form_vec_deserialize};
+//! use deserialize_form_style_query_parameter::{form_vec_deserialize, option_form_vec_deserialize};
 //! use serde::{Deserialize, Serialize};
 //!
 //! #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -43,7 +43,7 @@
 //!
 //! ## Deserialize Object
 //! ```
-//! use deserialize_form_array_in_query_parameter::pure_from_str;
+//! use deserialize_form_style_query_parameter::pure_from_str;
 //! use serde::{Deserialize, Serialize};
 //! use std::str::FromStr;
 //!
@@ -92,32 +92,35 @@
 //! assert_eq!(example_params, correct_answer);
 //! ```
 //!
-//! # Provided Items
+//! # Provided Functions
 //!
 //! ## `fn form_vec_deserialize`
-//! A deserialize function for `Vec<T: FromStr>`, which could be used by `deserialize_with`. \
-//! Add `#[serde(deserialize_with = "form_vec_deserialize")]` above field to enable.
+//! A deserialize function for `Vec<T: FromStr>`. \
+//! Add `#[serde(deserialize_with = "form_vec_deserialize")]` above field to enable. \
+//! This function use struct `FormVecVisitor` to deserialize,
+//! which only accept string, and split it into a `Vec<String>` by ','.
+//! Then execute `T::from_str(s).ok()` for every items (**illegal items will be discarded**).
 //!
 //! ## `fn option_form_vec_deserialize`
-//! A deserialize function for `Option<Vec<T: FromStr>>`, which could be used by `deserialize_with`. \
+//! A deserialize function for `Option<Vec<T: FromStr>>`. \
 //! Add `#[serde(deserialize_with = "form_vec_deserialize", default)]` above field to enable.
 //! The `default` means this field would be `None` if its value is **not present**. \
 //! More details about **serde's field attributes**: [serde.rs field-attrs](https://serde.rs/field-attrs.html).
 //!
-//! ## `struct FormVecVisitor`
-//! `FormVecVisitor<T>` is the visitor for `Vec<T>` (only available when `T: FromStr`).
-//! `form_vec_deserialize` only call `deserializer.deserialize_str(FormVecVisitor::<T>::new())`
-//! to deserialize `Vec<T>`.\
-//! `FormVecVisitor` only accept string, and just split it into a String Vec by ','.
-//! Then execute `T::from_str(s).ok()` for every items (illegal items will be discarded).
+//! ## `fn pure_from_str`
+//! A deserialize function for `T: FromStr`. \
+//! Add `#[serde(deserialize_with = "pure_from_str")]` above field to enable. \
+//! This function use struct `PureFromStrVisitor` to deserialize,
+//! which only accept string, and just call `T::from_str`.
+//! An error would be thrown when `T::from_str` failed.
 //!
-//! ## Adapt Custom Vec Wrappers
+//! ## Adapt Custom Wrappers
 //!
-//! Taking `option_form_vec_deserialize`'s source code as an example:
+//! Take `option_form_vec_deserialize` source code as an example:
 //! ```no_run
 //! use std::str::FromStr;
 //! use serde::Deserializer;
-//! use deserialize_form_array_in_query_parameter::form_vec_deserialize;
+//! use deserialize_form_style_query_parameter::form_vec_deserialize;
 //!
 //! pub fn option_form_vec_deserialize<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
 //!     where D: Deserializer<'de>,
@@ -125,7 +128,7 @@
 //!     form_vec_deserialize(deserializer).map(|v| Some(v))
 //! }
 //! ```
-//! Copy it and modify `map(|v| Some(v))` and `Result<Option<Vec<T>>, D::Error>` to meet your needs.
+//! Copy and modify it to meet your needs.
 //!
 //! # When and Why Use This Crate
 //!
@@ -167,11 +170,12 @@
 //! After replacing `serde_urlencoded` with `serde_qs`, which claiming to be skilled in handling query parameters,
 //! nothing changed. Crate `serde_qs` only support array like`arr[]=55&arr[]=66` and `arr[0]=55&arr[1]=66`.
 //! This might be an [unresolved bug](https://github.com/samscott89/serde_qs/issues/83). \
+//! Very similarly, both of them can't recognize form style object.
 //!
 //! ## Why this crate works
 //! Luckily, both `serde_urlencoded::from_str` and `serde_qs::from_str`
-//! recognize form arrays as Strings, and then execute their deserialize functions. \
-//! So this crate provide customize deserialize functions, and we can use `deserialize_with`
+//! recognize form style arrays and objects as Strings, and then execute their deserialize functions. \
+//! So this crate provide some deserialize functions, and user could use `deserialize_with`
 //! to enable them.
 //!
 
@@ -213,7 +217,7 @@ impl<'de, T> Visitor<'de> for FormVecVisitor<T>
 
     // Format a message stating what data this Visitor expects to receive.
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("form array in GET http request's query parameter")
+        formatter.write_str("form style array in GET http request's query parameter")
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: Error {
@@ -260,7 +264,7 @@ impl<'de, T> Visitor<'de> for PureFromStrVisitor<T>
 
     // Format a message stating what data this Visitor expects to receive.
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("form array in GET http request's query parameter")
+        formatter.write_str("form style object in GET http request's query parameter")
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: Error {

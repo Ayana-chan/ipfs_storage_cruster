@@ -1,5 +1,5 @@
 [package]
-name = "deserialize_form_array_in_query_parameter"
+name = "deserialize_form_style_query_parameter"
 version = "0.1.0"
 edition = "2021"
 
