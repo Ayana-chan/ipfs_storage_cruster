@@ -105,8 +105,8 @@ impl<S> FromRequestParts<S> for AuthContext
         let token = headers.get(AUTH_KEY);
         if token.is_none() {
             // here to decide return empty token or refuse request
-            // return Ok(AuthContext::new(""));
-            return Err(ResponseError::new(ResponseErrorType::Unauthorized).into_response());
+            return Ok(AuthContext::new(""));
+            // return Err(ResponseError::new(ResponseErrorType::Unauthorized).into_response());
         }
         let token = token.unwrap().to_str();
         if token.is_err() {
@@ -156,7 +156,8 @@ mod tests {
         }
         #[async_trait]
         impl IpfsPinServiceApi for MyApi {
-            async fn get_pins(token: AuthContext, EnhancedQuery(get_pins_args): EnhancedQuery<GetPinsArgs>) -> ApiResponse<GetPinsResponse> {
+            async fn get_pins(token: AuthContext, EnhancedQuery(get_pins_args): EnhancedQuery<GetPinsArgs>)
+                -> ApiResponse<GetPinsResponse> {
                 println!("get_pins: {:?}", get_pins_args);
                 println!("get_pins auth: {:?}", token.token());
                 Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
