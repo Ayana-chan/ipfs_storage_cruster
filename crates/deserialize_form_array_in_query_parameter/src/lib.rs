@@ -1,11 +1,13 @@
-//! Tiny crate to deserialize array (in **form** style) from **query parameters** in http GET request.
+//! Tiny crate to deserialize **from** style
+//! from **query parameters** in http GET request. \
 //!
-//! # NOTE
-//! Deserialize result is `Vec<T: FromStr>`.
-//! The deserialization of `T` is based on `FromStr`, so make sure you have done `impl FromStr for T` correctly.
+//! # Able to Deserialize
+//! 1. **Form style simple array**(`/users?id=3,4,5`), whose elements' type T impls `FromStr` trait.
+//! 2. **Form style object** that impls `FromStr` trait in a certain way (a little complex).
 //!
 //! # Sample Code
 //!
+//! ## Deserialize Vec<T>
 //! ```
 //! use deserialize_form_array_in_query_parameter::{form_vec_deserialize, option_form_vec_deserialize};
 //! use serde::{Deserialize, Serialize};
@@ -35,6 +37,57 @@
 //! // So handler(Query(para)) also works.
 //! let example_params: QueryParams =
 //!     serde_urlencoded::from_str("id=12345&user_ids=1,2b,3")
+//!     .unwrap();
+//! assert_eq!(example_params, correct_answer);
+//! ```
+//!
+//! ## Deserialize Object
+//! ```
+//! use deserialize_form_array_in_query_parameter::pure_from_str;
+//! use serde::{Deserialize, Serialize};
+//! use std::str::FromStr;
+//!
+//! #[derive(Debug, PartialEq, Deserialize, Serialize)]
+//! struct Address {
+//!     city: String,
+//!     postcode: String,
+//! }
+//!
+//! impl FromStr for Address {
+//!     type Err = ();
+//!
+//!     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//!         // This function might be very complex in actual situations.
+//!         let parts: Vec<&str> = s.split(',').collect();
+//!         if parts.len() != 4{
+//!             return Err(());
+//!         }
+//!         if !parts[0].eq("city") || !parts[2].eq("postcode") {
+//!             return Err(());
+//!         }
+//!         Ok(Address{
+//!             city: parts[1].to_string(),
+//!             postcode: parts[3].to_string()
+//!         })
+//!     }
+//! }
+//!
+//! #[derive(Debug, PartialEq, Deserialize, Serialize)]
+//! struct QueryParams {
+//!     id: Option<u32>,
+//!     #[serde(deserialize_with = "pure_from_str")]
+//!     address: Address,
+//! }
+//!
+//! let correct_answer = QueryParams{
+//!     id: Some(12345),
+//!     address: Address {
+//!         city: "Teyvat".to_string(),
+//!         postcode: "191919".to_string()
+//!     }
+//! };
+//! let example_params: QueryParams =
+//!     serde_urlencoded::from_str("id=12345&address=city,Teyvat,postcode,191919")
 //!     .unwrap();
 //! assert_eq!(example_params, correct_answer);
 //! ```
@@ -180,6 +233,41 @@ impl<'de, T> Visitor<'de> for FormVecVisitor<T>
     }
 }
 
+pub fn pure_from_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+    where D: Deserializer<'de>,
+          T: FromStr {
+    deserializer.deserialize_str(PureFromStrVisitor::<T>::new())
+}
+
+pub struct PureFromStrVisitor<T> {
+    marker: PhantomData<fn() -> T>,
+}
+
+impl<T> PureFromStrVisitor<T> {
+    fn new() -> Self {
+        Self {
+            marker: PhantomData
+        }
+    }
+}
+
+impl<'de, T> Visitor<'de> for PureFromStrVisitor<T>
+    where
+        T: FromStr
+{
+    // The type that our Visitor is going to produce.
+    type Value = T;
+
+    // Format a message stating what data this Visitor expects to receive.
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("form array in GET http request's query parameter")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: Error {
+        T::from_str(v).map_err(|_| E::custom(format!("Failed deserialize pure str: {}", v)))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -190,9 +278,24 @@ mod tests {
         postcode: String,
     }
 
+    impl FromStr for Address {
+        type Err = ();
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            // fake logic
+            Ok(Address {
+                city: s.to_string(),
+                postcode: "yyy".to_string(),
+            })
+            // Err(())
+        }
+    }
+
     #[derive(Debug, PartialEq, Deserialize, Serialize)]
     struct QueryParams {
         id: Option<u32>,
+        #[serde(deserialize_with = "pure_from_str")]
+        address: Address,
         #[serde(deserialize_with = "form_vec_deserialize")]
         user_ids: Vec<u8>,
         #[serde(deserialize_with = "option_form_vec_deserialize", default)]
@@ -202,8 +305,8 @@ mod tests {
     #[test]
     fn it_works() {
         let rec_params: QueryParams =
-            serde_urlencoded::from_str("id=12345&user_ids=1a,2,3")
-            .unwrap();
+            serde_urlencoded::from_str("id=12345&address=city,abc,postcode,efg&user_ids=1a,2,3")
+                .unwrap();
         println!("{:#?}", rec_params);
     }
 }
