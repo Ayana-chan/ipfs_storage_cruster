@@ -1,5 +1,6 @@
 //! Tiny crate to deserialize **form** style data
 //! from **query parameters** in http GET request.
+//! Built upon **Serde**.
 //!
 //! # Able to Deserialize
 //! 1. **Form style simple array** (`/users?id=3,4,5`), whose elements' type T impls `FromStr` trait.
