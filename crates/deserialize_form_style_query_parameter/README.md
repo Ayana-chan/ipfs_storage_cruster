@@ -13,12 +13,6 @@ use deserialize_form_style_query_parameter::{form_vec_deserialize, option_form_v
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
-struct Address {
-    city: String,
-    postcode: String,
-}
-
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
 struct QueryParams {
     id: Option<u32>,
     #[serde(deserialize_with = "form_vec_deserialize")]

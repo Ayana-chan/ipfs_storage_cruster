@@ -13,12 +13,6 @@
 //! use serde::{Deserialize, Serialize};
 //!
 //! #[derive(Debug, PartialEq, Deserialize, Serialize)]
-//! struct Address {
-//!     city: String,
-//!     postcode: String,
-//! }
-//!
-//! #[derive(Debug, PartialEq, Deserialize, Serialize)]
 //! struct QueryParams {
 //!     id: Option<u32>,
 //!     #[serde(deserialize_with = "form_vec_deserialize")]
@@ -181,13 +175,13 @@
 
 use std::marker::PhantomData;
 use std::str::FromStr;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::Deserializer;
 use serde::de::{Error, Visitor};
 
 pub fn option_form_vec_deserialize<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
     where D: Deserializer<'de>,
           T: FromStr {
-    form_vec_deserialize(deserializer).map(|v| Some(v))
+    form_vec_deserialize(deserializer).map(Some)
 }
 
 pub fn form_vec_deserialize<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
@@ -275,6 +269,7 @@ impl<'de, T> Visitor<'de> for PureFromStrVisitor<T>
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::{Deserialize, Serialize};
 
     #[derive(Debug, PartialEq, Deserialize, Serialize)]
     struct Address {
