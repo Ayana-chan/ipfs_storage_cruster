@@ -1,4 +1,4 @@
-Tiny crate to deserialize **form** style
+Tiny crate to deserialize **form** style data
 from **query parameters** in http GET request.
 
 # Able to Deserialize
