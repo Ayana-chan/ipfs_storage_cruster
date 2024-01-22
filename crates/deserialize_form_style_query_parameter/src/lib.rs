@@ -119,7 +119,7 @@
 //! pub fn option_form_vec_deserialize<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
 //!     where D: Deserializer<'de>,
 //!           T: FromStr {
-//!     form_vec_deserialize(deserializer).map(|v| Some(v))
+//!     form_vec_deserialize(deserializer).map(Some)
 //! }
 //! ```
 //! Copy and modify it to meet your needs.

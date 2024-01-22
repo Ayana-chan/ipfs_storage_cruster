@@ -1,6 +1,6 @@
 [package]
 name = "deserialize_form_style_query_parameter"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Tiny crate to deserialize form style data from query parameters in http GET request."
 license = "MIT OR Apache-2.0"
