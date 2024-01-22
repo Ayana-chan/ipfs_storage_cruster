@@ -2,7 +2,7 @@
 name = "deserialize_form_style_query_parameter"
 version = "0.1.2"
 edition = "2021"
-description = "Deserialize Form style Query parameters in with Serde."
+description = "Deserialize Form style Query parameters with Serde."
 license = "MIT OR Apache-2.0"
 keywords = ["http", "query", "serde", "deserialize", "get"]
 categories = ["parsing"]
