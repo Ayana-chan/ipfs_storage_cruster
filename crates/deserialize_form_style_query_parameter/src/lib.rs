@@ -1,5 +1,5 @@
-//! Tiny crate to deserialize **from** style
-//! from **query parameters** in http GET request. \
+//! Tiny crate to deserialize **form** style
+//! from **query parameters** in http GET request.
 //!
 //! # Able to Deserialize
 //! 1. **Form style simple array** (`/users?id=3,4,5`), whose elements' type T impls `FromStr` trait.
