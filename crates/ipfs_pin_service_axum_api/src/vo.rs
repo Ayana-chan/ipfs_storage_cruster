@@ -19,6 +19,8 @@ pub struct GetPinsArgs {
     pub before: Option<chrono::DateTime::<chrono::Utc>>,
     pub after: Option<chrono::DateTime::<chrono::Utc>>,
     pub limit: Option<i32>,
+    /// Not supported TODO
+    #[serde(skip)]
     pub meta: Option<std::collections::HashMap<String, String>>,
 }
 

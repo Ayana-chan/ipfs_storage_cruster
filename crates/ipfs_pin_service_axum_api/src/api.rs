@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use axum::{http, Json, response, Router};
 use axum::routing::{get, post, delete};
 use async_trait::async_trait;
-use axum::extract::FromRequestParts;
+use axum::extract::{FromRequestParts, Path};
 use axum::http::request::Parts;
 use axum::response::IntoResponse;
 use crate::errors::{ResponseError, ResponseErrorType};
@@ -22,17 +22,19 @@ pub trait IpfsPinServiceApi {
     /// List pin objects.
     async fn get_pins(
         token: AuthContext,
-        EnhancedQuery(get_pins_args): EnhancedQuery<vo::GetPinsArgs>
+        EnhancedQuery(get_pins_args): EnhancedQuery<vo::GetPinsArgs>,
     ) -> ApiResponse<vo::GetPinsResponse>;
 
     /// Add pin object.
     async fn add_pin(
+        token: AuthContext,
         Json(pin): Json<models::Pin>,
     ) -> ApiResponse<vo::AddPinResponse>;
 
     /// Get pin object.
     async fn get_pin_by_request_id(
-        requestid: String,
+        token: AuthContext,
+        Path(requestid): Path<String>,
     ) -> ApiResponse<vo::GetPinByRequestIdResponse>;
 
     /// Replace pin object. \
@@ -45,13 +47,15 @@ pub trait IpfsPinServiceApi {
     /// **NOTE**: **Replace pin** and **Add pin** are basically equivalent in response to business needs,
     /// so `replace_pin_by_request_id` returns `vo::AddPinResponse`
     async fn replace_pin_by_request_id(
-        requestid: String,
-        pin: models::Pin,
+        token: AuthContext,
+        Path(requestid): Path<String>,
+        Json(pin): Json<models::Pin>,
     ) -> ApiResponse<vo::AddPinResponse>;
 
     /// Remove pin object.
     async fn delete_pin_by_request_id(
-        requestid: String,
+        token: AuthContext,
+        Path(requestid): Path<String>,
     ) -> ApiResponse<vo::DeletePinByRequestIdResponse>;
 }
 
@@ -59,11 +63,11 @@ pub trait IpfsPinServiceApi {
 pub fn generate_router<T>() -> Router
     where T: IpfsPinServiceApi + 'static {
     let ipfs_pin_service_app = Router::new()
-        .route("/", get(T::get_pins));
-    // .route("/", post(T::add_pin))
-    // .route("/:requestid", get(T::get_pin_by_request_id))
-    // .route("/:requestid", post(T::replace_pin_by_request_id))
-    // .route("/:requestid", delete(T::delete_pin_by_request_id));
+        .route("/", get(T::get_pins))
+        .route("/", post(T::add_pin))
+        .route("/:requestid", get(T::get_pin_by_request_id))
+        .route("/:requestid", post(T::replace_pin_by_request_id))
+        .route("/:requestid", delete(T::delete_pin_by_request_id));
 
     // add pins prefix
     let ipfs_pin_service_app = Router::new().nest("/pins", ipfs_pin_service_app);
@@ -75,11 +79,11 @@ pub fn generate_router<T>() -> Router
 
 /// Intermediary of auth
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
-pub struct AuthContext{
+pub struct AuthContext {
     pub token: String,
 }
 
-impl AuthContext{
+impl AuthContext {
     pub fn new(token: &str) -> Self {
         Self {
             token: token.to_string(),
@@ -159,25 +163,36 @@ mod tests {
         #[async_trait]
         impl IpfsPinServiceApi for MyApi {
             async fn get_pins(token: AuthContext, EnhancedQuery(get_pins_args): EnhancedQuery<GetPinsArgs>)
-                -> ApiResponse<GetPinsResponse> {
+                              -> ApiResponse<GetPinsResponse> {
                 info!("get_pins: {:?}", get_pins_args);
                 info!("get_pins auth: {:?}", token.token());
                 Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
             }
 
-            async fn add_pin(Json(pin): Json<Pin>) -> ApiResponse<AddPinResponse> {
+            async fn add_pin(token: AuthContext, Json(pin): Json<Pin>) -> ApiResponse<AddPinResponse> {
+                info!("add_pins: {:?}", pin);
+                info!("add_pin auth: {:?}", token.token());
+                Ok(AddPinResponse::new(PinStatus::new(
+                    "123456".to_string(),
+                    Status::Queued,
+                    Default::default(),
+                    Pin {
+                        cid: "ggbbaa".to_string(),
+                        name: Some("ayana".to_string()),
+                        origins: Some(vec!["www.exp1.com/aaa".to_string(), "www.exp2.com/bbb/ccc".to_string()]),
+                        meta: Some(vec![("key1".to_string(), "1".to_string()), ("key2".to_string(), "2".to_string()), ("key3".to_string(), "3".to_string())].into_iter().collect()),
+                    }, vec![])))
+            }
+
+            async fn get_pin_by_request_id(token: AuthContext, Path(requestid): Path<String>) -> ApiResponse<GetPinByRequestIdResponse> {
                 todo!()
             }
 
-            async fn get_pin_by_request_id(requestid: String) -> ApiResponse<GetPinByRequestIdResponse> {
+            async fn replace_pin_by_request_id(token: AuthContext, Path(requestid): Path<String>, Json(pin): Json<Pin>) -> ApiResponse<AddPinResponse> {
                 todo!()
             }
 
-            async fn replace_pin_by_request_id(requestid: String, pin: Pin) -> ApiResponse<AddPinResponse> {
-                todo!()
-            }
-
-            async fn delete_pin_by_request_id(requestid: String) -> ApiResponse<DeletePinByRequestIdResponse> {
+            async fn delete_pin_by_request_id(token: AuthContext, Path(requestid): Path<String>) -> ApiResponse<DeletePinByRequestIdResponse> {
                 todo!()
             }
         }
