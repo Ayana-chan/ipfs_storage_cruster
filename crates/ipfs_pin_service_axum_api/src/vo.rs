@@ -19,9 +19,12 @@ pub struct GetPinsArgs {
     pub before: Option<chrono::DateTime<chrono::Utc>>,
     pub after: Option<chrono::DateTime<chrono::Utc>>,
     pub limit: Option<i32>,
-    /// Not supported TODO
-    #[serde(skip)]
-    pub meta: Option<std::collections::HashMap<String, String>>,
+    /// Not supported well.
+    /// Could be analyzed by some crate for json,
+    /// like [serde_json](https://crates.io/crates/serde_json) or [json](https://crates.io/crates/json).
+    // #[serde(skip)]
+    // pub meta: Option<std::collections::HashMap<String, String>>,
+    pub meta: String,
 }
 
 pub struct GetPinsResponse {

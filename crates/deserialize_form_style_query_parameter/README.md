@@ -4,7 +4,9 @@ Built upon **Serde**.
 
 # Able to Deserialize
 1. **Form style simple array** (`/users?id=3,4,5`), whose elements' type T impls `FromStr` trait.
-2. **Form style object** (`/users?id=role,admin,firstName,Alex`) that impls `FromStr` trait in a certain way (a little complex).
+2. **Any type** (for example, **form object**: `/users?id=role,admin,firstName,Alex`) that impls `FromStr` trait in a certain way (a little complex).
+
+>**NOTE**: If you only want to deserialize with `FromStr`, you may just need [serde_with](https://crates.io/crates/serde_with).
 
 # Sample Code
 
