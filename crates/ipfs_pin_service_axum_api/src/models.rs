@@ -36,12 +36,12 @@ pub struct Pin {
 
 impl Pin {
     #[allow(clippy::new_without_default)]
-    pub fn new(cid: String) -> Pin {
+    pub fn new(cid: String, name: Option<String>, origins: Option<Vec<String>>, meta: Option<std::collections::HashMap<String, String>>) -> Pin {
         Pin {
             cid,
-            name: None,
-            origins: None,
-            meta: None,
+            name,
+            origins,
+            meta,
         }
     }
 }
@@ -266,14 +266,14 @@ pub struct PinStatus {
 
 impl PinStatus {
     #[allow(clippy::new_without_default)]
-    pub fn new(requestid: String, status: Status, created: chrono::DateTime::<chrono::Utc>, pin: Pin, delegates: Vec<String>) -> PinStatus {
+    pub fn new(requestid: String, status: Status, created: chrono::DateTime::<chrono::Utc>, pin: Pin, delegates: Vec<String>, info: Option<std::collections::HashMap<String, String>>) -> PinStatus {
         PinStatus {
             requestid,
             status,
             created,
             pin,
             delegates,
-            info: None,
+            info,
         }
     }
 }

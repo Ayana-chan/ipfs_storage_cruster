@@ -16,8 +16,8 @@ pub struct GetPinsArgs {
     pub r#match: Option<models::TextMatchingStrategy>,
     #[serde(deserialize_with = "option_form_vec_deserialize", default)]
     pub status: Option<Vec<models::Status>>,
-    pub before: Option<chrono::DateTime::<chrono::Utc>>,
-    pub after: Option<chrono::DateTime::<chrono::Utc>>,
+    pub before: Option<chrono::DateTime<chrono::Utc>>,
+    pub after: Option<chrono::DateTime<chrono::Utc>>,
     pub limit: Option<i32>,
     /// Not supported TODO
     #[serde(skip)]
