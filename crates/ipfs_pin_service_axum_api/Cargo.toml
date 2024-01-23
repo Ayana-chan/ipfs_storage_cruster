@@ -16,6 +16,7 @@ serde_json = "1.0"
 validator = { version = "0.16", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
 serde_qs = "0.12"
+json = "0.12"
 
 [dev-dependencies]
 tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
