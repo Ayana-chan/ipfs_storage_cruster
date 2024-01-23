@@ -80,7 +80,7 @@ impl<T> EnhancedQuery<T>
 /// like `http://example.com:3000/search?meta={"admin_name":"123","app_id":"4420da6158cc"}`. \
 /// Result is `HashMap<String, String>` (key->value). \
 /// `map_parameter` is `Option` to **make it easy to be moved**.
-#[derive(Debug)]
+#[derive(Default, Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 pub struct MapQueryWrapper {
     /// deserialization result
     pub map_parameter: Option<HashMap<String, String>>,
@@ -106,7 +106,7 @@ impl FromStr for MapQueryWrapper {
         // convert
         let map_result: HashMap<&str, &JsonValue> = json_value.entries().collect();
         let map_result = map_result.into_iter().map(|entry| (
-            entry.0.to_string(), entry.1.as_str().unwrap_or_default().to_string()
+            entry.0.to_string(), entry.1.to_string()
         )).collect();
         // (|m|
         //     m.into_iter().map(|entry| (

@@ -5,7 +5,8 @@
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use crate::{common, models};
-use deserialize_form_style_query_parameter::option_form_vec_deserialize;
+use deserialize_form_style_query_parameter::{option_form_vec_deserialize, option_pure_from_str};
+use crate::common::MapQueryWrapper;
 
 /// Args to get pin list. For pagination and filtering.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
@@ -19,12 +20,8 @@ pub struct GetPinsArgs {
     pub before: Option<chrono::DateTime<chrono::Utc>>,
     pub after: Option<chrono::DateTime<chrono::Utc>>,
     pub limit: Option<i32>,
-    /// Not supported well.
-    /// Could be analyzed by some crate for json,
-    /// like [serde_json](https://crates.io/crates/serde_json) or [json](https://crates.io/crates/json).
-    // #[serde(skip)]
-    // pub meta: Option<std::collections::HashMap<String, String>>,
-    pub meta: String,
+    #[serde(deserialize_with = "option_pure_from_str", default)]
+    pub meta: Option<MapQueryWrapper>,
 }
 
 pub struct GetPinsResponse {
