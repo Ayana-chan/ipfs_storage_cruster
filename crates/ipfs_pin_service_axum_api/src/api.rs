@@ -124,6 +124,7 @@ async fn handle_404() -> ResponseError {
 
 #[cfg(test)]
 mod tests {
+    use tracing::info;
     use crate::models::*;
     use crate::vo::{AddPinResponse, DeletePinByRequestIdResponse, GetPinByRequestIdResponse, GetPinsArgs, GetPinsResponse};
     use super::*;
@@ -149,6 +150,7 @@ mod tests {
     // #[ignore]
     #[allow(warnings)]
     async fn test_basic() {
+        tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
         struct MyApi {}
         #[derive(Debug)]
         struct MyAuthedUser {
@@ -158,8 +160,8 @@ mod tests {
         impl IpfsPinServiceApi for MyApi {
             async fn get_pins(token: AuthContext, EnhancedQuery(get_pins_args): EnhancedQuery<GetPinsArgs>)
                 -> ApiResponse<GetPinsResponse> {
-                println!("get_pins: {:?}", get_pins_args);
-                println!("get_pins auth: {:?}", token.token());
+                info!("get_pins: {:?}", get_pins_args);
+                info!("get_pins auth: {:?}", token.token());
                 Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
             }
 
@@ -180,7 +182,7 @@ mod tests {
             }
         }
         let app = generate_router::<MyApi>();
-        let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
         axum::serve(listener, app).await.unwrap();
     }
 }

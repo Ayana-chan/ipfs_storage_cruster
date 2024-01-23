@@ -10,7 +10,6 @@ deserialize_form_style_query_parameter = { path = "../deserialize_form_style_que
 
 async-trait = "0.1"
 tokio = { version = "1.0", features = ["full"] }
-#tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
 axum = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -18,5 +17,6 @@ validator = { version = "0.16", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
 serde_qs = "0.12"
 
-#[dev-dependencies]
-#tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+[dev-dependencies]
+tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
