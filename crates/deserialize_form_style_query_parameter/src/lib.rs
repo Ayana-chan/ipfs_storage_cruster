@@ -109,6 +109,11 @@
 //! which only accept string, and just call `T::from_str`.
 //! An error would be thrown when `T::from_str` failed.
 //!
+//! ## `fn option_pure_from_str`
+//! A deserialize function for `Option<T: FromStr>`. \
+//! Add `#[serde(deserialize_with = "option_pure_from_str", default)]` above field to enable.
+//! The `default` means this field would be `None` if its value is **not present**.
+//!
 //! ## Adapt Custom Wrappers
 //!
 //! Take `option_form_vec_deserialize` source code as an example:
@@ -236,6 +241,12 @@ pub fn pure_from_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
     where D: Deserializer<'de>,
           T: FromStr {
     deserializer.deserialize_str(PureFromStrVisitor::<T>::new())
+}
+
+pub fn option_pure_from_str<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+    where D: Deserializer<'de>,
+          T: FromStr {
+    pure_from_str(deserializer).map(Some)
 }
 
 pub struct PureFromStrVisitor<T> {

@@ -9,9 +9,11 @@ use crate::{common, models};
 /// Args to get pin list. For pagination and filtering.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 pub struct GetPinsArgs {
+    #[serde(deserialize_with = "option_form_vec_deserialize", default)]
     pub cid: Option<Vec<String>>,
     pub name: Option<String>,
     pub r#match: Option<models::TextMatchingStrategy>,
+    #[serde(deserialize_with = "option_form_vec_deserialize", default)]
     pub status: Option<Vec<models::Status>>,
     pub before: Option<chrono::DateTime::<chrono::Utc>>,
     pub after: Option<chrono::DateTime::<chrono::Utc>>,
