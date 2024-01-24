@@ -151,7 +151,7 @@ mod tests {
     }
 
     #[tokio::test]
-    // #[ignore]
+    #[ignore]
     #[allow(warnings)]
     async fn test_basic() {
         tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
@@ -166,7 +166,35 @@ mod tests {
                               -> ApiResponse<GetPinsResponse> {
                 info!("get_pins args: {:?}", get_pins_args);
                 info!("get_pins auth: {:?}", token.token());
-                Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
+                // Err(ResponseError::new(ResponseErrorType::CustomError(477)).detail("miku dayoo"))
+                Ok(GetPinsResponse::new(PinResults::new(2, vec![
+                    PinStatus::new(
+                        "123456".to_string(),
+                        Status::Queued,
+                        Default::default(),
+                        Pin::new(
+                            "ggbbaa".to_string(),
+                            None,
+                            Some(vec!["www.exp1.com/aaa".to_string(), "www.exp2.com/bbb/ccc".to_string()]),
+                            Some(vec![("key1".to_string(), "1".to_string()), ("key2".to_string(), "2".to_string()), ("key3".to_string(), "3".to_string())].into_iter().collect()),
+                        ),
+                        vec![],
+                        None,
+                    ),
+                    PinStatus::new(
+                        "98765".to_string(),
+                        Status::Pinned,
+                        Default::default(),
+                        Pin::new(
+                            "ggbbaa".to_string(),
+                            None,
+                            Some(vec!["www.exp1.com/aaa".to_string(), "www.exp2.com/bbb/ccc".to_string()]),
+                            Some(vec![("key1".to_string(), "1".to_string()), ("key2".to_string(), "2".to_string()), ("key3".to_string(), "3".to_string())].into_iter().collect()),
+                        ),
+                        vec![],
+                        None,
+                    )
+                ])))
             }
 
             async fn add_pin(token: AuthContext, Json(pin): Json<Pin>) -> ApiResponse<AddPinResponse> {

@@ -1,5 +1,5 @@
 [package]
-name = "ipfs_pin_service_axum_api"
+name = "ipfs_pin_service_axum_api_framework"
 version = "0.1.0"
 edition = "2021"
 
