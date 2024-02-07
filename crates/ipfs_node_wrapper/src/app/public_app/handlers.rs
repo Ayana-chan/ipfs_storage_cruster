@@ -1,6 +1,6 @@
 use axum::extract::{Query, State};
 use axum::http::{HeaderMap, HeaderValue};
-use axum::response::IntoResponse;
+use bytes::Bytes;
 use tracing::{info, trace};
 use crate::app::public_app::PublicAppState;
 use crate::models;
@@ -8,9 +8,15 @@ use crate::ipfs_client;
 
 #[axum_macros::debug_handler]
 #[tracing::instrument(skip_all)]
-pub async fn get_file(State(state): State<PublicAppState>, Query(query): Query<models::GetFileArgs>) -> Result<(HeaderMap, impl IntoResponse), String> {
-    info!("Get File");
-    let ipfs_res = ipfs_client::ipfs_get_file(&query.cid, &state.app_state.ipfs_node_metadata).await;
+pub async fn get_file(
+    State(state): State<PublicAppState>,
+    Query(query): Query<models::GetFileArgs>)
+    -> Result<(HeaderMap, Bytes), String> {
+    info!("Get File cid: {}", query.cid);
+    let ipfs_res = ipfs_client::ipfs_get_file(
+        &query.cid,
+        &state.app_state.ipfs_node_metadata,
+    ).await;
     if let Err(e) = ipfs_res {
         return Err(e); //TODO 定制error
     }
@@ -33,12 +39,12 @@ pub async fn get_file(State(state): State<PublicAppState>, Query(query): Query<m
         }
     }
 
-    let content = ipfs_res.text().await;
+    let content = ipfs_res.bytes().await;
     if let Err(e) = content {
         return Err(e.to_string());
     }
     let content = content.unwrap();
-    trace!("text: {:?}", content);
+    // trace!("text: {:?}", content);
 
     Ok((header.to_owned(), content))
 }
