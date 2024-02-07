@@ -1,17 +1,25 @@
+use std::sync::Arc;
 use axum::Router;
 use tokio::net::ToSocketAddrs;
+use crate::ipfs_client::IpfsNodeMetadata;
 
 mod public_app;
 mod admin_app;
 
-pub async fn serve(){
+#[derive(Default, Clone, Debug)]
+pub struct AppState {
+    ipfs_node_metadata: Arc<parking_lot::RwLock<IpfsNodeMetadata>>,
+}
+
+pub async fn serve(public_server_address: impl ToSocketAddrs, admin_server_address: impl ToSocketAddrs){
+    let state = Arc::new(AppState::default());
     let public_server = generate_server(
-        ("127.0.0.1", 3000),
-        public_app::generate_public_app()
+        public_server_address,
+        public_app::generate_public_app(&state)
     );
     let admin_server = generate_server(
-        ("127.0.0.1", 4000),
-        admin_app::generate_admin_app()
+        admin_server_address,
+        admin_app::generate_admin_app(&state)
     );
     tokio::join!(public_server, admin_server);
 }

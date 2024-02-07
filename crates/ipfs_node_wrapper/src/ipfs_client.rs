@@ -1,14 +1,15 @@
 use tracing::trace;
 
-// TODO 变成可变
-pub static IPFS_NODE_ADDRESS: &str = "127.0.0.1";
-pub static IPFS_NODE_GATEWAY_PORT: u16 = 8080;
-pub static IPFS_NODE_RPC_PORT: u16 = 5001;
+#[derive(Default, Clone, Debug)]
+pub struct IpfsNodeMetadata {
+    gateway_address: String,
+    rpc_address: String,
+}
 
 #[tracing::instrument]
-pub async fn ipfs_get_file(cid: &str) -> Result<String, String> {
+pub async fn ipfs_get_file(cid: &str, ipfs_node_metadata: &parking_lot::RwLock<IpfsNodeMetadata>) -> Result<String, String> {
     let url = "http://".to_string() +
-        IPFS_NODE_ADDRESS + ":" + &IPFS_NODE_GATEWAY_PORT.to_string() +
+        &ipfs_node_metadata.read().gateway_address +
         "/ipfs/" + cid;
     let res = reqwest::Client::new()
         .get(url)
