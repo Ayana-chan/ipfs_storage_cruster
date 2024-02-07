@@ -2,8 +2,6 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use axum::Router;
 use tokio::net::ToSocketAddrs;
-use crate::app::admin_app::AdminAppState;
-use crate::app::public_app::PublicAppState;
 use crate::ipfs_client::IpfsNodeMetadata;
 
 mod public_app;
@@ -92,20 +90,14 @@ pub async fn serve(app_config: AppConfig) {
             rpc_address: app_config.ipfs_rpc_address.to_string(),
         })
     });
-    let public_app_state = PublicAppState {
-        app_state: app_state.clone(),
-    };
-    let admin_app_state = AdminAppState {
-        app_state: app_state.clone(),
-    };
 
     let public_server = generate_server(
         (app_config.public_server_ip, app_config.public_server_port),
-        public_app::generate_public_app().with_state(public_app_state),
+        public_app::generate_public_app(&app_config, &app_state),
     );
     let admin_server = generate_server(
         (app_config.admin_server_ip, app_config.admin_server_port),
-        admin_app::generate_admin_app().with_state(admin_app_state),
+        admin_app::generate_admin_app(&app_config, &app_state),
     );
     tokio::join!(public_server, admin_server);
 }
