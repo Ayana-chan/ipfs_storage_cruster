@@ -6,7 +6,7 @@ pub struct IpfsNodeMetadata {
     pub rpc_address: String,
 }
 
-#[tracing::instrument]
+#[tracing::instrument(skip_all)]
 pub async fn ipfs_get_file(cid: &str, ipfs_node_metadata: &parking_lot::RwLock<IpfsNodeMetadata>) -> Result<String, String> {
     let url = "http://".to_string() +
         &ipfs_node_metadata.read().gateway_address +
