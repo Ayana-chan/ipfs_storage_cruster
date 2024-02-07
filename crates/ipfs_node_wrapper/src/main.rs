@@ -1,5 +1,6 @@
 use tracing_subscriber::layer::SubscriberExt;
 
+mod utils;
 mod app;
 mod models;
 mod ipfs_client;

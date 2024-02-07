@@ -1,11 +1,14 @@
-use axum::extract::{Query, State};
-use axum::http::{HeaderMap, HeaderValue};
-use bytes::Bytes;
+#[allow(unused_imports)]
 use tracing::{info, trace};
+use axum::extract::{Query, State};
+use axum::http::HeaderMap;
+use bytes::Bytes;
 use crate::app::public_app::PublicAppState;
 use crate::models;
 use crate::ipfs_client;
+use crate::utils::HttpHeaderPorterFromReqwest;
 
+//TODO 文件名
 #[axum_macros::debug_handler]
 #[tracing::instrument(skip_all)]
 pub async fn get_file(
@@ -24,29 +27,20 @@ pub async fn get_file(
 
     // construct header
     let ipfs_res_header = ipfs_res.headers();
-    trace!("header: {:#?}", ipfs_res_header);
-    let mut header = HeaderMap::new();
-    let header_value;
-    header_value = ipfs_res_header
-        .get("content-type")
-        .map(|v|
-            v.to_str().unwrap_or_default()
-        );
-    if let Some(v) = header_value {
-        let hv = HeaderValue::from_str(v);
-        if let Ok(hv) = hv {
-            header.insert("content-type", hv);
-        }
-    }
+    // trace!("Header: {:#?}", ipfs_res_header);
+    let header = HttpHeaderPorterFromReqwest::new(ipfs_res_header)
+        .transfer_when_exist_with_static_key("content-type")
+        .finish();
 
+    // read file
     let content = ipfs_res.bytes().await;
     if let Err(e) = content {
         return Err(e.to_string());
     }
     let content = content.unwrap();
-    // trace!("text: {:?}", content);
+    // trace!("File content: {:?}", content);
 
-    Ok((header.to_owned(), content))
+    Ok((header, content))
 }
 
 
