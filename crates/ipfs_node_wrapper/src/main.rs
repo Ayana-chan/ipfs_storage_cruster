@@ -19,9 +19,19 @@ fn config_tracing(){
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 }
 
+// TODO 可配置化
+fn read_config() -> app::AppConfig {
+    app::AppConfigBuilder::new()
+        .public_server_ip("127.0.0.1".parse().unwrap())
+        .public_server_port(3000)
+        .admin_server_ip("127.0.0.1".parse().unwrap())
+        .admin_server_port(4000)
+        .finish()
+}
+
 #[tokio::main]
 async fn main() {
     config_tracing();
-    app::serve(("127.0.0.1", 3000), ("127.0.0.1", 4000)).await;
+    app::serve(read_config()).await;
 }
 

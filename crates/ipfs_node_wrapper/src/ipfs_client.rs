@@ -2,8 +2,8 @@ use tracing::trace;
 
 #[derive(Default, Clone, Debug)]
 pub struct IpfsNodeMetadata {
-    gateway_address: String,
-    rpc_address: String,
+    pub gateway_address: String,
+    pub rpc_address: String,
 }
 
 #[tracing::instrument]

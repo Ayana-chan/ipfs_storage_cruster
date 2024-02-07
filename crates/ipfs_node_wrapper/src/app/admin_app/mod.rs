@@ -9,7 +9,7 @@ mod handlers;
 
 #[derive(Default, Clone, Debug)]
 pub struct AdminAppState {
-    pub(crate) app_state: Arc<AppState>,
+    pub app_state: Arc<AppState>,
 }
 
 pub fn generate_admin_app() -> Router<AdminAppState> {
