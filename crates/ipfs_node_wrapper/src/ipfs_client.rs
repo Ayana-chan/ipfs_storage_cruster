@@ -5,6 +5,7 @@ pub static IPFS_NODE_ADDRESS: &str = "127.0.0.1";
 pub static IPFS_NODE_GATEWAY_PORT: u16 = 8080;
 pub static IPFS_NODE_RPC_PORT: u16 = 5001;
 
+#[tracing::instrument]
 pub async fn ipfs_get_file(cid: &str) -> Result<String, String> {
     let url = "http://".to_string() +
         IPFS_NODE_ADDRESS + ":" + &IPFS_NODE_GATEWAY_PORT.to_string() +
