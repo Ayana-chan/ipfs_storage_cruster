@@ -18,6 +18,7 @@ pub async fn get_file(
     info!("Get File cid: {}", query.cid);
     let ipfs_res = ipfs_client::ipfs_get_file(
         &query.cid,
+        query.filename.as_deref(),
         &state.app_state.ipfs_node_metadata,
     ).await;
     if let Err(e) = ipfs_res {
@@ -27,9 +28,10 @@ pub async fn get_file(
 
     // construct header
     let ipfs_res_header = ipfs_res.headers();
-    // trace!("Header: {:#?}", ipfs_res_header);
+    trace!("Header: {:#?}", ipfs_res_header);
     let header = HttpHeaderPorterFromReqwest::new(ipfs_res_header)
         .transfer_when_exist_with_static_key("content-type")
+        .transfer_when_exist_with_static_key("content-disposition")
         .finish();
 
     // read file
