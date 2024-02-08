@@ -17,7 +17,7 @@ pub struct PublicAppState {
 #[allow(unused_variables)]
 pub fn generate_public_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
     let app = Router::new()
-        .route("/", get(get_file));
+        .route("/:cid", get(get_file));
 
     let public_app_state = PublicAppState {
         app_state: app_state.clone(),

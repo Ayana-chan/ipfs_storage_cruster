@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use tracing::{info, trace};
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use bytes::Bytes;
 use crate::app::public_app::PublicAppState;
@@ -8,16 +8,16 @@ use crate::models;
 use crate::ipfs_client;
 use crate::utils::HttpHeaderPorterFromReqwest;
 
-//TODO 文件名
 #[axum_macros::debug_handler]
 #[tracing::instrument(skip_all)]
 pub async fn get_file(
     State(state): State<PublicAppState>,
+    Path(cid): Path<String>,
     Query(query): Query<models::GetFileArgs>)
     -> Result<(HeaderMap, Bytes), String> {
-    info!("Get File cid: {}", query.cid);
+    info!("Get File cid: {}", cid);
     let ipfs_res = ipfs_client::ipfs_get_file(
-        &query.cid,
+        &cid,
         query.filename.as_deref(),
         &state.app_state.ipfs_node_metadata,
     ).await;
