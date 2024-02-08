@@ -3,6 +3,7 @@ use tracing_subscriber::layer::SubscriberExt;
 mod utils;
 mod app;
 mod models;
+mod errors;
 mod ipfs_client;
 
 fn config_tracing(){

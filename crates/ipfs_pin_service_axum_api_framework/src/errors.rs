@@ -21,9 +21,16 @@ pub enum ResponseErrorType {
 /// Structure to generate error object to response (by [`IntoResponse`] trait). \
 /// Just returning `ResponseError` in handler is ok. For example: \
 /// ```no_run
-/// # use ipfs_pin_service_axum_api::errors::{ResponseError, ResponseErrorType};
+/// # use ipfs_pin_service_axum_api_framework::errors::{ResponseError, ResponseErrorType};
 /// async fn handle_404() -> ResponseError {
 ///     ResponseError::new(ResponseErrorType::NotFound)
+/// }
+/// ```
+/// `From<(u16, &str)>` has been implemented.
+/// ```no_run
+/// # use ipfs_pin_service_axum_api_framework::errors::{ResponseError, ResponseErrorType};
+/// async fn handle_crash() -> ResponseError {
+///     (514, "A custom crash").into()
 /// }
 /// ```
 ///
@@ -64,6 +71,22 @@ impl ResponseError {
             self.detail = default_detail.map(String::from);
         }
         self.detail.as_deref()
+    }
+}
+
+impl From<(u16, &str)> for ResponseError {
+    fn from(value: (u16, &str)) -> Self {
+        ResponseError::new(
+            ResponseErrorType::CustomError(value.0)
+        ).detail(value.1)
+    }
+}
+
+impl From<(u16, String)> for ResponseError {
+    fn from(value: (u16, String)) -> Self {
+        ResponseError::new(
+            ResponseErrorType::CustomError(value.0)
+        ).detail(&value.1)
     }
 }
 
