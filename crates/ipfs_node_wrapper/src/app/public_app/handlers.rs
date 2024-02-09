@@ -8,7 +8,7 @@ use crate::models;
 use crate::ipfs_client;
 use crate::utils::HttpHeaderPorterFromReqwest;
 use crate::error;
-use crate::common::ApiResponse;
+use crate::common::ApiResult;
 
 #[axum_macros::debug_handler]
 #[tracing::instrument(skip_all)]
@@ -16,7 +16,7 @@ pub async fn get_file(
     State(state): State<PublicAppState>,
     Path(cid): Path<String>,
     Query(query): Query<models::GetFileArgs>)
-    -> ApiResponse<(HeaderMap, Bytes)> {
+    -> ApiResult<(HeaderMap, Bytes)> {
     info!("Get File cid: {}", cid);
     let ipfs_res = ipfs_client::ipfs_get_file(
         &cid,
@@ -40,7 +40,7 @@ pub async fn get_file(
         })?;
     // trace!("File content: {:?}", content);
 
-    Ok((header, content))
+    Ok((header, content.into()))
 }
 
 
