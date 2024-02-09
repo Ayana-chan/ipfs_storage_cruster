@@ -3,12 +3,12 @@ use tracing::{info, trace};
 use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use bytes::Bytes;
-use ipfs_pin_service_axum_api_framework::api::ApiResponse;
 use crate::app::public_app::PublicAppState;
 use crate::models;
 use crate::ipfs_client;
 use crate::utils::HttpHeaderPorterFromReqwest;
-use crate::errors;
+use crate::error;
+use crate::common::ApiResponse;
 
 #[axum_macros::debug_handler]
 #[tracing::instrument(skip_all)]
@@ -34,7 +34,7 @@ pub async fn get_file(
 
     // read file
     let content = ipfs_res.bytes().await
-        .map_err(|_e| errors::IPFS_DOWNLOAD_ERROR.clone())?;
+        .map_err(|_e| error::IPFS_DOWNLOAD_ERROR.clone())?;
     // trace!("File content: {:?}", content);
 
     Ok((header, content))

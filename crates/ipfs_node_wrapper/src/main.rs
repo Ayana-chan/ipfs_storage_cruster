@@ -3,8 +3,9 @@ use tracing_subscriber::layer::SubscriberExt;
 mod utils;
 mod app;
 mod models;
-mod errors;
+mod error;
 mod ipfs_client;
+mod common;
 
 fn config_tracing(){
     let console_subscriber = tracing_subscriber::fmt::layer()

@@ -1,6 +1,6 @@
 use reqwest::Response;
-use crate::errors;
-use ipfs_pin_service_axum_api_framework::api::ApiResponse;
+use crate::error;
+use crate::common::ApiResponse;
 
 #[derive(Default, Clone, Debug)]
 pub struct IpfsNodeMetadata {
@@ -22,7 +22,7 @@ pub async fn ipfs_get_file(cid: &str, file_name: Option<&str>, ipfs_node_metadat
         .get(url)
         .send()
         .await.map_err(|_e|
-        errors::IPFS_COMMUCATION_FAIL.clone()
+        error::IPFS_COMMUCATION_FAIL.clone()
     )?;
 
     let status = res.status();
@@ -30,5 +30,5 @@ pub async fn ipfs_get_file(cid: &str, file_name: Option<&str>, ipfs_node_metadat
         return Ok(res);
     }
 
-    Err(errors::IPFS_UNKNOWN_ERROR.clone().into())
+    Err(error::IPFS_UNKNOWN_ERROR.clone().into())
 }
