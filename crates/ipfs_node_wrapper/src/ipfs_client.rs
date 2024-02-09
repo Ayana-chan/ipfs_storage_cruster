@@ -1,4 +1,5 @@
-use reqwest::Response;
+use tracing::{error, debug};
+use reqwest::{Response, StatusCode};
 use crate::error;
 use crate::common::ApiResponse;
 
@@ -21,14 +22,25 @@ pub async fn ipfs_get_file(cid: &str, file_name: Option<&str>, ipfs_node_metadat
     let res = reqwest::Client::new()
         .get(url)
         .send()
-        .await.map_err(|_e|
+        .await.map_err(|_e| {
+        error!("Fail to contact IPFS node: {:?}", _e);
         error::IPFS_COMMUCATION_FAIL.clone()
+    }
     )?;
 
     let status = res.status();
-    if status.is_success() {
-        return Ok(res);
-    }
-
-    Err(error::IPFS_UNKNOWN_ERROR.clone().into())
+    return match status {
+        _ if status.is_success() => {
+            debug!("Success contact IPFS node");
+            Ok(res)
+        }
+        StatusCode::NOT_FOUND => {
+            error!("IPFS node unreachable");
+            Err(error::IPFS_NOT_FOUND.clone().into())
+        }
+        _ => {
+            error!("IPFS node respond an unknown status code: {}", status.to_string());
+            Err(error::IPFS_UNKNOWN_ERROR.clone().into())
+        }
+    };
 }

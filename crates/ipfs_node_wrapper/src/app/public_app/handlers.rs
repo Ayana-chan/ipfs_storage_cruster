@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-use tracing::{info, trace};
+use tracing::{info, trace, error};
 use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use bytes::Bytes;
@@ -34,7 +34,10 @@ pub async fn get_file(
 
     // read file
     let content = ipfs_res.bytes().await
-        .map_err(|_e| error::IPFS_DOWNLOAD_ERROR.clone())?;
+        .map_err(|_e| {
+            error!("Fail to get data from IPFS node: {:?}", _e);
+            error::IPFS_DOWNLOAD_ERROR.clone()
+        })?;
     // trace!("File content: {:?}", content);
 
     Ok((header, content))
