@@ -1,3 +1,4 @@
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::layer::SubscriberExt;
 
 mod utils;
@@ -10,10 +11,18 @@ mod common;
 fn config_tracing(){
     let console_subscriber = tracing_subscriber::fmt::layer()
         .with_writer(std::io::stdout);
-    let log_file = std::fs::File::create("log.txt").unwrap();
+
+    let file_appender = RollingFileAppender::new(
+        Rotation::HOURLY,
+        "log",
+        "ipfs_node_wrapper.log");
     let file_subscriber = tracing_subscriber::fmt::layer()
-        .with_writer(log_file)
+        .with_writer(file_appender)
         .with_ansi(false);
+    // let log_file = std::fs::File::create("log.txt").unwrap();
+    // let file_subscriber = tracing_subscriber::fmt::layer()
+    //     .with_writer(log_file)
+    //     .with_ansi(false);
 
     let subscriber = tracing_subscriber::registry()
         .with(console_subscriber)

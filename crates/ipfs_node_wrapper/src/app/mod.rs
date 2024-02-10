@@ -102,6 +102,8 @@ pub async fn serve(app_config: AppConfig) {
         admin_app::generate_admin_app(&app_config, &app_state),
     );
 
+    info!("--- Server Start ---");
+
     info!("public service listen at: {}:{}", app_config.public_server_ip, app_config.public_server_port);
     info!("admin  service listen at: {}:{}", app_config.admin_server_ip, app_config.admin_server_port);
 
