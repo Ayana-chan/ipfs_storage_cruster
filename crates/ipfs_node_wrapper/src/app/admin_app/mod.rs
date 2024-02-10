@@ -1,9 +1,10 @@
 use std::sync::Arc;
 use axum::{
     Router,
-    routing::get,
+    routing::post,
 };
 use crate::app::{AppConfig, AppState};
+use handlers::*;
 
 mod handlers;
 
@@ -15,7 +16,7 @@ pub struct AdminAppState {
 #[allow(unused_variables)]
 pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
     let app = Router::new()
-        .route("/", get(|| async { "Soyorin Love!" }));
+        .route("/pin", post(pin_file));
 
     let admin_app_state = AdminAppState {
         app_state: app_state.clone(),

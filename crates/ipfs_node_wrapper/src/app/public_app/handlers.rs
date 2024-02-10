@@ -23,8 +23,6 @@ pub async fn get_file(
         &state.app_state.ipfs_node_metadata,
     ).await?;
 
-    //TODO 优化 https://github.com/tokio-rs/axum/blob/main/examples/reqwest-response/src/main.rs
-
     // construct header
     let ipfs_res_header = ipfs_res.headers();
     // trace!("Header: {:#?}", ipfs_res_header);
