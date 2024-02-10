@@ -11,7 +11,6 @@ pub struct IpfsNodeMetadata {
 
 // TODO 建立struct来访问ipfs，然后把结构体存在state中
 
-#[tracing::instrument(skip_all)]
 pub async fn ipfs_get_file(cid: &str, file_name: Option<&str>, ipfs_node_metadata: &parking_lot::RwLock<IpfsNodeMetadata>) -> ApiResult<Response> {
     let url = format!("http://{addr}/ipfs/{cid}?filename={file_name}&download=true",
                       addr = &ipfs_node_metadata.read().gateway_address,

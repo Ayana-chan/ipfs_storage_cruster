@@ -11,7 +11,6 @@ use crate::common::ApiResponseResult;
 
 /// Get file from IPFS node's gateway.
 #[axum_macros::debug_handler]
-#[tracing::instrument(skip_all)]
 pub async fn get_file(
     State(state): State<PublicAppState>,
     Path(cid): Path<String>,

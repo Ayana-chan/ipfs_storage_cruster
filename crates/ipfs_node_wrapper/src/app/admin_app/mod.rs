@@ -21,7 +21,27 @@ pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> 
         app_state: app_state.clone(),
     };
 
+    let tracing_layer = tower_http::trace::TraceLayer::new_for_http()
+        // Create our own span for the request and include the matched path. The matched
+        // path is useful for figuring out which handler the request was routed to.
+        .make_span_with(|req: &axum::extract::Request| {
+            let method = req.method();
+            let uri = req.uri();
+
+            // axum automatically adds this extension.
+            let matched_path = req
+                .extensions()
+                .get::<axum::extract::MatchedPath>()
+                .map(|matched_path| matched_path.as_str());
+
+            tracing::debug_span!("request", %method, %uri, matched_path)
+        })
+        // By default `TraceLayer` will log 5xx responses but we're doing our specific
+        // logging of errors so disable that
+        .on_failure(());
+
     Router::new()
         .nest("/api", app)
         .with_state(admin_app_state)
+        .layer(tracing_layer)
 }
