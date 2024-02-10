@@ -40,7 +40,7 @@ impl From<ResponseErrorStatic> for ResponseError {
     fn from(value: ResponseErrorStatic) -> Self {
         ResponseError {
             code: value.code.to_string(),
-            message: value.msg.to_string(),
+            message: value.message.to_string(),
         }
     }
 }
@@ -49,19 +49,19 @@ impl From<ResponseErrorStatic> for ResponseError {
 #[derive(Clone, Debug)]
 pub struct ResponseErrorStatic {
     pub code: &'static str,
-    pub msg: &'static str,
+    pub message: &'static str,
 }
 
 impl ResponseErrorStatic {
-    pub fn new(code: &'static str, msg: &'static str) -> Self {
+    pub fn new(code: &'static str, message: &'static str) -> Self {
         ResponseErrorStatic {
             code,
-            msg,
+            message,
         }
     }
 
     pub fn modify_msg(mut self, new_msg: &'static str) -> Self {
-        self.msg = new_msg;
+        self.message = new_msg;
         self
     }
 }
