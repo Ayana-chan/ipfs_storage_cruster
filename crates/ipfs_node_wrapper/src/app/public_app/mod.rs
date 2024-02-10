@@ -37,10 +37,7 @@ pub fn generate_public_app(app_config: &AppConfig, app_state: &Arc<AppState>) ->
                 .map(|matched_path| matched_path.as_str());
 
             tracing::debug_span!("request", %method, %uri, matched_path)
-        })
-        // By default `TraceLayer` will log 5xx responses but we're doing our specific
-        // logging of errors so disable that
-        .on_failure(());
+        });
 
     let cors_layer = cors::CorsLayer::new()
         .allow_origin(cors::Any)
