@@ -6,7 +6,7 @@ use crate::error;
 use serde::Serialize;
 
 pub type ApiResult<T> = Result<T, error::ResponseError>;
-pub type ApiResponseResult = Result<Response, error::ResponseError>;
+pub type ApiResponseResult = ApiResult<Response>;
 pub type StandardApiResult<T> = Result<StandardApiJsonBody<T>, error::ResponseError>;
 
 // TODO untested
