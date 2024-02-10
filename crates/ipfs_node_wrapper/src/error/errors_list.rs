@@ -1,19 +1,17 @@
 use crate::error::ResponseErrorStatic;
 
-//TODO 宏
-pub static IPFS_COMMUCATION_FAIL: ResponseErrorStatic = ResponseErrorStatic {
-    code: "C0601",
-    message: "Fail to contact IPFS node",
-};
-pub static IPFS_UNKNOWN_ERROR: ResponseErrorStatic = ResponseErrorStatic {
-    code: "C0602",
-    message: "IPFS node respond an unknown error",
-};
-pub static IPFS_NOT_FOUND: ResponseErrorStatic = ResponseErrorStatic {
-    code: "C0603",
-    message: "IPFS node unreachable",
-};
-pub static IPFS_DOWNLOAD_ERROR: ResponseErrorStatic = ResponseErrorStatic {
-    code: "C0604",
-    message: "Fail to get data from IPFS node",
-};
+macro_rules! define_static_error {
+    ($name:ident, $code:expr, $message:expr) => {
+        pub static $name: ResponseErrorStatic = ResponseErrorStatic {
+            code: $code,
+            message: $message,
+        };
+    };
+}
+
+define_static_error!(IPFS_COMMUCATION_FAIL, "C0601", "IPFS node respond an unknown error");
+define_static_error!(IPFS_UNKNOWN_ERROR, "C0602", "Fail to contact IPFS node");
+define_static_error!(IPFS_NOT_FOUND, "C0603", "IPFS node unreachable");
+define_static_error!(IPFS_DOWNLOAD_ERROR, "C0604", "Fail to get data from IPFS node");
+
+
