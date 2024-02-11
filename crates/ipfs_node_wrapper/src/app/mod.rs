@@ -3,20 +3,20 @@ use std::sync::Arc;
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
-use crate::ipfs_client::IpfsNodeMetadata;
+use crate::ipfs_client::IpfsClient;
 
 mod public_app;
 mod admin_app;
 
 pub struct AppConfig {
     // server config
-    public_server_ip: IpAddr,
-    public_server_port: u16,
-    admin_server_ip: IpAddr,
-    admin_server_port: u16,
+    pub public_server_ip: IpAddr,
+    pub public_server_port: u16,
+    pub admin_server_ip: IpAddr,
+    pub admin_server_port: u16,
     // Ipfs node config
-    ipfs_gateway_address: SocketAddr,
-    ipfs_rpc_address: SocketAddr,
+    pub ipfs_gateway_address: SocketAddr,
+    pub ipfs_rpc_address: SocketAddr,
 }
 
 #[allow(dead_code)]
@@ -81,16 +81,13 @@ impl AppConfigBuilder {
 
 #[derive(Default, Debug)]
 pub struct AppState {
-    pub ipfs_node_metadata: parking_lot::RwLock<IpfsNodeMetadata>,
+    pub ipfs_client: IpfsClient,
 }
 
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
     let app_state = Arc::new(AppState {
-        ipfs_node_metadata: parking_lot::RwLock::new(IpfsNodeMetadata {
-            gateway_address: app_config.ipfs_gateway_address.to_string(),
-            rpc_address: app_config.ipfs_rpc_address.to_string(),
-        })
+        ipfs_client: IpfsClient::new_from_config(&app_config)
     });
 
     let public_server = generate_server(

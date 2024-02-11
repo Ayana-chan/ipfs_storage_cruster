@@ -5,7 +5,6 @@ use axum::body::Body;
 use axum::response::IntoResponse;
 use crate::app::public_app::PublicAppState;
 use crate::models;
-use crate::ipfs_client;
 use crate::utils::HttpHeaderPorterFromReqwest;
 use crate::common::ApiResponseResult;
 
@@ -17,10 +16,9 @@ pub async fn get_file(
     Query(query): Query<models::GetFileArgs>)
     -> ApiResponseResult {
     info!("Get File cid: {}", cid);
-    let ipfs_res = ipfs_client::ipfs_get_file(
+    let ipfs_res = state.app_state.ipfs_client.ipfs_get_file(
         &cid,
         query.filename.as_deref(),
-        &state.app_state.ipfs_node_metadata,
     ).await?;
 
     // construct header
