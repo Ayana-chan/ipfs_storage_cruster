@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::error::Error;
 use axum::http::StatusCode;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
@@ -75,6 +76,14 @@ impl ResponseErrorStatic {
     /// and output an error log of `message`.
     pub fn clone_to_error_with_log(&self) -> ResponseError {
         error!(self.message);
+        self.clone().into()
+    }
+
+    /// Convert `ResponseErrorStatic` to `Err(ResponseError)`,
+    /// and output an error log of `message` and `Error`.
+    pub fn clone_to_error_with_log_error(&self, err: impl Error) -> ResponseError {
+        let err_log = self.message.to_string() + ": " + &err.to_string();
+        error!(err_log);
         self.clone().into()
     }
 }

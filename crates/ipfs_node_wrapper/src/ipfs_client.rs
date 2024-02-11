@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use tracing::{error, debug};
 use reqwest::{Client, Response, StatusCode};
 use crate::app::AppConfig;
@@ -38,8 +39,7 @@ impl IpfsClient {
             .get(url)
             .send()
             .await.map_err(|_e| {
-            error!("Fail to contact IPFS node: {:?}", _e);
-            error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log()
+            error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log_error(_e)
         }
         )?;
 
@@ -50,11 +50,9 @@ impl IpfsClient {
                 Ok(res)
             }
             StatusCode::NOT_FOUND => {
-                error!("IPFS node unreachable");
                 Err(error::IPFS_NOT_FOUND.clone_to_error_with_log())
             }
             _ => {
-                error!("IPFS node respond an unknown status code: {}", status.to_string());
                 Err(error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log())
             }
         };
