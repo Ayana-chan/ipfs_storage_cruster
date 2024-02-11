@@ -1,8 +1,10 @@
+use tracing::error;
 use std::sync::Arc;
 use axum::{
     Router,
     routing::get,
 };
+use axum::http::{StatusCode, Uri};
 use tower_http::cors;
 use crate::app::{AppConfig, AppState};
 use handlers::*;
@@ -49,5 +51,11 @@ pub fn generate_public_app(app_config: &AppConfig, app_state: &Arc<AppState>) ->
         .with_state(public_app_state)
         .layer(tracing_layer)
         .layer(cors_layer)
+        .fallback(fallback)
+}
+
+async fn fallback(uri: Uri) -> (StatusCode, String) {
+    error!("Receive a request but no route match. uri: {}", uri);
+    (StatusCode::NOT_FOUND, format!("No route for {}", uri))
 }
 

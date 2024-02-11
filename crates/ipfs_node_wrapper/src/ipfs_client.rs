@@ -81,7 +81,7 @@ impl IpfsClient {
         let status = res.status();
         return match status {
             _ if status.is_success() => {
-                debug!("Success add pin");
+                debug!("Success add pin. cid: {}, pin_name: {}", cid, pin_name);
                 Ok(res)
             }
             err => Err(handle_rpc_error(err))
