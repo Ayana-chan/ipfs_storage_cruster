@@ -39,7 +39,7 @@ impl IpfsClient {
             .send()
             .await.map_err(|_e| {
             error!("Fail to contact IPFS node: {:?}", _e);
-            error::IPFS_COMMUCATION_FAIL.clone()
+            error::IPFS_COMMUCATION_FAIL.clone_to_error()
         }
         )?;
 
@@ -51,11 +51,11 @@ impl IpfsClient {
             }
             StatusCode::NOT_FOUND => {
                 error!("IPFS node unreachable");
-                Err(error::IPFS_NOT_FOUND.clone().into())
+                Err(error::IPFS_NOT_FOUND.clone_to_error())
             }
             _ => {
                 error!("IPFS node respond an unknown status code: {}", status.to_string());
-                Err(error::IPFS_UNKNOWN_ERROR.clone().into())
+                Err(error::IPFS_UNKNOWN_ERROR.clone_to_error())
             }
         };
     }

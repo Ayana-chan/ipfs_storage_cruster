@@ -64,6 +64,11 @@ impl ResponseErrorStatic {
         self.message = new_msg;
         self
     }
+
+    /// Convert `ResponseErrorStatic` to `Err(ResponseError)`.
+    pub fn clone_to_error(&self) -> ResponseError {
+        self.clone().into()
+    }
 }
 
 
