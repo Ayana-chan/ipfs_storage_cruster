@@ -39,23 +39,23 @@ impl IpfsClient {
             .send()
             .await.map_err(|_e| {
             error!("Fail to contact IPFS node: {:?}", _e);
-            error::IPFS_COMMUCATION_FAIL.clone_to_error()
+            error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log()
         }
         )?;
 
         let status = res.status();
         return match status {
             _ if status.is_success() => {
-                debug!("Success contact IPFS node");
+                debug!("Success get file");
                 Ok(res)
             }
             StatusCode::NOT_FOUND => {
                 error!("IPFS node unreachable");
-                Err(error::IPFS_NOT_FOUND.clone_to_error())
+                Err(error::IPFS_NOT_FOUND.clone_to_error_with_log())
             }
             _ => {
                 error!("IPFS node respond an unknown status code: {}", status.to_string());
-                Err(error::IPFS_UNKNOWN_ERROR.clone_to_error())
+                Err(error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log())
             }
         };
     }

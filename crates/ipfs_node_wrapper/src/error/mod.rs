@@ -5,6 +5,7 @@ use axum::Json;
 use axum::response::{IntoResponse, Response};
 pub use errors_list::*;
 use serde::Serialize;
+use tracing::error;
 
 mod errors_list;
 
@@ -67,6 +68,13 @@ impl ResponseErrorStatic {
 
     /// Convert `ResponseErrorStatic` to `Err(ResponseError)`.
     pub fn clone_to_error(&self) -> ResponseError {
+        self.clone().into()
+    }
+
+    /// Convert `ResponseErrorStatic` to `Err(ResponseError)`,
+    /// and output an error log of `message`.
+    pub fn clone_to_error_with_log(&self) -> ResponseError {
+        error!(self.message);
         self.clone().into()
     }
 }
