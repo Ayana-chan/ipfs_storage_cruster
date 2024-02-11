@@ -4,17 +4,22 @@ use axum::Json;
 use tracing::{info, trace, error};
 use crate::app::admin_app::AdminAppState;
 use crate::common::StandardApiResult;
-use crate::error;
 use crate::models;
 
 /// Pin file to IPFS node.
 #[axum_macros::debug_handler]
-pub async fn pin_file(
+pub async fn add_pin(
     State(state): State<AdminAppState>,
     Json(args): Json<models::PinFileArgs>)
     -> StandardApiResult<()> {
+    info!("Add Pin cid: {}", args.cid);
+    let ipfs_res = state.app_state.ipfs_client
+        .add_pin_recursive(
+            &args.cid,
+            args.name.as_deref()
+        ).await?;
 
-    Err(error::IPFS_UNKNOWN_ERROR.clone_to_error())
+    Ok(().into())
 }
 
 

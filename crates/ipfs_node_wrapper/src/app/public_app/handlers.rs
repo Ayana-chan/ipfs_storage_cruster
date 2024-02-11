@@ -16,10 +16,11 @@ pub async fn get_file(
     Query(query): Query<models::GetFileArgs>)
     -> ApiResponseResult {
     info!("Get File cid: {}", cid);
-    let ipfs_res = state.app_state.ipfs_client.ipfs_get_file(
-        &cid,
-        query.filename.as_deref(),
-    ).await?;
+    let ipfs_res = state.app_state.ipfs_client
+        .get_file_gateway(
+            &cid,
+            query.filename.as_deref(),
+        ).await?;
 
     // construct header
     let ipfs_res_header = ipfs_res.headers();

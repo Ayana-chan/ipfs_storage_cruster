@@ -7,4 +7,6 @@ pub struct GetFileArgs {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PinFileArgs {
     pub cid: String,
+    /// pin's name
+    pub name: Option<String>,
 }
