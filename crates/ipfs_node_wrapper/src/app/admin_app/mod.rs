@@ -19,7 +19,8 @@ pub struct AdminAppState {
 #[allow(unused_variables)]
 pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
     let app = Router::new()
-        .route("/pin/add", post(add_pin));
+        .route("/pin/add", post(add_pin))
+        .route("/pin/add-async", post(add_pin_async));
 
     let admin_app_state = AdminAppState {
         app_state: app_state.clone(),

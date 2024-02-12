@@ -1,12 +1,14 @@
 use axum::extract::State;
+use axum::http::StatusCode;
 use axum::Json;
 #[allow(unused_imports)]
 use tracing::{info, trace, error};
 use crate::app::admin_app::AdminAppState;
-use crate::common::StandardApiResult;
+use crate::common::{StandardApiResult, StandardApiResultStatus};
 use crate::models;
 
 /// Pin file to IPFS node.
+/// Return after pin completed.
 #[axum_macros::debug_handler]
 pub async fn add_pin(
     State(state): State<AdminAppState>,
@@ -23,5 +25,17 @@ pub async fn add_pin(
     Ok(().into())
 }
 
+/// Pin file to IPFS node.
+/// Return immediately.
+#[axum_macros::debug_handler]
+pub async fn add_pin_async(
+    state: State<AdminAppState>,
+    args: Json<models::PinFileArgs>)
+    -> StandardApiResultStatus<()> {
+    info!("Add Pin Async cid: {}", args.cid);
+    tokio::spawn(add_pin(state,args));
 
+    // trace!("add pin res: {}", _ipfs_res.text().await.unwrap_or_default());
+    Ok((StatusCode::ACCEPTED, ().into()))
+}
 

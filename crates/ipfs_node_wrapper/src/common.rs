@@ -8,6 +8,7 @@ use serde::Serialize;
 pub type ApiResult<T> = Result<T, error::ResponseError>;
 pub type ApiResponseResult = ApiResult<Response>;
 pub type StandardApiResult<T> = Result<StandardApiJsonBody<T>, error::ResponseError>;
+pub type StandardApiResultStatus<T> = Result<(http::StatusCode, StandardApiJsonBody<T>), error::ResponseError>;
 
 // TODO untested
 #[derive(Clone, Debug, Serialize)]
@@ -28,7 +29,7 @@ impl<T: Serialize> From<T> for StandardApiJsonBody<T> {
         StandardApiJsonBody {
             code: "00000".to_string(),
             message: "success".to_string(),
-            data: value
+            data: value,
         }
     }
 }
