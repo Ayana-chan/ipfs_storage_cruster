@@ -79,6 +79,8 @@ impl AppConfigBuilder {
     }
 }
 
+/// Public state among all apps.
+/// Should never be Cloned.
 #[derive(Default, Debug)]
 pub struct AppState {
     pub ipfs_client: IpfsClient,
@@ -87,7 +89,7 @@ pub struct AppState {
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
     let app_state = Arc::new(AppState {
-        ipfs_client: IpfsClient::new_from_config(&app_config)
+        ipfs_client: IpfsClient::new_from_config(&app_config).into()
     });
 
     let public_server = generate_server(

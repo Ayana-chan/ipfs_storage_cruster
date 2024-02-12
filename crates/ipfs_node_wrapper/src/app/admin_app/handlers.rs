@@ -29,13 +29,17 @@ pub async fn add_pin(
 /// Return immediately.
 #[axum_macros::debug_handler]
 pub async fn add_pin_async(
-    state: State<AdminAppState>,
-    args: Json<models::PinFileArgs>)
+    State(state): State<AdminAppState>,
+    Json(args): Json<models::PinFileArgs>)
     -> StandardApiResultStatus<()> {
     info!("Add Pin Async cid: {}", args.cid);
-    tokio::spawn(add_pin(state,args));
+    let add_pin_future = state.app_state.ipfs_client
+        .add_pin_recursive(
+            &args.cid,
+            args.name.as_deref(),
+        );
+    state.add_pin_manager.launch(add_pin_future).await;
 
-    // trace!("add pin res: {}", _ipfs_res.text().await.unwrap_or_default());
     Ok((StatusCode::ACCEPTED, ().into()))
 }
 

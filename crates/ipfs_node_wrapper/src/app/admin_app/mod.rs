@@ -8,12 +8,14 @@ use axum::http::{StatusCode, Uri};
 use tower_http::cors;
 use crate::app::{AppConfig, AppState};
 use handlers::*;
+use crate::add_pin_manager::AddPinManager;
 
 mod handlers;
 
 #[derive(Default, Clone, Debug)]
 pub struct AdminAppState {
     pub app_state: Arc<AppState>,
+    pub add_pin_manager: Arc<AddPinManager>,
 }
 
 #[allow(unused_variables)]
@@ -24,6 +26,7 @@ pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> 
 
     let admin_app_state = AdminAppState {
         app_state: app_state.clone(),
+        add_pin_manager: AddPinManager::new().into(),
     };
 
     let tracing_layer = tower_http::trace::TraceLayer::new_for_http()
