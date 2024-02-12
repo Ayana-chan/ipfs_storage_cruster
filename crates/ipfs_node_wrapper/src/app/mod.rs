@@ -89,7 +89,7 @@ pub struct AppState {
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
     let app_state = Arc::new(AppState {
-        ipfs_client: IpfsClient::new_from_config(&app_config).into()
+        ipfs_client: IpfsClient::new_from_config(&app_config)
     });
 
     let public_server = generate_server(

@@ -1,3 +1,4 @@
+use std::sync::Arc;
 #[allow(unused_imports)]
 use tracing::{error, debug};
 use reqwest::{Client, Response, StatusCode};
@@ -11,10 +12,11 @@ pub struct IpfsNodeMetadata {
     pub rpc_address: String,
 }
 
-#[derive(Default, Debug)]
+/// Safe to clone.
+#[derive(Default, Debug, Clone)]
 pub struct IpfsClient {
     pub client: Client,
-    pub ipfs_node_metadata: parking_lot::RwLock<IpfsNodeMetadata>,
+    pub ipfs_node_metadata: Arc<parking_lot::RwLock<IpfsNodeMetadata>>,
 }
 
 impl IpfsClient {
@@ -25,7 +27,7 @@ impl IpfsClient {
             ipfs_node_metadata: parking_lot::RwLock::new(IpfsNodeMetadata {
                 gateway_address: app_config.ipfs_gateway_address.to_string(),
                 rpc_address: app_config.ipfs_rpc_address.to_string(),
-            }),
+            }).into(),
         }
     }
 
