@@ -2,8 +2,7 @@ use std::sync::Arc;
 use crate::ipfs_client::IpfsClient;
 
 #[derive(Default, Debug)]
-struct TaskManager {
-    /// cid -> state
+pub struct TaskManager {
     working_tasks: scc::HashSet<String>,
     success_tasks: scc::HashSet<String>,
     failed_tasks: scc::HashSet<String>,
@@ -11,35 +10,31 @@ struct TaskManager {
 
 #[derive(Default, Debug)]
 pub struct AddPinManager {
-    /// cid -> state
     task_manager: Arc<TaskManager>,
 }
 
 impl AddPinManager {
     pub fn new() -> Self {
         AddPinManager {
-            task_manager: TaskManager {
-                working_tasks: scc::HashSet::new(),
-                success_tasks: scc::HashSet::new(),
-                failed_tasks: scc::HashSet::new(),
-            }.into()
+            task_manager: TaskManager::default().into()
         }
     }
 
+    /// Start add pin in background. Return immediately.
     pub async fn launch(&self, ipfs_client: &IpfsClient, cid: &str, name: Option<&str>) {
-        // check pin status
+        // modify pin status
         if self.task_manager.success_tasks.contains_async(cid).await {
+            // succeeded
             return;
         }
-        let was_failed = self.task_manager.failed_tasks.contains_async(cid).await;
-        // TODO 这里查一下ipfs里面有没有pin，但已failed的时候也许不用查。要优化一下working_tasks的查询位置来防止浪费查询时间
         let res = self.task_manager.working_tasks.insert_async(cid.to_string()).await;
         if res.is_err() {
+            // on working
             return;
         }
-        if was_failed {
-            self.task_manager.failed_tasks.remove(cid);
-        }
+        // remove from `failed_tasks` if contained
+        self.task_manager.failed_tasks.remove_async(cid).await;
+        // Although a pin may be in `failed_tasks` while it has been pinned successfully, it's ok to pin again. A `pin verify` is not necessary.
 
         // adjust args
         let task_manager = self.task_manager.clone();
@@ -65,6 +60,11 @@ impl AddPinManager {
                 task_manager.working_tasks.remove_async(&cid).await;
             }
         });
+    }
+
+    /// Get a cloned Arc of task_manager.
+    pub fn task_manager(&self) -> Arc<TaskManager> {
+        self.task_manager.clone()
     }
 }
 
