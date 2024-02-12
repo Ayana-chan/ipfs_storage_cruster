@@ -13,12 +13,13 @@ pub async fn add_pin(
     Json(args): Json<models::PinFileArgs>)
     -> StandardApiResult<()> {
     info!("Add Pin cid: {}", args.cid);
-    let ipfs_res = state.app_state.ipfs_client
+    let _ipfs_res = state.app_state.ipfs_client
         .add_pin_recursive(
             &args.cid,
-            args.name.as_deref()
+            args.name.as_deref(),
         ).await?;
 
+    // trace!("add pin res: {}", _ipfs_res.text().await.unwrap_or_default());
     Ok(().into())
 }
 

@@ -65,10 +65,11 @@ impl IpfsClient {
         let pin_name = pin_name.unwrap_or("untitled");
 
         let url = format!("http://{addr}/api/v0/pin/add?arg={cid}&name={pin_name}",
-                          addr = &self.ipfs_node_metadata.read().gateway_address,
+                          addr = &self.ipfs_node_metadata.read().rpc_address,
                           cid = cid,
                           pin_name = pin_name,
-        ); //TODO progress
+        );
+        // debug!("add pin url: {}", url);
 
         let res = self.client
             .post(url)
