@@ -26,6 +26,7 @@ pub struct AsyncTasksRecoder {
     task_manager: Arc<TaskManager>,
 }
 
+//TODO 任何时候都可以重新launch，只不过大部分就可以直接拒绝
 /// # Proof
 ///
 /// ## P01
@@ -33,7 +34,7 @@ pub struct AsyncTasksRecoder {
 ///
 /// When a task fail, it wouldn't break anything. Failure just means the task could be launched again,
 /// so if this proposition (**P01**) is true, there is almost nothing to worry about.
-/// For further discussion, please refer to **P02** \
+/// For further discussion, please refer to **P02**. \
 ///
 /// `working_tasks` play the role of lock,
 /// which allow tasks with the same `task_id` to execute remaining codes (after `insert` & before `remove`) only once.

@@ -95,6 +95,7 @@ impl AuthContext {
     }
 }
 
+// TODO async_trait is not free
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthContext
     where S: Send + Sync {
