@@ -102,8 +102,10 @@ impl AddPinManager {
     /// 4. It's impossible to avoid reporting a task as `Failed` when it's `working` or `success`. (E2, I2, I3, I5) \
     /// 5. A task must not be `Failed` when it's in `success_tasks`. (E6, I4) \
     /// 6. A task should always be in one of the `tasks` unless it's `failed`. (I5)
-    async fn launch_core<Fut>(&self, cid: &str, add_pin_task: Fut)
-        where Fut: Future<Output=Result<(), ()>> + Send + 'static {
+    async fn launch_core<Fut, R, E>(&self, cid: &str, add_pin_task: Fut)
+        where Fut: Future<Output=Result<R, E>> + Send + 'static,
+              R: Send,
+              E: Send {
         // check success -> insert working -> remove failed -> work -> insert success -> remove working
         // modify pin status
         if self.task_manager.success_tasks.contains_async(cid).await {
@@ -178,8 +180,8 @@ mod tests {
 
     // tools ------------------------------------------------------------------------
 
-    fn do_async_test<Fut, R>(runtime_type: RuntimeType, test_future: Fut)
-        where Fut: Future<Output=R> {
+    fn do_async_test<Fut>(runtime_type: RuntimeType, test_future: Fut)
+        where Fut: Future {
         let runtime;
         match runtime_type {
             RuntimeType::CurrentThread => {
