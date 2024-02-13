@@ -11,22 +11,22 @@ enum RuntimeType {
 }
 
 #[test]
-fn test_add_pin_manager_basic() {
+fn test_once() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_add_pin_manager_basic_core(),
+        test_once_core(),
     );
 }
 
 // #[test]
-// fn test_add_pin_manager_serial() {}
+// fn test_basic() {}
 //
 // #[test]
-// fn test_add_pin_manager_random() {}
+// fn test_random() {}
 
 // core functions ---------------------------------------------------------------
 
-async fn test_add_pin_manager_basic_core() {
+async fn test_once_core() {
     let manager = AsyncTasksRecoder::new();
     manager.launch("t1", empty_task()).await;
     check_success(&manager, "t1", None, None).await;
@@ -63,7 +63,6 @@ async fn check_success_once(manager: &AsyncTasksRecoder, cid: &str) -> bool {
     manager.get_task_status(cid).await == TaskStatus::Pinned
 }
 
-// TODO failed re-pin机制
 /// Err when timeout
 async fn check_success(manager: &AsyncTasksRecoder, cid: &str, interval_ms: Option<u64>, timeout_ms: Option<u128>) {
     let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());

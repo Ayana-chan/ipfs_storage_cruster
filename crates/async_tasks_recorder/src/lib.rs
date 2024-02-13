@@ -33,26 +33,9 @@ impl AsyncTasksRecoder {
         }
     }
 
-    /// success_tasks -> failed_tasks -> working_tasks
-    /// If not found in all tasks, be `Failed`.
-    pub async fn get_task_status(&self, cid: &str) -> TaskStatus {
-        if self.task_manager.success_tasks.contains_async(cid).await {
-            return TaskStatus::Pinned;
-        }
-
-        if self.task_manager.failed_tasks.contains_async(cid).await {
-            return TaskStatus::Failed;
-        }
-
-        if self.task_manager.working_tasks.contains_async(cid).await {
-            return TaskStatus::Working;
-        }
-
-        return TaskStatus::Failed;
-    }
-
-    /// Launch task.
-    pub async fn launch<Fut, R, E>(&self, task_id: &str, add_pin_task: Fut)
+    /// Launch task. \
+    /// `task`: an async closure to add pin (truly interact with IPFS without modifying manager).
+    pub async fn launch<Fut, R, E>(&self, task_id: &str, task: Fut)
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
               E: Send {
@@ -76,7 +59,7 @@ impl AsyncTasksRecoder {
 
         // start
         let _task = tokio::spawn(async move {
-            let add_pin_res = add_pin_task.await;
+            let add_pin_res = task.await;
             // TODO 优化这里的string clone
             if add_pin_res.is_ok() {
                 let _ = task_manager.success_tasks.insert_async(cid.clone()).await;
@@ -87,6 +70,24 @@ impl AsyncTasksRecoder {
                 let _ = task_manager.failed_tasks.insert_async(cid).await;
             }
         });
+    }
+
+    /// success_tasks -> failed_tasks -> working_tasks
+    /// If not found in all tasks, be `Failed`.
+    pub async fn get_task_status(&self, cid: &str) -> TaskStatus {
+        if self.task_manager.success_tasks.contains_async(cid).await {
+            return TaskStatus::Pinned;
+        }
+
+        if self.task_manager.failed_tasks.contains_async(cid).await {
+            return TaskStatus::Failed;
+        }
+
+        if self.task_manager.working_tasks.contains_async(cid).await {
+            return TaskStatus::Working;
+        }
+
+        return TaskStatus::Failed;
     }
 
     /// Get a cloned `Arc` of `task_manager`. Then you can do anything you want.
