@@ -141,14 +141,17 @@ mod tests {
 
     #[test]
     fn test_add_pin_manager_basic() {
-        start_async_test(RuntimeType::MultiThread, test_add_pin_manager_basic_core);
+        do_async_test(
+            RuntimeType::MultiThread,
+            test_add_pin_manager_basic_core
+        );
     }
 
-    #[test]
-    fn test_add_pin_manager_serial() {}
-
-    #[test]
-    fn test_add_pin_manager_random() {}
+    // #[test]
+    // fn test_add_pin_manager_serial() {}
+    //
+    // #[test]
+    // fn test_add_pin_manager_random() {}
 
     // core functions ---------------------------------------------------------------
 
@@ -159,7 +162,7 @@ mod tests {
 
     // tools ------------------------------------------------------------------------
 
-    fn start_async_test<F, Fut>(runtime_type: RuntimeType, test_func: F)
+    fn do_async_test<F, Fut>(runtime_type: RuntimeType, test_func: F)
         where F: FnOnce() -> Fut,
               Fut: Future<Output=()>, {
         let runtime;
