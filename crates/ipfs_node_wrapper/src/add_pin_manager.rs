@@ -32,31 +32,7 @@ impl AddPinManager {
         }
     }
 
-    /// Start add pin in background. Return immediately. \
-    /// ## Ugly Proof
-    /// **Environment Propositions**: \
-    /// 1. The status will be queried multiple times, and may only retry in case of `Failed`. \
-    /// 2. For network reasons, a task may become `Failed` while it has been pinned successfully in IPFS node. \
-    /// 3. Adding a pin that has done successfully in IPFS node is ok, with almost no consumption. \
-    /// 4. Must not to report `Pinned` when is not `success`. \
-    /// 5. A task must eventually be `Pinned` or `Failed`. (ignored) \
-    /// 6. A `Pinned` task must not turn into any other status in future.
-    ///
-    /// **Implementation Propositions**: \
-    /// 1. A task is in `success_tasks` only when it's `success`. \
-    /// 2. If a task is in `failed_tasks`, it may be in any status, but mostly `failed`. \
-    /// 3. If a task is in `working_tasks`, it may be in any status, but mostly `working`. \
-    /// 4. A task was reported as `Pinned` when and only when it's in `success_tasks`. \
-    /// 5. A task was reported as `Failed` when and only when it's in `failed_tasks` but not in `success_tasks`, or not in any `tasks`. \
-    /// 6. A task was reported as `Pinning` when and only when it's in `working_tasks` while not in either `success_tasks` or `failed_tasks`. \
-    ///
-    /// **Derived Propositions**: \
-    /// 1. A task was reported as `Pinned` only when it's `success`. (I1, I4) \
-    /// 2. Logic about success is correct. (E4, D1) \
-    /// 3. It's acceptable to be a slightly more `Failed`, but its priority should be lower then `Pinned`. (E1, E3, E6) \
-    /// 4. It's impossible to avoid reporting a task as `Failed` when it's `working` or `success`. (E2, I2, I3, I5) \
-    /// 5. A task must not be `Failed` when it's in `success_tasks`. (E6, I4) \
-    /// 6. A task should always be in one of the `tasks` unless it's `failed`. (I5)
+    /// Start add pin in background. Return immediately.
     pub async fn launch(&self, ipfs_client: &ReqwestIpfsClient, cid: &str, name: Option<&str>) {
         let ipfs_client = ipfs_client.clone();
         let cid_backup = cid;
@@ -101,6 +77,31 @@ impl AddPinManager {
         self.task_manager.clone()
     }
 
+    /// add_pin_task: an async closure to add pin (truly interact with IPFS without modifying manager).
+    /// ## Ugly Proof
+    /// **Environment Propositions**: \
+    /// 1. The status will be queried multiple times, and may only retry in case of `Failed`. \
+    /// 2. For network reasons, a task may become `Failed` while it has been pinned successfully in IPFS node. \
+    /// 3. Adding a pin that has done successfully in IPFS node is ok, with almost no consumption. \
+    /// 4. Must not to report `Pinned` when is not `success`. \
+    /// 5. A task must eventually be `Pinned` or `Failed`. (ignored) \
+    /// 6. A `Pinned` task must not turn into any other status in future.
+    ///
+    /// **Implementation Propositions**: \
+    /// 1. A task is in `success_tasks` only when it's `success`. \
+    /// 2. If a task is in `failed_tasks`, it may be in any status, but mostly `failed`. \
+    /// 3. If a task is in `working_tasks`, it may be in any status, but mostly `working`. \
+    /// 4. A task was reported as `Pinned` when and only when it's in `success_tasks`. \
+    /// 5. A task was reported as `Failed` when and only when it's in `failed_tasks` but not in `success_tasks`, or not in any `tasks`. \
+    /// 6. A task was reported as `Pinning` when and only when it's in `working_tasks` while not in either `success_tasks` or `failed_tasks`. \
+    ///
+    /// **Derived Propositions**: \
+    /// 1. A task was reported as `Pinned` only when it's `success`. (I1, I4) \
+    /// 2. Logic about success is correct. (E4, D1) \
+    /// 3. It's acceptable to be a slightly more `Failed`, but its priority should be lower then `Pinned`. (E1, E3, E6) \
+    /// 4. It's impossible to avoid reporting a task as `Failed` when it's `working` or `success`. (E2, I2, I3, I5) \
+    /// 5. A task must not be `Failed` when it's in `success_tasks`. (E6, I4) \
+    /// 6. A task should always be in one of the `tasks` unless it's `failed`. (I5)
     async fn launch_core<F, Fut>(&self, cid: &str, add_pin_task: F)
         where F: FnOnce() -> Fut + Send + 'static,
               Fut: Future<Output=Result<(), ()>> + Send {
@@ -126,8 +127,6 @@ impl AddPinManager {
         // start
         let _task = tokio::spawn(async move {
             let add_pin_res = add_pin_task().await;
-            // Guarantee any launched cid can be found in one of the sets.
-            // But it causes a copy of cid.
             // TODO 优化这里的string clone
             if add_pin_res.is_ok() {
                 let _ = task_manager.success_tasks.insert_async(cid.clone()).await;
