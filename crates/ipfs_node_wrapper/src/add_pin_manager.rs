@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::ipfs_client::IpfsClient;
+use crate::ipfs_client::ReqwestIpfsClient;
 
 #[derive(Default, Debug)]
 pub struct TaskManager {
@@ -56,7 +56,7 @@ impl AddPinManager {
     /// 4. It's impossible to avoid reporting a task as `Failed` when it's `working` or `success`. (E2, I2, I3, I5) \
     /// 5. A task must not be `Failed` when it's in `success_tasks`. (E6, I4) \
     /// 6. A task should always be in one of the `tasks` unless it's `failed`. (I5)
-    pub async fn launch(&self, ipfs_client: &IpfsClient, cid: &str, name: Option<&str>) {
+    pub async fn launch(&self, ipfs_client: &ReqwestIpfsClient, cid: &str, name: Option<&str>) {
         // check success -> insert working -> remove failed -> work -> insert success -> remove working
         // modify pin status
         if self.task_manager.success_tasks.contains_async(cid).await {
@@ -127,19 +127,68 @@ impl AddPinManager {
 #[cfg(test)]
 mod tests {
     use std::error::Error;
+    use std::future::{Future, IntoFuture};
     use super::*;
 
     static DEFAULT_CHECK_INTERVAL_MS: u64 = 5;
     static DEFAULT_CHECK_TIMEOUT_MS: u128 = 1000;
 
-    #[test]
-    fn test_add_pin_manager() {
-        tracing_subscriber::fmt().init();
+    enum RuntimeType {
+        CurrentThread,
+        CustomThread(usize),
+        MultiThread,
+    }
 
-        let runtime = tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build().unwrap();
-        let _runtime_guard = runtime.enter();
+    #[test]
+    fn test_add_pin_manager_basic() {
+        start_async_test(RuntimeType::MultiThread, test_add_pin_manager_basic_core);
+    }
+
+    #[test]
+    fn test_add_pin_manager_serial() {}
+
+    #[test]
+    fn test_add_pin_manager_random() {}
+
+    // core functions ---------------------------------------------------------------
+
+    async fn test_add_pin_manager_basic_core() {
+        let manager = AddPinManager::new();
+        // manager.launch()
+    }
+
+    // tools ------------------------------------------------------------------------
+
+    fn start_async_test<F, Fut>(runtime_type: RuntimeType, test_func: F)
+        where F: FnOnce() -> Fut,
+              Fut: Future<Output=()>, {
+        let runtime;
+        match runtime_type {
+            RuntimeType::CurrentThread => {
+                runtime = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build().unwrap();
+            }
+            RuntimeType::CustomThread(thread_num) => {
+                runtime = tokio::runtime::Builder::new_multi_thread()
+                    .worker_threads(thread_num)
+                    .enable_all()
+                    .build().unwrap();
+            }
+            RuntimeType::MultiThread => {
+                runtime = tokio::runtime::Builder::new_multi_thread()
+                    .enable_all()
+                    .build().unwrap();
+            }
+        }
+
+        runtime.block_on(async {
+            test_func().await;
+        })
+    }
+
+    async fn check_success_once(manager: &AddPinManager, cid: &str) -> bool {
+        manager.get_task_status(cid).await == TaskStatus::Pinned
     }
 
     /// Err when timeout
@@ -155,16 +204,12 @@ mod tests {
                 return Err(());
             }
 
-            if manager.get_task_status(cid).await == TaskStatus::Pinned {
+            if check_success_once(manager, cid).await {
                 return Ok(());
             }
 
             tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;
         }
     }
-
-    async fn test_add_pin_manager_serial() {}
-
-    async fn test_add_pin_manager_random() {}
 }
 

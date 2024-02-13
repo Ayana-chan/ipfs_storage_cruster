@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
-use crate::ipfs_client::IpfsClient;
+use crate::ipfs_client::ReqwestIpfsClient;
 
 mod public_app;
 mod admin_app;
@@ -83,13 +83,13 @@ impl AppConfigBuilder {
 /// Should never be Cloned.
 #[derive(Default, Debug)]
 pub struct AppState {
-    pub ipfs_client: IpfsClient,
+    pub ipfs_client: ReqwestIpfsClient,
 }
 
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
     let app_state = Arc::new(AppState {
-        ipfs_client: IpfsClient::new_from_config(&app_config)
+        ipfs_client: ReqwestIpfsClient::new_from_config(&app_config)
     });
 
     let public_server = generate_server(

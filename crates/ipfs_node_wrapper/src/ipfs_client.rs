@@ -6,6 +6,11 @@ use crate::app::AppConfig;
 use crate::error;
 use crate::common::ApiResult;
 
+#[async_trait::async_trait]
+pub trait IpfsClient {
+
+}
+
 #[derive(Default, Clone, Debug)]
 pub struct IpfsNodeMetadata {
     pub gateway_address: String,
@@ -14,15 +19,15 @@ pub struct IpfsNodeMetadata {
 
 /// Safe to clone.
 #[derive(Default, Debug, Clone)]
-pub struct IpfsClient {
+pub struct ReqwestIpfsClient {
     pub client: Client,
     pub ipfs_node_metadata: Arc<parking_lot::RwLock<IpfsNodeMetadata>>,
 }
 
-impl IpfsClient {
+impl ReqwestIpfsClient {
     /// Create ipfs client by `AppConfig`
     pub fn new_from_config(app_config: &AppConfig) -> Self {
-        IpfsClient {
+        ReqwestIpfsClient {
             client: reqwest::Client::new(),
             ipfs_node_metadata: parking_lot::RwLock::new(IpfsNodeMetadata {
                 gateway_address: app_config.ipfs_gateway_address.to_string(),
