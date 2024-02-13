@@ -9,7 +9,8 @@ pub struct TaskManager {
     failed_tasks: scc::HashSet<String>,
 }
 
-pub enum  TaskStatus {
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub enum TaskStatus {
     /// pinning or queued
     Pinning,
     /// success
@@ -17,7 +18,8 @@ pub enum  TaskStatus {
     Failed,
 }
 
-#[derive(Default, Debug)]
+/// Safe to clone.
+#[derive(Default, Debug, Clone)]
 pub struct AddPinManager {
     task_manager: Arc<TaskManager>,
 }
@@ -112,12 +114,57 @@ impl AddPinManager {
             return TaskStatus::Pinning;
         }
 
-        return TaskStatus::Failed
+        return TaskStatus::Failed;
     }
 
     /// Get a cloned `Arc` of `task_manager`.
     pub fn task_manager(&self) -> Arc<TaskManager> {
         self.task_manager.clone()
     }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
+    use super::*;
+
+    static DEFAULT_CHECK_INTERVAL_MS: u64 = 5;
+    static DEFAULT_CHECK_TIMEOUT_MS: u128 = 1000;
+
+    #[test]
+    fn test_add_pin_manager() {
+        tracing_subscriber::fmt().init();
+
+        let runtime = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build().unwrap();
+        let _runtime_guard = runtime.enter();
+    }
+
+    /// Err when timeout
+    async fn check_success(manager: &AddPinManager, cid: &str, interval_ms: Option<u64>, timeout_ms: Option<u128>) -> Result<(), ()> {
+        let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
+        let timeout_ms = timeout_ms.unwrap_or(DEFAULT_CHECK_TIMEOUT_MS.clone());
+
+        let start_time = std::time::Instant::now();
+
+        loop {
+            // timeout
+            if start_time.elapsed().as_millis() >= timeout_ms {
+                return Err(());
+            }
+
+            if manager.get_task_status(cid).await == TaskStatus::Pinned {
+                return Ok(());
+            }
+
+            tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;
+        }
+    }
+
+    async fn test_add_pin_manager_serial() {}
+
+    async fn test_add_pin_manager_random() {}
 }
 
