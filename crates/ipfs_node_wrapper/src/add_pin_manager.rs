@@ -1,3 +1,4 @@
+use std::future::Future;
 use std::sync::Arc;
 use crate::ipfs_client::ReqwestIpfsClient;
 
@@ -61,7 +62,7 @@ impl AddPinManager {
         let cid_backup = cid;
         let cid = cid.to_string();
         let name = name.map(String::from);
-        let add_pin_task = Box::pin(async move {
+        let add_pin_task = async move || {
             let add_pin_res = ipfs_client
                 .add_pin_recursive(
                     &cid,
@@ -73,7 +74,7 @@ impl AddPinManager {
             } else {
                 Err(())
             };
-        });
+        };
         self.launch_core(cid_backup, add_pin_task).await;
     }
 
@@ -100,7 +101,9 @@ impl AddPinManager {
         self.task_manager.clone()
     }
 
-    async fn launch_core(&self, cid: &str, add_pin_task: std::pin::Pin<Box<dyn std::future::Future<Output=Result<(), ()>> + Send>>) {
+    async fn launch_core<F, Fut>(&self, cid: &str, add_pin_task: F)
+        where F: FnOnce() -> Fut + Send + 'static,
+              Fut: Future<Output=Result<(), ()>> + Send {
         // check success -> insert working -> remove failed -> work -> insert success -> remove working
         // modify pin status
         if self.task_manager.success_tasks.contains_async(cid).await {
@@ -122,7 +125,7 @@ impl AddPinManager {
 
         // start
         let _task = tokio::spawn(async move {
-            let add_pin_res = add_pin_task.await;
+            let add_pin_res = add_pin_task().await;
             // Guarantee any launched cid can be found in one of the sets.
             // But it causes a copy of cid.
             // TODO 优化这里的string clone
@@ -171,7 +174,7 @@ mod tests {
 
     async fn test_add_pin_manager_basic_core() {
         let manager = AddPinManager::new();
-        manager.launch_core("t1", generate_empty_task()).await;
+        manager.launch_core("t1", empty_task).await;
         check_success(&manager, "t1", None, None).await;
     }
 
@@ -209,6 +212,7 @@ mod tests {
         manager.get_task_status(cid).await == TaskStatus::Pinned
     }
 
+    // TODO failed re-pin机制
     /// Err when timeout
     async fn check_success(manager: &AddPinManager, cid: &str, interval_ms: Option<u64>, timeout_ms: Option<u128>) {
         let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
@@ -230,10 +234,8 @@ mod tests {
         }
     }
 
-    fn generate_empty_task() -> std::pin::Pin<Box<dyn std::future::Future<Output=Result<(), ()>> + Send>> {
-        Box::pin(async {
-            Ok(())
-        })
+    async fn empty_task() -> Result<(), ()> {
+        Ok(())
     }
 }
 
