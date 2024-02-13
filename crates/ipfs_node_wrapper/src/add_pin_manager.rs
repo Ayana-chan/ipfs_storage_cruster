@@ -47,13 +47,13 @@ impl AddPinManager {
     /// 5. A task was reported as `Failed` when and only when it's in `failed_tasks` but not in `success_tasks`, or not in any `tasks`. \
     /// 6. A task was reported as `Pinning` when and only when it's in `working_tasks` while not in either `success_tasks` or `failed_tasks`. \
     ///
-    /// **Derived Proposition**: \
+    /// **Derived Propositions**: \
     /// 1. A task was reported as `Pinned` only when it's `success`. (I1, I4) \
     /// 2. Logic about success is correct. (E4, D1) \
     /// 3. It's acceptable to be a slightly more `Failed`, but its priority should be lower then `Pinned`. (E1, E3, E6) \
     /// 4. It's impossible to avoid reporting a task as `Failed` when it's `working` or `success`. (E2, I2, I3, I5) \
-    /// 5. A task must not be `Failed` when it's in `success_tasks`. (E6, I4)
-    /// 6. A task should always be in one of the `tasks` unless it's `failed`.
+    /// 5. A task must not be `Failed` when it's in `success_tasks`. (E6, I4) \
+    /// 6. A task should always be in one of the `tasks` unless it's `failed`. (I5)
     pub async fn launch(&self, ipfs_client: &IpfsClient, cid: &str, name: Option<&str>) {
         // check success -> insert working -> remove failed -> work -> insert success -> remove working
         // modify pin status
