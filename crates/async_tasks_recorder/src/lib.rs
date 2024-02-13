@@ -30,41 +30,43 @@ pub struct AsyncTasksRecoder {
 ///
 /// ## P01
 /// **A task (or tasks with the same `task_id`) wouldn't be executed again after one success.** \
-/// `working_tasks` play the role of lock,
-/// which only allow tasks with the same `task_id` to execute remaining codes before `remove` from `working_tasks`.
-/// And before `remove` from `working_tasks`, the succeeded `task_id` has been in `success_tasks`.
 ///
 /// When a task fail, it wouldn't break anything. Failure just means the task could be launched again,
-/// so if the proposition is true, there is almost nothing to worry about.
+/// so if this proposition (**P01**) is true, there is almost nothing to worry about.
+/// For further discussion, please refer to **P02** \
+///
+/// `working_tasks` play the role of lock,
+/// which allow tasks with the same `task_id` to execute remaining codes (after `insert` & before `remove`) only once.
+/// And before `remove` from `working_tasks`, the succeeded `task_id` has been in `success_tasks`.
+///
+/// In the case of success alone, an equivalent pseudocode can be obtained \
+/// - `working_tasks` become a **mutex** for one `task_id`. \
+/// - `success_tasks` become an atomic boolean, which can only change from false to true. \
+/// - An execution of a task becomes adding on an atomic int (`count`).
+/// Therefore, if the `count` is never greater than 1, it means that the task will only be called once.
 ///
 /// ```not_rust
-/// let success_tasks = atomic(0);
+/// let working_tasks = mutex::new();
+/// let success_tasks = atomic(false);
 /// let count = atomic(0);
 /// loop_multi_thread {
 ///     working_tasks.lock();
-///     if success_tasks.get() == 1 exit();
+///     if success_tasks.get() {
+///         exit();
+///     }
 ///     count.add(1);
-///     success_tasks.set(1);
+///     success_tasks.set(true);
 ///     working_tasks.unlock();
 /// }
 /// assert_eq!(count.get(), 1);
 /// ```
-///
-/// ```not_rust
-/// let success_tasks = atomic(0);
-/// let count = atomic(0);
-/// loop_multi_thread {
-///     working_tasks.lock();
-///     if success_tasks.get() == 1 exit();
-///     success_tasks.set(1);
-///     count.add(1);
-///     working_tasks.unlock();
-/// }
-/// assert_eq!(count.get(), 1);
-/// ```
+/// Obviously, `success_tasks.set(true)` can only be executed once.
+/// After that, `exit()` is always called.
+/// This results in `count.add(1)` being called only once, too. Q.E.D.
 ///
 /// ## P02
-/// ** **`failed task` is only for optimizing the failure judgment.
+/// **Task failure is not harmful, and the related operations have been well optimized** \
+/// `failed task` is only for optimizing the failure judgment. TODO
 impl AsyncTasksRecoder {
     pub fn new() -> Self {
         AsyncTasksRecoder {
