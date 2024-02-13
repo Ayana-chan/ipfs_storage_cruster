@@ -38,7 +38,7 @@ impl AddPinManager {
         let cid_backup = cid;
         let cid = cid.to_string();
         let name = name.map(String::from);
-        let add_pin_task = async move || {
+        let add_pin_task = async move {
             let add_pin_res = ipfs_client
                 .add_pin_recursive(
                     &cid,
@@ -102,9 +102,8 @@ impl AddPinManager {
     /// 4. It's impossible to avoid reporting a task as `Failed` when it's `working` or `success`. (E2, I2, I3, I5) \
     /// 5. A task must not be `Failed` when it's in `success_tasks`. (E6, I4) \
     /// 6. A task should always be in one of the `tasks` unless it's `failed`. (I5)
-    async fn launch_core<F, Fut>(&self, cid: &str, add_pin_task: F)
-        where F: FnOnce() -> Fut + Send + 'static,
-              Fut: Future<Output=Result<(), ()>> + Send {
+    async fn launch_core<Fut>(&self, cid: &str, add_pin_task: Fut)
+        where Fut: Future<Output=Result<(), ()>> + Send + 'static {
         // check success -> insert working -> remove failed -> work -> insert success -> remove working
         // modify pin status
         if self.task_manager.success_tasks.contains_async(cid).await {
@@ -126,7 +125,7 @@ impl AddPinManager {
 
         // start
         let _task = tokio::spawn(async move {
-            let add_pin_res = add_pin_task().await;
+            let add_pin_res = add_pin_task.await;
             // TODO 优化这里的string clone
             if add_pin_res.is_ok() {
                 let _ = task_manager.success_tasks.insert_async(cid.clone()).await;
@@ -159,7 +158,7 @@ mod tests {
     fn test_add_pin_manager_basic() {
         do_async_test(
             RuntimeType::MultiThread,
-            test_add_pin_manager_basic_core,
+            test_add_pin_manager_basic_core(),
         );
     }
 
@@ -173,15 +172,14 @@ mod tests {
 
     async fn test_add_pin_manager_basic_core() {
         let manager = AddPinManager::new();
-        manager.launch_core("t1", empty_task).await;
+        manager.launch_core("t1", empty_task()).await;
         check_success(&manager, "t1", None, None).await;
     }
 
     // tools ------------------------------------------------------------------------
 
-    fn do_async_test<F, Fut>(runtime_type: RuntimeType, test_func: F)
-        where F: FnOnce() -> Fut,
-              Fut: Future<Output=()>, {
+    fn do_async_test<Fut, R>(runtime_type: RuntimeType, test_future: Fut)
+        where Fut: Future<Output=R> {
         let runtime;
         match runtime_type {
             RuntimeType::CurrentThread => {
@@ -202,9 +200,7 @@ mod tests {
             }
         }
 
-        runtime.block_on(async {
-            test_func().await;
-        })
+        runtime.block_on(test_future);
     }
 
     async fn check_success_once(manager: &AddPinManager, cid: &str) -> bool {
@@ -233,8 +229,19 @@ mod tests {
         }
     }
 
+    // TODO 定制延迟；定制概率（至少不能是50%）
+    /// A task always return ok.
     async fn empty_task() -> Result<(), ()> {
         Ok(())
+    }
+
+    /// A task possibly return err.
+    async fn empty_random_task() -> Result<(), ()> {
+        if fastrand::bool() {
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 }
 

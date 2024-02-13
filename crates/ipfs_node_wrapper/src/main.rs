@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::layer::SubscriberExt;
 
