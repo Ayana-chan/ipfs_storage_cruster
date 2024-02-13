@@ -6,11 +6,6 @@ use crate::app::AppConfig;
 use crate::error;
 use crate::common::ApiResult;
 
-#[async_trait::async_trait]
-pub trait IpfsClient {
-
-}
-
 #[derive(Default, Clone, Debug)]
 pub struct IpfsNodeMetadata {
     pub gateway_address: String,

@@ -57,46 +57,24 @@ impl AddPinManager {
     /// 5. A task must not be `Failed` when it's in `success_tasks`. (E6, I4) \
     /// 6. A task should always be in one of the `tasks` unless it's `failed`. (I5)
     pub async fn launch(&self, ipfs_client: &ReqwestIpfsClient, cid: &str, name: Option<&str>) {
-        // check success -> insert working -> remove failed -> work -> insert success -> remove working
-        // modify pin status
-        if self.task_manager.success_tasks.contains_async(cid).await {
-            // succeeded
-            return;
-        }
-        let res = self.task_manager.working_tasks.insert_async(cid.to_string()).await;
-        if res.is_err() {
-            // on working
-            return;
-        }
-        // remove from `failed_tasks` if contained
-        self.task_manager.failed_tasks.remove_async(cid).await;
-        // Although , it's ok to pin again. A `pin verify` is not necessary.
-
-        // adjust args
-        let task_manager = self.task_manager.clone();
         let ipfs_client = ipfs_client.clone();
+        let cid_backup = cid;
         let cid = cid.to_string();
         let name = name.map(String::from);
-
-        // start
-        let _task = tokio::spawn(async move {
+        let add_pin_task = Box::pin(async move {
             let add_pin_res = ipfs_client
                 .add_pin_recursive(
                     &cid,
                     name.as_deref(),
                 ).await;
-            // Guarantee any launched cid can be found in one of the sets.
-            // But it causes a copy of cid.
-            // TODO 优化这里的string clone
-            if let Ok(_success_res) = add_pin_res {
-                let _ = task_manager.success_tasks.insert_async(cid.clone()).await;
-                task_manager.working_tasks.remove_async(&cid).await;
+            // TODO log error
+            return if let Ok(_success_res) = add_pin_res {
+                Ok(())
             } else {
-                // more contention or more memory copy?
-                task_manager.working_tasks.remove_async(&cid).await;
-                let _ = task_manager.failed_tasks.insert_async(cid).await;
-            }
+                Err(())
+            };
         });
+        self.launch_core(cid_backup, add_pin_task).await;
     }
 
     /// success -> failed -> working
@@ -121,13 +99,49 @@ impl AddPinManager {
     pub fn task_manager(&self) -> Arc<TaskManager> {
         self.task_manager.clone()
     }
+
+    async fn launch_core(&self, cid: &str, add_pin_task: std::pin::Pin<Box<dyn std::future::Future<Output=Result<(), ()>> + Send>>) {
+        // check success -> insert working -> remove failed -> work -> insert success -> remove working
+        // modify pin status
+        if self.task_manager.success_tasks.contains_async(cid).await {
+            // succeeded
+            return;
+        }
+        let res = self.task_manager.working_tasks.insert_async(cid.to_string()).await;
+        if res.is_err() {
+            // on working
+            return;
+        }
+        // remove from `failed_tasks` if contained
+        self.task_manager.failed_tasks.remove_async(cid).await;
+        // Although , it's ok to pin again. A `pin verify` is not necessary.
+
+        // adjust args
+        let task_manager = self.task_manager.clone();
+        let cid = cid.to_string();
+
+        // start
+        let _task = tokio::spawn(async move {
+            let add_pin_res = add_pin_task.await;
+            // Guarantee any launched cid can be found in one of the sets.
+            // But it causes a copy of cid.
+            // TODO 优化这里的string clone
+            if add_pin_res.is_ok() {
+                let _ = task_manager.success_tasks.insert_async(cid.clone()).await;
+                task_manager.working_tasks.remove_async(&cid).await;
+            } else {
+                // more contention or more memory copy?
+                task_manager.working_tasks.remove_async(&cid).await;
+                let _ = task_manager.failed_tasks.insert_async(cid).await;
+            }
+        });
+    }
 }
 
 
 #[cfg(test)]
 mod tests {
-    use std::error::Error;
-    use std::future::{Future, IntoFuture};
+    use std::future::Future;
     use super::*;
 
     static DEFAULT_CHECK_INTERVAL_MS: u64 = 5;
@@ -143,7 +157,7 @@ mod tests {
     fn test_add_pin_manager_basic() {
         do_async_test(
             RuntimeType::MultiThread,
-            test_add_pin_manager_basic_core
+            test_add_pin_manager_basic_core,
         );
     }
 
@@ -157,7 +171,8 @@ mod tests {
 
     async fn test_add_pin_manager_basic_core() {
         let manager = AddPinManager::new();
-        // manager.launch()
+        manager.launch_core("t1", generate_empty_task()).await;
+        check_success(&manager, "t1", None, None).await;
     }
 
     // tools ------------------------------------------------------------------------
@@ -195,7 +210,7 @@ mod tests {
     }
 
     /// Err when timeout
-    async fn check_success(manager: &AddPinManager, cid: &str, interval_ms: Option<u64>, timeout_ms: Option<u128>) -> Result<(), ()> {
+    async fn check_success(manager: &AddPinManager, cid: &str, interval_ms: Option<u64>, timeout_ms: Option<u128>) {
         let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
         let timeout_ms = timeout_ms.unwrap_or(DEFAULT_CHECK_TIMEOUT_MS.clone());
 
@@ -204,15 +219,21 @@ mod tests {
         loop {
             // timeout
             if start_time.elapsed().as_millis() >= timeout_ms {
-                return Err(());
+                panic!("Timeout before success. cid: {:?}", cid);
             }
 
             if check_success_once(manager, cid).await {
-                return Ok(());
+                return;
             }
 
             tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;
         }
+    }
+
+    fn generate_empty_task() -> std::pin::Pin<Box<dyn std::future::Future<Output=Result<(), ()>> + Send>> {
+        Box::pin(async {
+            Ok(())
+        })
     }
 }
 
