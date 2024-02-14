@@ -83,7 +83,10 @@ fn test_redo_single() {
 fn test_random() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_random_core(30),
+        test_random_core(30,
+                         3, 500,
+                         0, 13,
+                         60),
     );
 }
 
@@ -91,7 +94,10 @@ fn test_random() {
 fn test_random_single() {
     do_async_test(
         RuntimeType::CurrentThread,
-        test_random_core(4),
+        test_random_core(8,
+                         3, 500,
+                         0, 13,
+                         60),
     );
 }
 
@@ -135,15 +141,20 @@ async fn test_once_redo_core() {
                             0, 13, 100).await;
 }
 
-async fn test_random_core(task_num: usize) {
+async fn test_random_core(task_num: usize,
+                          check_interval_ms: u64, check_time_out_ms: u128,
+                          redo_delay_ms: u64, redo_task_latency: u64,
+                          redo_task_success_probability: u8) {
     let manager = AsyncTasksRecoder::new();
 
     let task_id_vec = generate_task_id_vec(task_num);
     let task_id_vec = task_id_vec.into();
 
     launch_vec_success(&manager, &task_id_vec, 2..15).await;
-    check_success_vec_auto_redo(&manager, &task_id_vec, Some(3), Some(100),
-                                0, 13, 100).await;
+    check_success_vec_auto_redo(&manager, &task_id_vec,
+                                Some(check_interval_ms), Some(check_time_out_ms),
+                                redo_delay_ms, redo_task_latency,
+                                redo_task_success_probability).await;
 }
 
 // tools ------------------------------------------------------------------------
