@@ -1,10 +1,12 @@
 use async_tasks_recorder::*;
 use std::future::Future;
+use std::ops::RangeBounds;
 use std::sync::Arc;
 
 static DEFAULT_CHECK_INTERVAL_MS: u64 = 5;
 static DEFAULT_CHECK_TIMEOUT_MS: u128 = 1000;
 
+#[allow(dead_code)]
 enum RuntimeType {
     CurrentThread,
     CustomThread(usize),
@@ -61,6 +63,22 @@ fn test_basic_single() {
     );
 }
 
+#[test]
+fn test_redo() {
+    do_async_test(
+        RuntimeType::MultiThread,
+        test_once_redo_core(),
+    );
+}
+
+#[test]
+fn test_redo_single() {
+    do_async_test(
+        RuntimeType::CurrentThread,
+        test_once_redo_core(),
+    );
+}
+
 // #[test]
 // fn test_random() {}
 
@@ -94,6 +112,26 @@ async fn test_basic_core(task_num: usize) {
     check_success_vec(&manager, &task_id_vec, None, None).await;
 }
 
+async fn test_once_redo_core() {
+    let manager = AsyncTasksRecoder::new();
+    let mut task_id_generator = get_task_id_generator();
+
+    let id = task_id_generator();
+    manager.launch(&id, fail_task(13)).await;
+    check_success_auto_redo(&manager, &id, None, Some(100),
+                            0, 13, 100).await;
+}
+
+// async fn test_random_core() {
+//     let manager = AsyncTasksRecoder::new();
+//     let mut task_id_generator = get_task_id_generator();
+//
+//     let id = task_id_generator();
+//     manager.launch(&id, fail_task(13)).await;
+//     check_success_auto_redo(&manager, &id, None, Some(100),
+//                             0, 13, 100).await;
+// }
+
 // tools ------------------------------------------------------------------------
 
 fn do_async_test<Fut>(runtime_type: RuntimeType, test_future: Fut)
@@ -124,7 +162,7 @@ fn do_async_test<Fut>(runtime_type: RuntimeType, test_future: Fut)
 /// Launch success task by `task_id_vec`.
 /// The latency of each task is randomly selected within `latency_range`.
 async fn launch_vec_success<Range>(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>, latency_range: Range)
-    where Range: std::ops::RangeBounds<u64> + Clone {
+    where Range: RangeBounds<u64> + Clone {
     let task_num = task_id_vec.len();
     let shuffled_map = get_shuffled_index_map(task_num);
     for i in 0..task_num {
@@ -145,9 +183,11 @@ async fn check_success_once(manager: &AsyncTasksRecoder, task_id: &str) -> bool 
     manager.get_task_status(task_id).await == TaskStatus::Pinned
 }
 
+/// If `redo` is `Some(t)`, it will be redo after a delay after the task is found to have failed.
 /// Check per `interval_ms`. \
 /// Err when the time consumption reaches `timeout_ms`.
-async fn check_success(manager: &AsyncTasksRecoder, task_id: &str, interval_ms: Option<u64>, timeout_ms: Option<u128>) {
+async fn check_success(manager: &AsyncTasksRecoder, task_id: &str,
+                       interval_ms: Option<u64>, timeout_ms: Option<u128>) {
     let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
     let timeout_ms = timeout_ms.unwrap_or(DEFAULT_CHECK_TIMEOUT_MS.clone());
 
@@ -161,6 +201,37 @@ async fn check_success(manager: &AsyncTasksRecoder, task_id: &str, interval_ms: 
 
         if check_success_once(manager, task_id).await {
             return;
+        }
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;
+    }
+}
+
+/// A task will be redo after a delay (`redo_delay_ms`) after it is found to have failed.
+/// Check per `interval_ms`. \
+/// Err when the time consumption reaches `timeout_ms`.
+async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
+                                 interval_ms: Option<u64>, timeout_ms: Option<u128>,
+                                 redo_delay_ms: u64, redo_task_latency: u64,
+                                 redo_task_success_probability: u8) {
+    let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
+    let timeout_ms = timeout_ms.unwrap_or(DEFAULT_CHECK_TIMEOUT_MS.clone());
+
+    let start_time = std::time::Instant::now();
+
+    loop {
+        // timeout
+        if start_time.elapsed().as_millis() >= timeout_ms {
+            panic!("Timeout before success. task_id: {:?}", task_id);
+        }
+
+        if check_success_once(manager, task_id).await {
+            return;
+        } else {
+            // redo
+            tokio::time::sleep(tokio::time::Duration::from_millis(redo_delay_ms)).await;
+            let task = random_task(redo_task_latency, redo_task_success_probability);
+            manager.launch(task_id, task).await;
         }
 
         tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;
