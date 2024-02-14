@@ -51,7 +51,7 @@ fn test_once_fail_single() {
 fn test_basic() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_basic_core(3),
+        test_basic_core(30),
     );
 }
 
@@ -79,8 +79,21 @@ fn test_redo_single() {
     );
 }
 
-// #[test]
-// fn test_random() {}
+#[test]
+fn test_random() {
+    do_async_test(
+        RuntimeType::MultiThread,
+        test_random_core(30),
+    );
+}
+
+#[test]
+fn test_random_single() {
+    do_async_test(
+        RuntimeType::CurrentThread,
+        test_random_core(4),
+    );
+}
 
 // core functions ---------------------------------------------------------------
 
@@ -122,15 +135,16 @@ async fn test_once_redo_core() {
                             0, 13, 100).await;
 }
 
-// async fn test_random_core() {
-//     let manager = AsyncTasksRecoder::new();
-//     let mut task_id_generator = get_task_id_generator();
-//
-//     let id = task_id_generator();
-//     manager.launch(&id, fail_task(13)).await;
-//     check_success_auto_redo(&manager, &id, None, Some(100),
-//                             0, 13, 100).await;
-// }
+async fn test_random_core(task_num: usize) {
+    let manager = AsyncTasksRecoder::new();
+
+    let task_id_vec = generate_task_id_vec(task_num);
+    let task_id_vec = task_id_vec.into();
+
+    launch_vec_success(&manager, &task_id_vec, 2..15).await;
+    check_success_vec_auto_redo(&manager, &task_id_vec, Some(3), Some(100),
+                                0, 13, 100).await;
+}
 
 // tools ------------------------------------------------------------------------
 
@@ -179,10 +193,6 @@ async fn launch_vec_success<Range>(manager: &AsyncTasksRecoder, task_id_vec: &Ar
     }
 }
 
-async fn check_success_once(manager: &AsyncTasksRecoder, task_id: &str) -> bool {
-    manager.get_task_status(task_id).await == TaskStatus::Pinned
-}
-
 /// If `redo` is `Some(t)`, it will be redo after a delay after the task is found to have failed.
 /// Check per `interval_ms`. \
 /// Err when the time consumption reaches `timeout_ms`.
@@ -190,16 +200,19 @@ async fn check_success(manager: &AsyncTasksRecoder, task_id: &str,
                        interval_ms: Option<u64>, timeout_ms: Option<u128>) {
     let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
     let timeout_ms = timeout_ms.unwrap_or(DEFAULT_CHECK_TIMEOUT_MS.clone());
-
     let start_time = std::time::Instant::now();
 
+    let mut task_status;
+
     loop {
+        // println!("check {}, interval: {}", task_id, interval_ms);
         // timeout
         if start_time.elapsed().as_millis() >= timeout_ms {
             panic!("Timeout before success. task_id: {:?}", task_id);
         }
 
-        if check_success_once(manager, task_id).await {
+        task_status = manager.get_task_status(task_id).await;
+        if task_status == TaskStatus::Success {
             return;
         }
 
@@ -216,22 +229,31 @@ async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
                                  redo_task_success_probability: u8) {
     let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
     let timeout_ms = timeout_ms.unwrap_or(DEFAULT_CHECK_TIMEOUT_MS.clone());
-
     let start_time = std::time::Instant::now();
 
+    let mut task_status;
+
     loop {
+        // println!("check {}, interval: {}", task_id, interval_ms);
         // timeout
         if start_time.elapsed().as_millis() >= timeout_ms {
             panic!("Timeout before success. task_id: {:?}", task_id);
         }
 
-        if check_success_once(manager, task_id).await {
-            return;
-        } else {
-            // redo
-            tokio::time::sleep(tokio::time::Duration::from_millis(redo_delay_ms)).await;
-            let task = random_task(redo_task_latency, redo_task_success_probability);
-            manager.launch(task_id, task).await;
+        task_status = manager.get_task_status(task_id).await;
+        match task_status {
+            TaskStatus::Success => {
+                println!("success {}", task_id);
+                return;
+            }
+            TaskStatus::Failed => {
+                // redo
+                println!("redo {}", task_id);
+                tokio::time::sleep(tokio::time::Duration::from_millis(redo_delay_ms)).await;
+                let task = random_task(redo_task_latency, redo_task_success_probability);
+                manager.launch(task_id, task).await;
+            }
+            TaskStatus::Working => {}
         }
 
         tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;
@@ -240,7 +262,8 @@ async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
 
 /// Check all task_id in a vec randomly and parallelly.
 /// Return after all checks finish.
-async fn check_success_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>, interval_ms: Option<u64>, timeout_ms: Option<u128>) {
+async fn check_success_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>,
+                           interval_ms: Option<u64>, timeout_ms: Option<u128>) {
     let task_num = task_id_vec.len();
     let shuffled_map = get_shuffled_index_map(task_num);
     let mut join_set = tokio::task::JoinSet::new();
@@ -252,6 +275,38 @@ async fn check_success_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<St
         let fut = async move {
             check_success(&manager_backup, &task_id_vec[mapped_index],
                           interval_ms.clone(), timeout_ms.clone()).await;
+        };
+        join_set.spawn(fut);
+    }
+
+    while let Some(res) = join_set.join_next().await {
+        if let Err(e) = res {
+            if e.is_panic() {
+                std::panic::resume_unwind(e.into_panic());
+            }
+        }
+    }
+}
+
+/// Check all task_id in a vec randomly and parallelly.
+/// Return after all checks finish.
+async fn check_success_vec_auto_redo(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>,
+                                     interval_ms: Option<u64>, timeout_ms: Option<u128>,
+                                     redo_delay_ms: u64, redo_task_latency: u64,
+                                     redo_task_success_probability: u8) {
+    let task_num = task_id_vec.len();
+    let shuffled_map = get_shuffled_index_map(task_num);
+    let mut join_set = tokio::task::JoinSet::new();
+    for i in 0..task_num {
+        let manager_backup = manager.clone();
+        let task_id_vec = task_id_vec.clone();
+        let mapped_index = shuffled_map[i];
+        // println!("spawn check {}", mapped_index);
+        let fut = async move {
+            check_success_auto_redo(&manager_backup, &task_id_vec[mapped_index],
+                                    interval_ms.clone(), timeout_ms.clone(),
+                                    redo_delay_ms, redo_task_latency,
+                                    redo_task_success_probability).await;
         };
         join_set.spawn(fut);
     }
@@ -294,13 +349,13 @@ fn get_shuffled_index_map(length: usize) -> Vec<usize> {
     map
 }
 
-// TODO 定制延迟；定制概率（至少不能是50%）
+// TODO 检验被调用次数
 /// A task always return ok. \
 /// Latency is caused by `std::thread::sleep`, which won't stop when panic in main thread occurs.
 async fn success_task(latency_ms: u64) -> Result<(), ()> {
     // must use `sleep` of std
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
-    // println!("finish");
+    println!("finish, latency: {}", latency_ms);
     Ok(())
 }
 
@@ -316,8 +371,10 @@ async fn random_task(latency_ms: u64, success_probability: u8) -> Result<(), ()>
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
     let rand_point = fastrand::u8(0..100);
     if rand_point < success_probability {
+        println!("Ok , rand_point: {}", rand_point);
         Ok(())
     } else {
+        println!("Err, rand_point: {}", rand_point);
         Err(())
     }
 }

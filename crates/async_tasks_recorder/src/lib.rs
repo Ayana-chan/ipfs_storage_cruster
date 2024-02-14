@@ -16,7 +16,7 @@ pub struct TaskManager {
 pub enum TaskStatus {
     /// running or pending
     Working,
-    Pinned,
+    Success,
     Failed,
 }
 
@@ -120,7 +120,7 @@ impl AsyncTasksRecoder {
     /// If not found in all tasks, be `Failed`.
     pub async fn get_task_status(&self, cid: &str) -> TaskStatus {
         if self.task_manager.success_tasks.contains_async(cid).await {
-            return TaskStatus::Pinned;
+            return TaskStatus::Success;
         }
 
         if self.task_manager.failed_tasks.contains_async(cid).await {
