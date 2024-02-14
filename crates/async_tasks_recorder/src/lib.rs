@@ -131,7 +131,7 @@ impl AsyncTasksRecoder {
             return TaskStatus::Working;
         }
 
-        return TaskStatus::Failed;
+        TaskStatus::Failed
     }
 
     /// Get a cloned `Arc` of `task_manager`. Then you can do anything you want.
