@@ -27,6 +27,7 @@ pub struct AsyncTasksRecoder {
 }
 
 //TODO 任何时候都可以重新launch，只不过大部分就可以直接拒绝
+//TODO 如果失败的话，task的拷贝如何复用？甚至有没有可能复用future？
 /// # Proof
 ///
 /// ## P01
