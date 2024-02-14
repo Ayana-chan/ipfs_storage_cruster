@@ -49,7 +49,7 @@ fn test_once_fail_single() {
 fn test_basic() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_basic_core(5),
+        test_basic_core(3),
     );
 }
 
@@ -90,7 +90,7 @@ async fn test_basic_core(task_num: usize) {
     let task_id_vec = generate_task_id_vec(task_num);
     let task_id_vec = task_id_vec.into();
 
-    launch_vec_success(&manager, &task_id_vec).await;
+    launch_vec_success(&manager, &task_id_vec, 0..60).await;
     check_success_vec(&manager, &task_id_vec, None, None).await;
 }
 
@@ -121,17 +121,21 @@ fn do_async_test<Fut>(runtime_type: RuntimeType, test_future: Fut)
     runtime.block_on(test_future);
 }
 
-async fn launch_vec_success(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>) {
+/// Launch success task by `task_id_vec`.
+/// The latency of each task is randomly selected within `latency_range`.
+async fn launch_vec_success<Range>(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>, latency_range: Range)
+    where Range: std::ops::RangeBounds<u64> + Clone {
     let task_num = task_id_vec.len();
     let shuffled_map = get_shuffled_index_map(task_num);
     for i in 0..task_num {
         let manager_backup = manager.clone();
         let task_id_vec = task_id_vec.clone();
         let mapped_index = shuffled_map[i];
-        // println!("spawn launch: {}", mapped_index);
+        let latency = fastrand::u64(latency_range.clone());
+        println!("spawn launch: {} latency: {}", mapped_index, latency);
         let fut = async move {
             manager_backup.launch(&task_id_vec[mapped_index],
-                                  success_task(fastrand::u64(0..80))).await;
+                                  success_task(latency)).await;
         };
         tokio::spawn(fut);
     }
@@ -222,20 +226,22 @@ fn get_shuffled_index_map(length: usize) -> Vec<usize> {
 // TODO 定制延迟；定制概率（至少不能是50%）
 /// A task always return ok.
 async fn success_task(latency_ms: u64) -> Result<(), ()> {
-    tokio::time::sleep(tokio::time::Duration::from_millis(latency_ms)).await;
+    // must use `sleep` of std
+    std::thread::sleep(std::time::Duration::from_millis(latency_ms));
+    // println!("finish");
     Ok(())
 }
 
 /// A task always return err.
 async fn fail_task(latency_ms: u64) -> Result<(), ()> {
-    tokio::time::sleep(tokio::time::Duration::from_millis(latency_ms)).await;
+    std::thread::sleep(std::time::Duration::from_millis(latency_ms));
     Err(())
 }
 
 /// A task possibly return err. \
 /// `success_probability`: The percentage probability of success. Supposed to be \[0, 100\].
 async fn random_task(latency_ms: u64, success_probability: u8) -> Result<(), ()> {
-    tokio::time::sleep(tokio::time::Duration::from_millis(latency_ms)).await;
+    std::thread::sleep(std::time::Duration::from_millis(latency_ms));
     let rand_point = fastrand::u8(0..100);
     if rand_point < success_probability {
         Ok(())
