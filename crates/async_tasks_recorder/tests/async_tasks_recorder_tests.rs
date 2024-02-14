@@ -28,7 +28,33 @@ fn test_once_single() {
 }
 
 #[test]
+#[should_panic(expected = "Timeout before success")]
+fn test_once_fail() {
+    do_async_test(
+        RuntimeType::MultiThread,
+        test_once_fail_core(),
+    );
+}
+
+#[test]
+#[should_panic(expected = "Timeout before success")]
+fn test_once_fail_single() {
+    do_async_test(
+        RuntimeType::CurrentThread,
+        test_once_fail_core(),
+    );
+}
+
+#[test]
 fn test_basic() {
+    do_async_test(
+        RuntimeType::MultiThread,
+        test_basic_core(5),
+    );
+}
+
+#[test]
+fn test_basic_single() {
     do_async_test(
         RuntimeType::CurrentThread,
         test_basic_core(5),
@@ -49,18 +75,23 @@ async fn test_once_core() {
     check_success(&manager, &id, None, None).await;
 }
 
+async fn test_once_fail_core() {
+    let manager = AsyncTasksRecoder::new();
+    let mut task_id_generator = get_task_id_generator();
+
+    let id = task_id_generator();
+    manager.launch(&id, fail_task()).await;
+    check_success(&manager, &id, None, Some(100)).await;
+}
+
 async fn test_basic_core(task_num: usize) {
     let manager = AsyncTasksRecoder::new();
 
     let task_id_vec = generate_task_id_vec(task_num);
-    let shuffled_map_1 = get_shuffled_index_map(task_num);
+    let task_id_vec = task_id_vec.into();
 
-    for i in 0..task_num {
-        // println!("shuffled_map_1[{}]: {}", i, shuffled_map_1[i]);
-        manager.launch(&task_id_vec[shuffled_map_1[i]], success_task()).await;
-    }
-
-    check_vec(&manager, &task_id_vec.into(), None, None).await;
+    launch_vec_success(&manager, &task_id_vec).await;
+    check_success_vec(&manager, &task_id_vec, None, None).await;
 }
 
 // tools ------------------------------------------------------------------------
@@ -90,6 +121,21 @@ fn do_async_test<Fut>(runtime_type: RuntimeType, test_future: Fut)
     runtime.block_on(test_future);
 }
 
+async fn launch_vec_success(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>) {
+    let task_num = task_id_vec.len();
+    let shuffled_map = get_shuffled_index_map(task_num);
+    for i in 0..task_num {
+        let manager_backup = manager.clone();
+        let task_id_vec = task_id_vec.clone();
+        let mapped_index = shuffled_map[i];
+        // println!("spawn launch: {}", mapped_index);
+        let fut = async move {
+            manager_backup.launch(&task_id_vec[mapped_index], success_task()).await;
+        };
+        tokio::spawn(fut);
+    }
+}
+
 async fn check_success_once(manager: &AsyncTasksRecoder, task_id: &str) -> bool {
     manager.get_task_status(task_id).await == TaskStatus::Pinned
 }
@@ -116,7 +162,8 @@ async fn check_success(manager: &AsyncTasksRecoder, task_id: &str, interval_ms: 
 }
 
 /// Check all task_id in a vec randomly and parallelly.
-async fn check_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>, interval_ms: Option<u64>, timeout_ms: Option<u128>) {
+/// Return after all checks finish.
+async fn check_success_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>, interval_ms: Option<u64>, timeout_ms: Option<u128>) {
     let task_num = task_id_vec.len();
     let shuffled_map = get_shuffled_index_map(task_num);
     let mut join_set = tokio::task::JoinSet::new();
@@ -124,8 +171,8 @@ async fn check_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>, 
         let manager_backup = manager.clone();
         let task_id_vec = task_id_vec.clone();
         let mapped_index = shuffled_map[i];
+        // println!("spawn check {}", mapped_index);
         let fut = async move {
-            println!("check {}", mapped_index);
             check_success(&manager_backup, &task_id_vec[mapped_index],
                           interval_ms.clone(), timeout_ms.clone()).await;
         };
