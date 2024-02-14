@@ -141,7 +141,8 @@ async fn check_success_once(manager: &AsyncTasksRecoder, task_id: &str) -> bool 
     manager.get_task_status(task_id).await == TaskStatus::Pinned
 }
 
-/// Err when timeout
+/// Check per `interval_ms`. \
+/// Err when the time consumption reaches `timeout_ms`.
 async fn check_success(manager: &AsyncTasksRecoder, task_id: &str, interval_ms: Option<u64>, timeout_ms: Option<u128>) {
     let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
     let timeout_ms = timeout_ms.unwrap_or(DEFAULT_CHECK_TIMEOUT_MS.clone());
