@@ -224,10 +224,12 @@ async fn fail_task(latency_ms: u64) -> Result<(), ()> {
     Err(())
 }
 
-/// A task possibly return err.
-async fn random_task(latency_ms: u64) -> Result<(), ()> {
+/// A task possibly return err. \
+/// `success_probability`: The percentage probability of success. Supposed to be \[0, 100\].
+async fn random_task(latency_ms: u64, success_probability: u8) -> Result<(), ()> {
     tokio::time::sleep(tokio::time::Duration::from_millis(latency_ms)).await;
-    if fastrand::bool() {
+    let rand_point = fastrand::u8((0..100));
+    if rand_point < success_probability {
         Ok(())
     } else {
         Err(())
