@@ -71,7 +71,7 @@ async fn test_once_core() {
     let mut task_id_generator = get_task_id_generator();
 
     let id = task_id_generator();
-    manager.launch(&id, success_task()).await;
+    manager.launch(&id, success_task(13)).await;
     check_success(&manager, &id, None, None).await;
 }
 
@@ -80,7 +80,7 @@ async fn test_once_fail_core() {
     let mut task_id_generator = get_task_id_generator();
 
     let id = task_id_generator();
-    manager.launch(&id, fail_task()).await;
+    manager.launch(&id, fail_task(13)).await;
     check_success(&manager, &id, None, Some(100)).await;
 }
 
@@ -130,7 +130,8 @@ async fn launch_vec_success(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<S
         let mapped_index = shuffled_map[i];
         // println!("spawn launch: {}", mapped_index);
         let fut = async move {
-            manager_backup.launch(&task_id_vec[mapped_index], success_task()).await;
+            manager_backup.launch(&task_id_vec[mapped_index],
+                                  success_task(fastrand::u64(0..30))).await;
         };
         tokio::spawn(fut);
     }
@@ -212,17 +213,20 @@ fn get_shuffled_index_map(length: usize) -> Vec<usize> {
 
 // TODO 定制延迟；定制概率（至少不能是50%）
 /// A task always return ok.
-async fn success_task() -> Result<(), ()> {
+async fn success_task(latency_ms: u64) -> Result<(), ()> {
+    tokio::time::sleep(tokio::time::Duration::from_millis(latency_ms)).await;
     Ok(())
 }
 
 /// A task always return err.
-async fn fail_task() -> Result<(), ()> {
+async fn fail_task(latency_ms: u64) -> Result<(), ()> {
+    tokio::time::sleep(tokio::time::Duration::from_millis(latency_ms)).await;
     Err(())
 }
 
 /// A task possibly return err.
-async fn random_task() -> Result<(), ()> {
+async fn random_task(latency_ms: u64) -> Result<(), ()> {
+    tokio::time::sleep(tokio::time::Duration::from_millis(latency_ms)).await;
     if fastrand::bool() {
         Ok(())
     } else {
