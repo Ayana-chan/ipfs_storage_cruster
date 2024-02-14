@@ -132,7 +132,7 @@ async fn launch_vec_success<Range>(manager: &AsyncTasksRecoder, task_id_vec: &Ar
         let task_id_vec = task_id_vec.clone();
         let mapped_index = shuffled_map[i];
         let latency = fastrand::u64(latency_range.clone());
-        println!("spawn launch: {} latency: {}", mapped_index, latency);
+        // println!("spawn launch: {} latency: {}", mapped_index, latency);
         let fut = async move {
             manager_backup.launch(&task_id_vec[mapped_index],
                                   success_task(latency)).await;
@@ -224,7 +224,8 @@ fn get_shuffled_index_map(length: usize) -> Vec<usize> {
 }
 
 // TODO 定制延迟；定制概率（至少不能是50%）
-/// A task always return ok.
+/// A task always return ok. \
+/// Latency is caused by `std::thread::sleep`, which won't stop when panic in main thread occurs.
 async fn success_task(latency_ms: u64) -> Result<(), ()> {
     // must use `sleep` of std
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
