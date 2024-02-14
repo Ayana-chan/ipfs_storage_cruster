@@ -131,7 +131,7 @@ async fn launch_vec_success(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<S
         // println!("spawn launch: {}", mapped_index);
         let fut = async move {
             manager_backup.launch(&task_id_vec[mapped_index],
-                                  success_task(fastrand::u64(0..30))).await;
+                                  success_task(fastrand::u64(0..80))).await;
         };
         tokio::spawn(fut);
     }
@@ -180,7 +180,14 @@ async fn check_success_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<St
         };
         join_set.spawn(fut);
     }
-    while let Some(_) = join_set.join_next().await {}
+
+    while let Some(res) = join_set.join_next().await {
+        if let Err(e) = res {
+            if e.is_panic() {
+                std::panic::resume_unwind(e.into_panic());
+            }
+        }
+    }
 }
 
 /// return a closure to generate incremental `task_id` string.
@@ -229,7 +236,7 @@ async fn fail_task(latency_ms: u64) -> Result<(), ()> {
 /// `success_probability`: The percentage probability of success. Supposed to be \[0, 100\].
 async fn random_task(latency_ms: u64, success_probability: u8) -> Result<(), ()> {
     tokio::time::sleep(tokio::time::Duration::from_millis(latency_ms)).await;
-    let rand_point = fastrand::u8((0..100));
+    let rand_point = fastrand::u8(0..100);
     if rand_point < success_probability {
         Ok(())
     } else {

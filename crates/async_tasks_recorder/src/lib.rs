@@ -68,7 +68,7 @@ pub struct AsyncTasksRecoder {
 ///
 /// ## P02
 /// **Task failure is not harmful, and the related operations have been well optimized** \
-/// `failed task` is only for optimizing the failure judgment. TODO
+/// `failed task` is only for optimizing the failure judgment. TODO proof
 impl AsyncTasksRecoder {
     pub fn new() -> Self {
         AsyncTasksRecoder {
@@ -76,7 +76,7 @@ impl AsyncTasksRecoder {
         }
     }
 
-    /// Launch task. \
+    /// Launch task. \ TODO redo
     /// `task`: an async closure to add pin (truly interact with IPFS without modifying manager).
     pub async fn launch<Fut, R, E>(&self, task_id: &str, task: Fut)
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
