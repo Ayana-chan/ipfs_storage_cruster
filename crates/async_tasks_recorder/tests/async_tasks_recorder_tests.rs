@@ -84,7 +84,7 @@ fn test_random() {
     do_async_test(
         RuntimeType::MultiThread,
         test_random_core(30,
-                         3, 500,
+                         3, 400,
                          0, 13,
                          60),
     );
@@ -95,7 +95,7 @@ fn test_random_single() {
     do_async_test(
         RuntimeType::CurrentThread,
         test_random_core(8,
-                         3, 500,
+                         3, 600,
                          0, 13,
                          60),
     );
@@ -127,7 +127,7 @@ async fn test_basic_core(task_num: usize) {
     let task_id_vec = generate_task_id_vec(task_num);
     let task_id_vec = task_id_vec.into();
 
-    launch_vec_success(&manager, &task_id_vec, 0..60).await;
+    launch_vec(&manager, &task_id_vec, 0..60, 100).await;
     check_success_vec(&manager, &task_id_vec, None, None).await;
 }
 
@@ -144,17 +144,17 @@ async fn test_once_redo_core() {
 async fn test_random_core(task_num: usize,
                           check_interval_ms: u64, check_time_out_ms: u128,
                           redo_delay_ms: u64, redo_task_latency: u64,
-                          redo_task_success_probability: u8) {
+                          task_success_probability: u8) {
     let manager = AsyncTasksRecoder::new();
 
     let task_id_vec = generate_task_id_vec(task_num);
     let task_id_vec = task_id_vec.into();
 
-    launch_vec_success(&manager, &task_id_vec, 2..15).await;
+    launch_vec(&manager, &task_id_vec, 2..15, task_success_probability).await;
     check_success_vec_auto_redo(&manager, &task_id_vec,
                                 Some(check_interval_ms), Some(check_time_out_ms),
                                 redo_delay_ms, redo_task_latency,
-                                redo_task_success_probability).await;
+                                task_success_probability).await;
 }
 
 // tools ------------------------------------------------------------------------
@@ -186,7 +186,8 @@ fn do_async_test<Fut>(runtime_type: RuntimeType, test_future: Fut)
 
 /// Launch success task by `task_id_vec`.
 /// The latency of each task is randomly selected within `latency_range`.
-async fn launch_vec_success<Range>(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>, latency_range: Range)
+async fn launch_vec<Range>(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>,
+                           latency_range: Range, task_success_probability: u8)
     where Range: RangeBounds<u64> + Clone {
     let task_num = task_id_vec.len();
     let shuffled_map = get_shuffled_index_map(task_num);
@@ -198,7 +199,7 @@ async fn launch_vec_success<Range>(manager: &AsyncTasksRecoder, task_id_vec: &Ar
         // println!("spawn launch: {} latency: {}", mapped_index, latency);
         let fut = async move {
             manager_backup.launch(&task_id_vec[mapped_index],
-                                  success_task(latency)).await;
+                                  random_task(latency, task_success_probability)).await;
         };
         tokio::spawn(fut);
     }
@@ -254,7 +255,7 @@ async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
         task_status = manager.get_task_status(task_id).await;
         match task_status {
             TaskStatus::Success => {
-                println!("success {}", task_id);
+                println!("success {}, used time: {}", task_id, start_time.elapsed().as_millis());
                 return;
             }
             TaskStatus::Failed => {
@@ -366,13 +367,14 @@ fn get_shuffled_index_map(length: usize) -> Vec<usize> {
 async fn success_task(latency_ms: u64) -> Result<(), ()> {
     // must use `sleep` of std
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
-    println!("finish, latency: {}", latency_ms);
+    println!("---->finish, task latency: {}", latency_ms);
     Ok(())
 }
 
 /// A task always return err.
 async fn fail_task(latency_ms: u64) -> Result<(), ()> {
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
+    println!("---->fail, task latency: {}", latency_ms);
     Err(())
 }
 
@@ -382,10 +384,10 @@ async fn random_task(latency_ms: u64, success_probability: u8) -> Result<(), ()>
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
     let rand_point = fastrand::u8(0..100);
     if rand_point < success_probability {
-        println!("Ok , rand_point: {}", rand_point);
+        println!("---->rand Ok, point: {} < {}, task latency: {}", rand_point, success_probability, latency_ms);
         Ok(())
     } else {
-        println!("Err, rand_point: {}", rand_point);
+        println!("rand Err, point: {} >= {}, task latency: {}", rand_point, success_probability, latency_ms);
         Err(())
     }
 }
