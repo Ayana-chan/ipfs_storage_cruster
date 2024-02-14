@@ -104,7 +104,7 @@ fn test_random() {
         test_random_core(30,
                          3, 400,
                          200,
-                         0, 13,
+                         2, 13,
                          60),
     );
 }
@@ -117,7 +117,7 @@ fn test_random_single() {
         test_random_core(8,
                          3, 600,
                          200,
-                         0, 13,
+                         2, 13,
                          60),
     );
 }
@@ -456,7 +456,7 @@ async fn check_success_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<St
                 std::panic::resume_unwind(e.into_panic());
             }
         }
-    } // TODO abort all
+    }
 }
 
 /// Check all task_id in a vec randomly and parallelly.
