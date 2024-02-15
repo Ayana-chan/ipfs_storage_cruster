@@ -71,10 +71,10 @@ pub async fn test_random(task_num: usize,
                                        task_success_probability).await;
 }
 
-pub async fn test_stress(group_num: usize, group_size_min: usize, group_size_max: usize,
-                         check_interval_ms: u64, check_time_out_ms: u128,
-                         suffix_query_time: u128, redo_task_latency: u64,
-                         task_success_probability: u8) {
+pub async fn test_interleave(group_num: usize, group_size_min: usize, group_size_max: usize,
+                             check_interval_ms: u64, check_time_out_ms: u128,
+                             suffix_query_time: u128, redo_task_latency: u64,
+                             task_success_probability: u8) {
     let group_size_vec = tools::get_arithmetic_sequence(group_num, group_size_min, group_size_max);
     println!("group_size_vec: {:?}", group_size_vec);
     let mut group_task_id_vec: Vec<Arc<Vec<String>>> = vec![];

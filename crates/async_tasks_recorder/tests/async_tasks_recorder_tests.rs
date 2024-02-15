@@ -93,21 +93,24 @@ fn test_random_single() {
 }
 
 #[test]
-fn test_stress_multi() {
+fn test_interleave_multi() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_stress(3, 2, 5,
-                    3, 600,
-                    200, 13,
-                    60),
+        test_interleave(3, 2, 5,
+                        3, 600,
+                        200, 13,
+                        60),
     );
 }
 
 #[test]
-fn test_stress_single() {
-    // do_async_test(
-    //     RuntimeType::CurrentThread,
-    //     test_stress()
-    // );
+fn test_interleave_single() {
+    do_async_test(
+        RuntimeType::CurrentThread,
+        test_interleave(3, 2, 5,
+                        3, 600,
+                        200, 13,
+                        60),
+    );
 }
 
