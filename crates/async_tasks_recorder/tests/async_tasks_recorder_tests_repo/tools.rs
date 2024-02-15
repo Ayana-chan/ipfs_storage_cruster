@@ -55,19 +55,30 @@ pub fn get_shuffled_index_map(length: usize) -> Vec<usize> {
     map
 }
 
-pub fn get_arithmetic_sequence(num: usize, min: usize, max: usize) -> Vec<usize> {
+pub fn get_arithmetic_sequence(num: usize, min: usize, mut max: usize) -> Vec<usize> {
     if num == 0 {
         return vec![];
     }
-    let step = (max - min) / num;
-    // SAFETY: Always
-    unsafe {
-        let mut res: Vec<usize> = Vec::new();
-        res.resize(num, 0);
-        res[0] = min;
-        for i in 1..num {
-            *(res.get_unchecked_mut(i)) = res.get_unchecked(i - 1) + step;
-        }
-        res
+    if max < min {
+        max = min;
     }
+
+    let mut res: Vec<usize> = vec![];
+    res.resize(num, 0);
+
+    let delta = max - min;
+    unsafe {
+        // res[i] = i * (max - min);
+        *res.get_unchecked_mut(0) = 0;
+        for i in 1..num {
+            *res.get_unchecked_mut(i) = res.get_unchecked(i - 1) + delta;
+        }
+    }
+
+    // res[i] = i * (max - min) / num + min
+    for item in &mut res {
+        *item = *item / num + min;
+    }
+
+    res
 }

@@ -96,7 +96,7 @@ fn test_random_single() {
 fn test_interleave_multi() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_interleave(3, 2, 5,
+        test_interleave(30, 2, 5,
                         3, 600,
                         200, 13,
                         60),
@@ -107,10 +107,31 @@ fn test_interleave_multi() {
 fn test_interleave_single() {
     do_async_test(
         RuntimeType::CurrentThread,
-        test_interleave(3, 2, 5,
+        test_interleave(5, 2, 5,
                         3, 600,
                         200, 13,
                         60),
     );
 }
 
+#[test]
+fn test_stress_1() {
+    do_async_test(
+        RuntimeType::MultiThread,
+        test_interleave(300, 2, 5,
+                        1, 3000,
+                        500, 13,
+                        60),
+    );
+}
+
+#[test]
+fn test_stress_2() {
+    do_async_test(
+        RuntimeType::MultiThread,
+        test_interleave(20, 10, 80,
+                        1, 3000,
+                        500, 13,
+                        60),
+    );
+}
