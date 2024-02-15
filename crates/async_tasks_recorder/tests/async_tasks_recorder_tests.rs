@@ -103,8 +103,7 @@ fn test_random() {
         RuntimeType::MultiThread,
         test_random_core(30,
                          3, 400,
-                         200,
-                         2, 13,
+                         200, 13,
                          60),
     );
 }
@@ -116,8 +115,7 @@ fn test_random_single() {
         RuntimeType::CurrentThread,
         test_random_core(8,
                          3, 600,
-                         200,
-                         2, 13,
+                         200, 13,
                          60),
     );
 }
@@ -159,13 +157,12 @@ async fn test_once_redo_core() {
     let id = task_id_generator();
     manager.launch(&id, fail_task(13, id.clone())).await;
     check_success_auto_redo(&manager, &id, None, Some(100), 200,
-                            0, 13, 100).await;
+                            13, 100).await;
 }
 
 async fn test_random_core(task_num: usize,
                           check_interval_ms: u64, check_time_out_ms: u128,
-                          suffix_query_time: u128,
-                          redo_delay_ms: u64, redo_task_latency: u64,
+                          suffix_query_time: u128, redo_task_latency: u64,
                           task_success_probability: u8) {
     let manager = AsyncTasksRecoder::new();
 
@@ -175,8 +172,7 @@ async fn test_random_core(task_num: usize,
     launch_vec(&manager, &task_id_vec, 2..15, task_success_probability).await;
     check_success_vec_auto_redo(&manager, &task_id_vec,
                                 Some(check_interval_ms), Some(check_time_out_ms),
-                                suffix_query_time,
-                                redo_delay_ms, redo_task_latency,
+                                suffix_query_time, redo_task_latency,
                                 task_success_probability).await;
 }
 
@@ -369,13 +365,12 @@ async fn check_success(manager: &AsyncTasksRecoder, task_id: &str,
     }
 }
 
-/// A task will be redo after a delay (`redo_delay_ms`) after it is found to have failed.
+/// A task will redo after it is found to have failed.
 /// Check per `interval_ms`. \
 /// Err when the time consumption reaches `timeout_ms`.
 async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
                                  interval_ms: Option<u64>, timeout_ms: Option<u128>,
-                                 suffix_query_time: u128,
-                                 redo_delay_ms: u64, redo_task_latency: u64,
+                                 suffix_query_time: u128, redo_task_latency: u64,
                                  redo_task_success_probability: u8) {
     let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
     let timeout_ms = timeout_ms.unwrap_or(DEFAULT_CHECK_TIMEOUT_MS.clone());
@@ -399,7 +394,6 @@ async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
             TaskStatus::Failed => {
                 // redo
                 println!("redo {}", task_id);
-                tokio::time::sleep(tokio::time::Duration::from_millis(redo_delay_ms)).await;
                 let task = random_task(redo_task_latency, redo_task_success_probability, task_id.to_string());
                 manager.launch(task_id, task).await;
             }
@@ -463,8 +457,7 @@ async fn check_success_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<St
 /// Return after all checks finish.
 async fn check_success_vec_auto_redo(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>,
                                      interval_ms: Option<u64>, timeout_ms: Option<u128>,
-                                     suffix_query_time: u128,
-                                     redo_delay_ms: u64, redo_task_latency: u64,
+                                     suffix_query_time: u128, redo_task_latency: u64,
                                      redo_task_success_probability: u8) {
     let task_num = task_id_vec.len();
     let shuffled_map = get_shuffled_index_map(task_num);
@@ -477,8 +470,7 @@ async fn check_success_vec_auto_redo(manager: &AsyncTasksRecoder, task_id_vec: &
         let fut = async move {
             check_success_auto_redo(&manager_backup, &task_id_vec[mapped_index],
                                     interval_ms.clone(), timeout_ms.clone(),
-                                    suffix_query_time,
-                                    redo_delay_ms, redo_task_latency,
+                                    suffix_query_time, redo_task_latency,
                                     redo_task_success_probability).await;
         };
         join_set.spawn(fut);
