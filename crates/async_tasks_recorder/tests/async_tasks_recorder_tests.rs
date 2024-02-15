@@ -11,10 +11,6 @@ lazy_static! {
     static ref TASK_EXEC_RECODER_CHECKER: TaskExecCountChecker = TaskExecCountChecker::new();
 }
 
-fn init_test() {
-    TASK_EXEC_RECODER_CHECKER.task_exec_recorder.clear();
-}
-
 #[allow(dead_code)]
 enum RuntimeType {
     CurrentThread,
@@ -24,7 +20,6 @@ enum RuntimeType {
 
 #[test]
 fn test_once() {
-    init_test();
     do_async_test(
         RuntimeType::MultiThread,
         test_once_core(),
@@ -33,7 +28,6 @@ fn test_once() {
 
 #[test]
 fn test_once_single() {
-    init_test();
     do_async_test(
         RuntimeType::CurrentThread,
         test_once_core(),
@@ -43,7 +37,6 @@ fn test_once_single() {
 #[test]
 #[should_panic(expected = "Timeout before success")]
 fn test_once_fail() {
-    init_test();
     do_async_test(
         RuntimeType::MultiThread,
         test_once_fail_core(),
@@ -53,7 +46,6 @@ fn test_once_fail() {
 #[test]
 #[should_panic(expected = "Timeout before success")]
 fn test_once_fail_single() {
-    init_test();
     do_async_test(
         RuntimeType::CurrentThread,
         test_once_fail_core(),
@@ -62,7 +54,6 @@ fn test_once_fail_single() {
 
 #[test]
 fn test_basic() {
-    init_test();
     do_async_test(
         RuntimeType::MultiThread,
         test_basic_core(30, None, 200),
@@ -71,7 +62,6 @@ fn test_basic() {
 
 #[test]
 fn test_basic_single() {
-    init_test();
     do_async_test(
         RuntimeType::CurrentThread,
         test_basic_core(5, Some(1500), 100),
@@ -80,7 +70,6 @@ fn test_basic_single() {
 
 #[test]
 fn test_redo() {
-    init_test();
     do_async_test(
         RuntimeType::MultiThread,
         test_once_redo_core(),
@@ -89,7 +78,6 @@ fn test_redo() {
 
 #[test]
 fn test_redo_single() {
-    init_test();
     do_async_test(
         RuntimeType::CurrentThread,
         test_once_redo_core(),
@@ -98,7 +86,6 @@ fn test_redo_single() {
 
 #[test]
 fn test_random() {
-    init_test();
     do_async_test(
         RuntimeType::MultiThread,
         test_random_core(30,
@@ -110,7 +97,6 @@ fn test_random() {
 
 #[test]
 fn test_random_single() {
-    init_test();
     do_async_test(
         RuntimeType::CurrentThread,
         test_random_core(8,
