@@ -94,10 +94,13 @@ fn test_random_single() {
 
 #[test]
 fn test_stress_multi() {
-    // do_async_test(
-    //     RuntimeType::MultiThread,
-    //     test_stress()
-    // );
+    do_async_test(
+        RuntimeType::MultiThread,
+        test_stress(3, 2, 5,
+                    3, 600,
+                    200, 13,
+                    60),
+    );
 }
 
 #[test]

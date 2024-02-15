@@ -53,11 +53,11 @@ pub async fn random_task(latency_ms: u64, success_probability: u8, task_id: Stri
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
     let rand_point = fastrand::u8(0..100);
     if rand_point < success_probability {
-        println!("---->rand Ok, point: {} < {}, task latency: {}", rand_point, success_probability, latency_ms);
+        println!("---->rand Ok {}, point: {} < {}, task latency: {}", task_id, rand_point, success_probability, latency_ms);
         TASK_EXEC_RECODER_CHECKER.check_and_record_async(task_id).await;
         Ok(())
     } else {
-        println!("rand Err, point: {} >= {}, task latency: {}", rand_point, success_probability, latency_ms);
+        println!("rand Err {}, point: {} >= {}, task latency: {}", task_id, rand_point, success_probability, latency_ms);
         Err(())
     }
 }

@@ -65,7 +65,7 @@ pub fn get_arithmetic_sequence(num: usize, min: usize, max: usize) -> Vec<usize>
         let mut res: Vec<usize> = Vec::new();
         res.resize(num, 0);
         res[0] = min;
-        for i in (1..num) {
+        for i in 1..num {
             *(res.get_unchecked_mut(i)) = res.get_unchecked(i - 1) + step;
         }
         res

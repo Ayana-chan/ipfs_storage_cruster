@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use async_tasks_recorder::*;
 pub use tools::do_async_test;
 
@@ -70,6 +71,54 @@ pub async fn test_random(task_num: usize,
                                        task_success_probability).await;
 }
 
-pub async fn test_stress(group_num: usize, group_size_min: usize, group_size_max: usize) {
-    // let mut join_set = tokio::task::JoinSet::new();
+pub async fn test_stress(group_num: usize, group_size_min: usize, group_size_max: usize,
+                         check_interval_ms: u64, check_time_out_ms: u128,
+                         suffix_query_time: u128, redo_task_latency: u64,
+                         task_success_probability: u8) {
+    let group_size_vec = tools::get_arithmetic_sequence(group_num, group_size_min, group_size_max);
+    println!("group_size_vec: {:?}", group_size_vec);
+    let mut group_task_id_vec: Vec<Arc<Vec<String>>> = vec![];
+    group_task_id_vec.resize(group_num, Arc::new(vec![]));
+    for i in 0..group_num {
+        group_task_id_vec[i] = tools::generate_task_id_vec(group_size_vec[i]).into();
+    }
+
+    // decide the sequence of launch and check (in units of groups)
+    let mut working_seq: Vec<usize> = (0..group_num * 2).collect();
+    fastrand::shuffle(&mut working_seq);
+    println!("working_seq: {:?}", working_seq);
+
+    let manager = AsyncTasksRecoder::new();
+    let mut check_join_set = tokio::task::JoinSet::new();
+
+    for cur in working_seq {
+        let group_id = cur / 2;
+        if cur % 2 == 0 {
+            // launch
+            println!("launch group {}, group size: {}, group task_id vec: {:?}", group_id, group_size_vec[group_id], group_task_id_vec[group_id]);
+            launch::launch_vec(&manager, &group_task_id_vec[group_id],
+                               2..15, task_success_probability).await;
+        } else {
+            // check
+            println!("check group {}, group size: {}, group task_id vec: {:?}", group_id, group_size_vec[group_id], group_task_id_vec[group_id]);
+            let task_id_vec = group_task_id_vec[group_id].clone();
+            let manager = manager.clone();
+            let check_fut = async move {
+                check::check_success_vec_auto_redo(&manager, &task_id_vec,
+                                                   Some(check_interval_ms), Some(check_time_out_ms),
+                                                   suffix_query_time, redo_task_latency,
+                                                   task_success_probability).await;
+            };
+            check_join_set.spawn(check_fut);
+        }
+    }
+
+    while let Some(res) = check_join_set.join_next().await {
+        if let Err(e) = res {
+            if e.is_panic() {
+                std::panic::resume_unwind(e.into_panic());
+            }
+        }
+    }
 }
+
