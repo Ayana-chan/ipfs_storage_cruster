@@ -1,10 +1,12 @@
 #[allow(unused_imports)]
 use async_tasks_recorder::*;
 use async_tasks_recorder_tests_repo::*;
+use serial_test::{serial, parallel};
 
 mod async_tasks_recorder_tests_repo;
 
 #[test]
+#[parallel]
 fn test_once_multi() {
     do_async_test(
         RuntimeType::MultiThread,
@@ -13,6 +15,7 @@ fn test_once_multi() {
 }
 
 #[test]
+#[parallel]
 fn test_once_single() {
     do_async_test(
         RuntimeType::CurrentThread,
@@ -21,6 +24,7 @@ fn test_once_single() {
 }
 
 #[test]
+#[parallel]
 #[should_panic(expected = "Timeout before success")]
 fn test_once_fail_multi() {
     do_async_test(
@@ -30,6 +34,7 @@ fn test_once_fail_multi() {
 }
 
 #[test]
+#[parallel]
 #[should_panic(expected = "Timeout before success")]
 fn test_once_fail_single() {
     do_async_test(
@@ -39,6 +44,7 @@ fn test_once_fail_single() {
 }
 
 #[test]
+#[parallel]
 fn test_basic_multi() {
     do_async_test(
         RuntimeType::MultiThread,
@@ -47,6 +53,7 @@ fn test_basic_multi() {
 }
 
 #[test]
+#[parallel]
 fn test_basic_single() {
     do_async_test(
         RuntimeType::CurrentThread,
@@ -55,6 +62,7 @@ fn test_basic_single() {
 }
 
 #[test]
+#[parallel]
 fn test_redo_multi() {
     do_async_test(
         RuntimeType::MultiThread,
@@ -63,6 +71,7 @@ fn test_redo_multi() {
 }
 
 #[test]
+#[parallel]
 fn test_redo_single() {
     do_async_test(
         RuntimeType::CurrentThread,
@@ -71,6 +80,7 @@ fn test_redo_single() {
 }
 
 #[test]
+#[parallel]
 fn test_random_multi() {
     do_async_test(
         RuntimeType::MultiThread,
@@ -82,6 +92,7 @@ fn test_random_multi() {
 }
 
 #[test]
+#[parallel]
 fn test_random_single() {
     do_async_test(
         RuntimeType::CurrentThread,
@@ -93,6 +104,7 @@ fn test_random_single() {
 }
 
 #[test]
+#[parallel]
 fn test_interleave_multi() {
     do_async_test(
         RuntimeType::MultiThread,
@@ -105,6 +117,7 @@ fn test_interleave_multi() {
 }
 
 #[test]
+#[parallel]
 fn test_interleave_single() {
     do_async_test(
         RuntimeType::CurrentThread,
@@ -117,6 +130,7 @@ fn test_interleave_single() {
 }
 
 #[test]
+#[serial]
 fn test_stress_large_group_num() {
     do_async_test(
         RuntimeType::MultiThread,
@@ -129,6 +143,7 @@ fn test_stress_large_group_num() {
 }
 
 #[test]
+#[serial]
 fn test_stress_large_group_size_range() {
     do_async_test(
         RuntimeType::MultiThread,
@@ -141,6 +156,7 @@ fn test_stress_large_group_size_range() {
 }
 
 #[test]
+#[serial]
 fn test_stress_large_task_latency_range() {
     do_async_test(
         RuntimeType::MultiThread,
