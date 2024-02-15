@@ -132,8 +132,20 @@ fn test_stress_large_group_num() {
 fn test_stress_large_group_size_range() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_interleave(20, 10, 80,
+        test_interleave(50, 1, 50,
                         2..15,
+                        1, 3000,
+                        500, 13,
+                        60),
+    );
+}
+
+#[test]
+fn test_stress_large_task_latency_range() {
+    do_async_test(
+        RuntimeType::MultiThread,
+        test_interleave(50, 10, 20,
+                        0..50,
                         1, 3000,
                         500, 13,
                         60),
