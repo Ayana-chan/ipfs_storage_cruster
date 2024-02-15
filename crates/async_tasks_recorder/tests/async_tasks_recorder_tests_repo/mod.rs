@@ -16,7 +16,7 @@ pub enum RuntimeType {
     MultiThread,
 }
 
-pub async fn test_once_core() {
+pub async fn test_once() {
     let manager = AsyncTasksRecoder::new();
     let mut task_id_generator = tools::get_task_id_generator();
 
@@ -25,7 +25,7 @@ pub async fn test_once_core() {
     check::check_success(&manager, &id, None, None, 60).await;
 }
 
-pub async fn test_once_fail_core() {
+pub async fn test_once_fail() {
     let manager = AsyncTasksRecoder::new();
     let mut task_id_generator = tools::get_task_id_generator();
 
@@ -34,7 +34,7 @@ pub async fn test_once_fail_core() {
     check::check_success(&manager, &id, None, Some(100), 60).await;
 }
 
-pub async fn test_basic_core(task_num: usize, check_time_out: Option<u128>, check_suffix_query_time: u128) {
+pub async fn test_basic(task_num: usize, check_time_out: Option<u128>, check_suffix_query_time: u128) {
     let manager = AsyncTasksRecoder::new();
 
     let task_id_vec = tools::generate_task_id_vec(task_num);
@@ -44,7 +44,7 @@ pub async fn test_basic_core(task_num: usize, check_time_out: Option<u128>, chec
     check::check_success_vec(&manager, &task_id_vec, None, check_time_out, check_suffix_query_time).await;
 }
 
-pub async fn test_once_redo_core() {
+pub async fn test_once_redo() {
     let manager = AsyncTasksRecoder::new();
     let mut task_id_generator = tools::get_task_id_generator();
 
@@ -54,10 +54,10 @@ pub async fn test_once_redo_core() {
                                    13, 100).await;
 }
 
-pub async fn test_random_core(task_num: usize,
-                              check_interval_ms: u64, check_time_out_ms: u128,
-                              suffix_query_time: u128, redo_task_latency: u64,
-                              task_success_probability: u8) {
+pub async fn test_random(task_num: usize,
+                         check_interval_ms: u64, check_time_out_ms: u128,
+                         suffix_query_time: u128, redo_task_latency: u64,
+                         task_success_probability: u8) {
     let manager = AsyncTasksRecoder::new();
 
     let task_id_vec = tools::generate_task_id_vec(task_num);
@@ -68,4 +68,8 @@ pub async fn test_random_core(task_num: usize,
                                        Some(check_interval_ms), Some(check_time_out_ms),
                                        suffix_query_time, redo_task_latency,
                                        task_success_probability).await;
+}
+
+pub async fn test_stress(group_num: usize, group_size_min: usize, group_size_max: usize) {
+    // let mut join_set = tokio::task::JoinSet::new();
 }

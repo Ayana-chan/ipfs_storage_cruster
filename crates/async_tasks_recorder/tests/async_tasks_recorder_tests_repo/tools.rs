@@ -37,7 +37,7 @@ pub fn get_task_id_generator() -> impl FnMut() -> String {
     }
 }
 
-/// generate `task_id` vec with a new generator from `get_task_id_generator`
+/// Generate `task_id` vec with a new generator from `get_task_id_generator`
 pub fn generate_task_id_vec(task_num: usize) -> Vec<String> {
     let mut task_id_generator = get_task_id_generator();
     let mut task_id_vec: Vec<String> = Vec::new();
@@ -53,4 +53,21 @@ pub fn get_shuffled_index_map(length: usize) -> Vec<usize> {
     let mut map: Vec<usize> = (0..length).collect();
     fastrand::shuffle(&mut map);
     map
+}
+
+pub fn get_arithmetic_sequence(num: usize, min: usize, max: usize) -> Vec<usize> {
+    if num == 0 {
+        return vec![];
+    }
+    let step = (max - min) / num;
+    // SAFETY: Always
+    unsafe {
+        let mut res: Vec<usize> = Vec::new();
+        res.resize(num, 0);
+        res[0] = min;
+        for i in (1..num) {
+            *(res.get_unchecked_mut(i)) = res.get_unchecked(i - 1) + step;
+        }
+        res
+    }
 }
