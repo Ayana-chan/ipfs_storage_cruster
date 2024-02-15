@@ -1,3 +1,4 @@
+use std::ops::RangeBounds;
 use std::sync::Arc;
 use async_tasks_recorder::*;
 pub use tools::do_async_test;
@@ -35,13 +36,14 @@ pub async fn test_once_fail() {
     check::check_success(&manager, &id, None, Some(100), 60).await;
 }
 
-pub async fn test_basic(task_num: usize, check_time_out: Option<u128>, check_suffix_query_time: u128) {
+pub async fn test_basic(task_num: usize, task_latency_range: impl RangeBounds<u64> + Clone,
+                        check_time_out: Option<u128>, check_suffix_query_time: u128) {
     let manager = AsyncTasksRecoder::new();
 
     let task_id_vec = tools::generate_task_id_vec(task_num);
     let task_id_vec = task_id_vec.into();
 
-    launch::launch_vec(&manager, &task_id_vec, 0..60, 100).await;
+    launch::launch_vec(&manager, &task_id_vec, task_latency_range, 100).await;
     check::check_success_vec(&manager, &task_id_vec, None, check_time_out, check_suffix_query_time).await;
 }
 
@@ -55,7 +57,7 @@ pub async fn test_once_redo() {
                                    13, 100).await;
 }
 
-pub async fn test_random(task_num: usize,
+pub async fn test_random(task_num: usize, task_latency_range: impl RangeBounds<u64> + Clone,
                          check_interval_ms: u64, check_time_out_ms: u128,
                          suffix_query_time: u128, redo_task_latency: u64,
                          task_success_probability: u8) {
@@ -64,7 +66,7 @@ pub async fn test_random(task_num: usize,
     let task_id_vec = tools::generate_task_id_vec(task_num);
     let task_id_vec = task_id_vec.into();
 
-    launch::launch_vec(&manager, &task_id_vec, 2..15, task_success_probability).await;
+    launch::launch_vec(&manager, &task_id_vec, task_latency_range, task_success_probability).await;
     check::check_success_vec_auto_redo(&manager, &task_id_vec,
                                        Some(check_interval_ms), Some(check_time_out_ms),
                                        suffix_query_time, redo_task_latency,
@@ -72,6 +74,7 @@ pub async fn test_random(task_num: usize,
 }
 
 pub async fn test_interleave(group_num: usize, group_size_min: usize, group_size_max: usize,
+                             task_latency_range: impl RangeBounds<u64> + Clone,
                              check_interval_ms: u64, check_time_out_ms: u128,
                              suffix_query_time: u128, redo_task_latency: u64,
                              task_success_probability: u8) {
@@ -97,7 +100,7 @@ pub async fn test_interleave(group_num: usize, group_size_min: usize, group_size
             // launch
             println!("launch group {}, group size: {}, group task_id vec: {:?}", group_id, group_size_vec[group_id], group_task_id_vec[group_id]);
             launch::launch_vec(&manager, &group_task_id_vec[group_id],
-                               2..15, task_success_probability).await;
+                               task_latency_range.clone(), task_success_probability).await;
         } else {
             // check
             println!("check group {}, group size: {}, group task_id vec: {:?}", group_id, group_size_vec[group_id], group_task_id_vec[group_id]);

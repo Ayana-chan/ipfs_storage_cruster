@@ -42,7 +42,7 @@ fn test_once_fail_single() {
 fn test_basic_multi() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_basic(30, None, 200),
+        test_basic(30, 0..60, None, 200),
     );
 }
 
@@ -50,7 +50,7 @@ fn test_basic_multi() {
 fn test_basic_single() {
     do_async_test(
         RuntimeType::CurrentThread,
-        test_basic(5, Some(1500), 100),
+        test_basic(5, 0..60, Some(1500), 100),
     );
 }
 
@@ -74,7 +74,7 @@ fn test_redo_single() {
 fn test_random_multi() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_random(30,
+        test_random(30, 2..15,
                     3, 400,
                     200, 13,
                     60),
@@ -85,7 +85,7 @@ fn test_random_multi() {
 fn test_random_single() {
     do_async_test(
         RuntimeType::CurrentThread,
-        test_random(8,
+        test_random(8, 2..15,
                     3, 600,
                     200, 13,
                     60),
@@ -97,6 +97,7 @@ fn test_interleave_multi() {
     do_async_test(
         RuntimeType::MultiThread,
         test_interleave(30, 2, 5,
+                        2..15,
                         3, 600,
                         200, 13,
                         60),
@@ -108,6 +109,7 @@ fn test_interleave_single() {
     do_async_test(
         RuntimeType::CurrentThread,
         test_interleave(5, 2, 5,
+                        2..15,
                         3, 600,
                         200, 13,
                         60),
@@ -115,10 +117,11 @@ fn test_interleave_single() {
 }
 
 #[test]
-fn test_stress_1() {
+fn test_stress_large_group_num() {
     do_async_test(
         RuntimeType::MultiThread,
         test_interleave(300, 2, 5,
+                        2..15,
                         1, 3000,
                         500, 13,
                         60),
@@ -126,10 +129,11 @@ fn test_stress_1() {
 }
 
 #[test]
-fn test_stress_2() {
+fn test_stress_large_group_size_range() {
     do_async_test(
         RuntimeType::MultiThread,
         test_interleave(20, 10, 80,
+                        2..15,
                         1, 3000,
                         500, 13,
                         60),
