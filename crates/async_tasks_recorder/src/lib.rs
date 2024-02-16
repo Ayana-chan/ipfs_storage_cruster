@@ -1,4 +1,4 @@
-//!
+//! It is recommended to directly look at the source code if there is any confusion.
 //! ## Abstract Model
 //! Here is the three-level structure for thinking about tasks' status:
 //! - Level 0: `real_failed`, `real_working`, `real_success` : **Exact status** of the tasks in the CPU (seen by God).
@@ -19,8 +19,6 @@
 //! 1. If a task's state is `Success`, it must be `real_success`, i.e. $\text{Success}(id) \rightarrow \text{real\_success}(id)$. \
 //! 2. If a task's state is `Failed`, it may be in any status, but mostly `real_failed`. \
 //! 3. If a task's state is `Working`, it may be in any status, but mostly `working`. \
-//! > Relationship between states and containers at [query_task_state](crate::AsyncTasksRecoder::query_task_state).
-//! It is recommended to directly look at the source code.
 //!
 //! ### About Task State Transition
 //! 1. Any task's state can be **queried** at any time, even before the task has been launched. \
@@ -29,6 +27,9 @@
 //! 4. Always, when a task is `Working`, it would eventually be `Fail` or `Success`, i.e. $\Box (\text{Working}(id) \rightarrow \lozenge(\text{Fail}(id) \vee \text{Success}(id)))$. \
 //! 5. Always, when a task is `Success`, it would be `Success` forever, i.e. $\Box (\text{Success}(id) \rightarrow \Box \text{Success}(id))$.
 //!
+//! ### Other
+//! Relationship between states and containers at [query_task_state](crate::AsyncTasksRecoder::query_task_state).
+//! Further propositions and proofs at [AsyncTasksRecoder](crate::AsyncTasksRecoder).
 //!
 
 use std::future::Future;
@@ -51,15 +52,10 @@ pub enum TaskStatus {
     Failed,
 }
 
-/// Safe to clone.
-#[derive(Default, Debug, Clone)]
-pub struct AsyncTasksRecoder {
-    task_manager: Arc<TaskManager>,
-}
-
-//TODO 任何时候都可以重新launch，只不过大部分就可以直接拒绝
+//TODO 添加机制，在success更新的时候能直接拿到，最大开销是每个task一个通道。
 //TODO 如果失败的话，task的拷贝如何复用？甚至有没有可能复用future？
-/// # Propositions & Proofs
+/// Safe to clone.
+/// # Further Propositions & Proofs
 ///
 /// ## P01
 /// **A task (or tasks with the same `task_id`) wouldn't be executed again after one success.** \
@@ -100,6 +96,11 @@ pub struct AsyncTasksRecoder {
 /// ## P02
 /// **Task failure is not harmful, and the related operations have been well optimized** \
 /// `failed task` is only for optimizing the failure judgment. TODO proof
+#[derive(Default, Debug, Clone)]
+pub struct AsyncTasksRecoder {
+    task_manager: Arc<TaskManager>,
+}
+
 impl AsyncTasksRecoder {
     pub fn new() -> Self {
         AsyncTasksRecoder {
