@@ -1,4 +1,5 @@
 //! It is recommended to directly look at the source code if there is any confusion.
+//!
 //! ## Abstract Model
 //! Here is the three-level structure for thinking about tasks' status:
 //! - Level 0: `real_failed`, `real_working`, `real_success` : **Exact status** of the tasks in the CPU (seen by God).
@@ -10,25 +11,26 @@
 //!
 //! ## Usage & Nature
 //! ### About Task
-//! 1. A task is **launched** by passing a `Future<Output=Result<R, E>>` with unique `task_id`. \
-//! 2. A task is `real_success` when return `Ok(R)`, and `real_failed` when return `Err(E)`. \
-//! 3. Different future with **the same `task_id`** is considered **the same task**. \
+//! 1. A task is **launched** by passing a `Future<Output=Result<R, E>>` with unique `task_id`.
+//! 2. A task is `real_success` when return `Ok(R)`, and `real_failed` when return `Err(E)`.
+//! 3. Different future with **the same `task_id`** is considered **the same task**.
 //! 4. The same task **can only `real_success` once**, e.g. a purchase process would never succeed more then once by launching with unique process id as `task_id`.
 //!
 //! ### About Task State
-//! 1. If a task's state is `Success`, it must be `real_success`, i.e. $\text{Success}(id) \rightarrow \text{real\_success}(id)$. \
-//! 2. If a task's state is `Failed`, it may be in any status, but mostly `real_failed`. \
-//! 3. If a task's state is `Working`, it may be in any status, but mostly `working`. \
+//! 1. If a task's state is `Success`, it must be `real_success`, i.e. $\text{Success}(id) \rightarrow \text{real\_success}(id)$.
+//! 2. If a task's state is `Failed`, it may be in any status, but mostly `real_failed`.
+//! 3. If a task's state is `Working`, it may be in any status, but mostly `working`.
 //!
 //! ### About Task State Transition
-//! 1. Any task's state can be **queried** at any time, even before the task has been launched. \
-//! 2. The initial state of the task is `Failed`. \
-//! 3. Always, when launch a task whose state is `Failed`, it will be `Working` at some future moment. \
-//! 4. Always, when a task is `Working`, it would eventually be `Fail` or `Success`, i.e. $\Box (\text{Working}(id) \rightarrow \lozenge(\text{Fail}(id) \vee \text{Success}(id)))$. \
+//! 1. Any task's state can be **queried** at any time, even before the task has been launched.
+//! 2. The initial state of the task is `Failed`.
+//! 3. Always, when launch a task whose state is `Failed`, it will be `Working` at some future moment.
+//! 4. Always, when a task is `Working`, it would eventually be `Fail` or `Success`, i.e. $\Box (\text{Working}(id) \rightarrow \lozenge(\text{Fail}(id) \vee \text{Success}(id)))$.
 //! 5. Always, when a task is `Success`, it would be `Success` forever, i.e. $\Box (\text{Success}(id) \rightarrow \Box \text{Success}(id))$.
 //!
 //! ### Other
 //! Relationship between states and containers at [query_task_state](crate::AsyncTasksRecoder::query_task_state).
+//!
 //! Further propositions and proofs at [AsyncTasksRecoder](crate::AsyncTasksRecoder).
 //!
 
@@ -58,20 +60,23 @@ pub enum TaskStatus {
 /// # Further Propositions & Proofs
 ///
 /// ## P01
-/// **A task (or tasks with the same `task_id`) wouldn't be executed again after one success.** \
+/// **A task (or tasks with the same `task_id`) wouldn't be executed again after one success.**
 ///
 /// When a task fail, it wouldn't break anything. Failure just means the task could be launched again,
 /// so if this proposition (**P01**) is true, there is almost nothing to worry about.
-/// For further discussion, please refer to **P02**. \
+/// For further discussion, please refer to **P02**.
+///
+/// From now on, only consider the situation of success.
 ///
 /// `working_tasks` play the role of lock,
 /// which allow tasks with the same `task_id` to execute remaining codes (after `insert` & before `remove`) only once.
 /// And before `remove` from `working_tasks`, the succeeded `task_id` has been in `success_tasks`.
 ///
-/// In the case of success alone, an equivalent pseudocode can be obtained \
-/// - `working_tasks` become a **mutex** for one `task_id`. \
-/// - `success_tasks` become an atomic boolean, which can only change from false to true. \
+/// An equivalent pseudocode can be obtained.
+/// - `working_tasks` become a **mutex** for one `task_id`.
+/// - `success_tasks` become an atomic boolean, which can only change from false to true.
 /// - An execution of a task becomes adding on an atomic int (`count`).
+///
 /// Therefore, if the `count` is never greater than 1, it means that the task will only be called once.
 ///
 /// ```not_rust
@@ -94,7 +99,8 @@ pub enum TaskStatus {
 /// This results in `count.add(1)` being called only once, too. Q.E.D.
 ///
 /// ## P02
-/// **Task failure is not harmful, and the related operations have been well optimized** \
+/// **Task failure is not harmful, and the related operations have been well optimized.**
+///
 /// `failed task` is only for optimizing the failure judgment. TODO proof
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder {
