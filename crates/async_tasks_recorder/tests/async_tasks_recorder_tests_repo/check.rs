@@ -23,7 +23,7 @@ pub async fn check_success(manager: &AsyncTasksRecoder, task_id: &str,
             panic!("Timeout before success. task_id: {:?}", task_id);
         }
 
-        task_status = manager.get_task_status(task_id).await;
+        task_status = manager.query_task_state(task_id).await;
         if task_status == TaskStatus::Success {
             println!("success {}, used time: {}", task_id, start_time.elapsed().as_millis());
             break;
@@ -43,7 +43,7 @@ pub async fn check_success(manager: &AsyncTasksRecoder, task_id: &str,
             break;
         }
 
-        task_status = manager.get_task_status(task_id).await;
+        task_status = manager.query_task_state(task_id).await;
         if task_status != TaskStatus::Success {
             panic!("Task {} change from success to {:?}", task_id, task_status);
         }
@@ -72,7 +72,7 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
             panic!("Timeout before success. task_id: {:?}", task_id);
         }
 
-        task_status = manager.get_task_status(task_id).await;
+        task_status = manager.query_task_state(task_id).await;
         match task_status {
             TaskStatus::Success => {
                 println!("success {}, used time: {}", task_id, start_time.elapsed().as_millis());
@@ -101,7 +101,7 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
             break;
         }
 
-        task_status = manager.get_task_status(task_id).await;
+        task_status = manager.query_task_state(task_id).await;
         if task_status != TaskStatus::Success {
             panic!("Task {} change from success to {:?}", task_id, task_status);
         }

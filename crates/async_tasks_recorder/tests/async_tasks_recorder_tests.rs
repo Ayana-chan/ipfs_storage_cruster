@@ -1,3 +1,5 @@
+//! Passed in CPU i7-11800H (8 core 16 thread).
+
 #[allow(unused_imports)]
 use async_tasks_recorder::*;
 use async_tasks_recorder_tests_repo::*;

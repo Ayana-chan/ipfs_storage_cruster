@@ -1,4 +1,35 @@
-//! `failed` <---> `working` ----> `success`
+//!
+//! ## Abstract Model
+//! Here is the three-level structure for thinking about tasks' status:
+//! - Level 0: `real_failed`, `real_working`, `real_success` : **Exact status** of the tasks in the CPU (seen by God).
+//! - Level 1: `failed_tasks`, `working_tasks`, `success_tasks` : **Containers** to store `task_id`s (a `task_id` can be stored in 0 to 2 containers simultaneously).
+//! - Level 2: `Failed`, `Working`, `Success` : **States** of the task that could be obtained by `query_task_state`.
+//!
+//! ## State Transition Diagram
+//! `Failed` \<\-\-\-\> `Working` \-\-\-\-\> `Success`
+//!
+//! ## Usage & Nature
+//! ### About Task
+//! 1. A task is **launched** by passing a `Future<Output=Result<R, E>>` with unique `task_id`. \
+//! 2. A task is `real_success` when return `Ok(R)`, and `real_failed` when return `Err(E)`. \
+//! 3. Different future with **the same `task_id`** is considered **the same task**. \
+//! 4. The same task **can only `real_success` once**, e.g. a purchase process would never succeed more then once by launching with unique process id as `task_id`.
+//!
+//! ### About Task State
+//! 1. If a task's state is `Success`, it must be `real_success`, i.e. $\text{Success}(id) \rightarrow \text{real\_success}(id)$. \
+//! 2. If a task's state is `Failed`, it may be in any status, but mostly `real_failed`. \
+//! 3. If a task's state is `Working`, it may be in any status, but mostly `working`. \
+//! > Relationship between states and containers at [query_task_state](crate::AsyncTasksRecoder::query_task_state).
+//! It is recommended to directly look at the source code.
+//!
+//! ### About Task State Transition
+//! 1. Any task's state can be **queried** at any time, even before the task has been launched. \
+//! 2. The initial state of the task is `Failed`. \
+//! 3. Always, when launch a task whose state is `Failed`, it will be `Working` at some future moment. \
+//! 4. Always, when a task is `Working`, it would eventually be `Fail` or `Success`, i.e. $\Box (\text{Working}(id) \rightarrow \lozenge(\text{Fail}(id) \vee \text{Success}(id)))$. \
+//! 5. Always, when a task is `Success`, it would be `Success` forever, i.e. $\Box (\text{Success}(id) \rightarrow \Box \text{Success}(id))$.
+//!
+//!
 
 use std::future::Future;
 use std::sync::Arc;
@@ -28,7 +59,7 @@ pub struct AsyncTasksRecoder {
 
 //TODO 任何时候都可以重新launch，只不过大部分就可以直接拒绝
 //TODO 如果失败的话，task的拷贝如何复用？甚至有没有可能复用future？
-/// # Proof
+/// # Propositions & Proofs
 ///
 /// ## P01
 /// **A task (or tasks with the same `task_id`) wouldn't be executed again after one success.** \
@@ -116,9 +147,10 @@ impl AsyncTasksRecoder {
         });
     }
 
-    /// success_tasks -> failed_tasks -> working_tasks
+    // TODO 判断命题
+    /// Priority: success_tasks -> failed_tasks -> working_tasks. \
     /// If not found in all tasks, be `Failed`.
-    pub async fn get_task_status(&self, cid: &str) -> TaskStatus {
+    pub async fn query_task_state(&self, cid: &str) -> TaskStatus {
         if self.task_manager.success_tasks.contains_async(cid).await {
             return TaskStatus::Success;
         }
