@@ -1,9 +1,10 @@
 //! # Introduction
 //!
 //! A struct to record async tasks' execution status with lock-free and async methods.
+//! Can host `Future`s and query whether they are successful, failed, or running.
 //!
 //! Use this crate if:
-//! - Easy to generate an **unique** `task_id` for a future (task).
+//! - Easy to generate an **unique** `task_id` (not necessarily be `String`) for a future (task).
 //! - Tasks might fail, and then you want to run it again, while you don't want it to success more then once.
 //! - Want to record and query all succeeded tasks and failed tasks.
 //!
@@ -199,7 +200,10 @@ impl<T> AsyncTasksRecoder<T>
         }
     }
 
-    /// Launch task.
+    /// Launch task that returns `Result`.
+    ///
+    /// The return value of task is ignored, so please use other methods to handle the return value,
+    /// such as channel or shared variable.
     ///
     /// - `task_id`: Uniquely mark a task. Different `Future` with **the same `task_id`** is considered **the same task**.
     /// - `task`: A `Future` to be executed automatically.
