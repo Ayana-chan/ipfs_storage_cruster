@@ -1,4 +1,15 @@
-//! It is recommended to directly look at the source code if there is any confusion.
+//! # Introduction
+//!
+//! > It is recommended to directly look at the source code if there is any confusion.
+//!
+//! # Usage
+//!
+//! Launch a task with a **unique** `task_id` and a `Future` by [launch](AsyncTasksRecoder::launch).
+//!
+//! Query the state of the task with its `task_id`
+//! by [query_task_state](AsyncTasksRecoder::query_task_state) or [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick).
+//!
+//! # Theory & Design
 //!
 //! ## Abstract Model
 //! Here is the three-level structure for thinking about tasks' status:
@@ -9,7 +20,7 @@
 //! ## State Transition Diagram
 //! `Failed` \<\-\-\-\> `Working` \-\-\-\-\> `Success`
 //!
-//! ## Usage & Nature
+//! ## Nature
 //! ### About Task
 //! 1. A task is **launched** by passing a `Future<Output=Result<R, E>>` with unique `task_id`.
 //! 2. A task is `real_success` when return `Ok(R)`, and `real_failed` when return `Err(E)`.
@@ -29,10 +40,18 @@
 //! 5. Always, when a task is `Success`, it would be `Success` forever, i.e. $\Box (\text{Success}(id) \rightarrow \Box \text{Success}(id))$.
 //!
 //! ### Other
-//! Relationship between states and containers at [query_task_state](crate::AsyncTasksRecoder::query_task_state).
+//! Relationship between states and containers at [query_task_state](AsyncTasksRecoder::query_task_state).
 //!
-//! Further propositions and proofs at [AsyncTasksRecoder](crate::AsyncTasksRecoder).
+//! Further propositions and proofs at [AsyncTasksRecoder](AsyncTasksRecoder).
 //!
+//! Use [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick) for less contention.
+//!
+
+// TODO Arc化String
+//TODO redo example
+//TODO 添加机制，在success更新的时候能直接拿到，最大开销是每个task一个通道。
+//TODO 如果失败的话，task的拷贝如何复用？甚至有没有可能复用future？
+// TODO 超时机制
 
 use std::future::Future;
 use std::sync::Arc;
@@ -54,9 +73,15 @@ pub enum TaskStatus {
     Failed,
 }
 
-//TODO 添加机制，在success更新的时候能直接拿到，最大开销是每个task一个通道。
-//TODO 如果失败的话，task的拷贝如何复用？甚至有没有可能复用future？
-/// Safe to clone.
+/// Arc was used internally, so after `clone`, the same `TaskManager` was used.
+///
+/// # Usage
+///
+/// Launch a task with a **unique** `task_id` and a `Future` by [launch](AsyncTasksRecoder::launch).
+///
+/// Query the state of the task with its `task_id`
+/// by [query_task_state](AsyncTasksRecoder::query_task_state) or [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick).
+///
 /// # Further Propositions & Proofs
 ///
 /// ## P01
@@ -102,7 +127,7 @@ pub enum TaskStatus {
 /// ## P02
 /// **Task failure is not harmful, and the related operations have been well optimized.**
 ///
-/// `failed task` is only for optimizing the failure judgment. TODO proof TODO redo example TODO channel for success
+/// `failed task` is only for optimizing the failure judgment.
 ///
 /// Considering the situation of failure, the pseudocode becomes like this:
 ///
@@ -133,9 +158,7 @@ pub enum TaskStatus {
 /// In a launch (critical section by `working_tasks`), the initial value of failed is ignored.
 /// Therefore, it's not important whether `failed_tasks` changes are atomic for launches.
 ///
-/// the task_id become in or not in `failed_tasks`,
-/// which is atomized by `working_tasks`.
-/// And
+///
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder {
     task_manager: Arc<TaskManager>,
@@ -189,7 +212,7 @@ impl AsyncTasksRecoder {
 
     /// Query the state of a task by `task_id`.
     ///
-    /// Container Priority: `success_tasks` -> `failed_tasks` -> `working_tasks`.
+    /// Query priority of containers : `success_tasks` -> `failed_tasks` -> `working_tasks`.
     ///
     /// **NOTE**: `working_tasks` usually has large contention.
     ///
@@ -211,11 +234,15 @@ impl AsyncTasksRecoder {
         TaskStatus::Failed
     }
 
-    /// Return `TaskStatus::Working` if not in either `success_tasks` or `failed_tasks`.
+    /// Return `Working` if not in either `success_tasks` or `failed_tasks`.
+    ///
     /// No query in `working_tasks`, so less contention.
     ///
-    /// Use it if you are certain that its launch must occur at some point in the past or future,
-    /// and don't care about when the launch occurs.
+    /// Even when the `task_id`'s launch have not occurred, return `Working`.
+    ///
+    /// Use this if you are certain that the task's launch must occur at some point in the past or future,
+    /// and don't care about when the launch occurs
+    /// (because first launch always turns into `Working` at some point).
     pub async fn query_task_state_quick(&self, task_id: &str) -> TaskStatus {
         if self.task_manager.success_tasks.contains_async(task_id).await {
             return TaskStatus::Success;
