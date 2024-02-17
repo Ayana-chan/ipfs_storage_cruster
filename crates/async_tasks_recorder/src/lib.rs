@@ -60,7 +60,7 @@ pub enum TaskStatus {
 /// # Further Propositions & Proofs
 ///
 /// ## P01
-/// **A task (or tasks with the same `task_id`) wouldn't be executed again after one success.**
+/// **A task (or tasks with the same `task_id`) wouldn't be executed again after first success.**
 ///
 /// When a task fail, it wouldn't break anything. Failure just means the task could be launched again,
 /// so if this proposition (**P01**) is true, there is almost nothing to worry about.
@@ -101,7 +101,7 @@ pub enum TaskStatus {
 /// ## P02
 /// **Task failure is not harmful, and the related operations have been well optimized.**
 ///
-/// `failed task` is only for optimizing the failure judgment. TODO proof TODO redo example
+/// `failed task` is only for optimizing the failure judgment. TODO proof TODO redo example TODO channel for success
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder {
     task_manager: Arc<TaskManager>,
@@ -115,12 +115,14 @@ impl AsyncTasksRecoder {
     }
 
     /// Launch task.
-    /// `task`: an async closure to add pin (truly interact with IPFS without modifying manager).
+    ///
+    /// - `task_id`: Uniquely mark a task. Different `Future` with **the same `task_id`** is considered **the same task**.
+    /// - `task`: A `Future` to be executed automatically.
     pub async fn launch<Fut, R, E>(&self, task_id: String, task: Fut)
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
               E: Send {
-        // insert working -> check success -> remove failed -> work -> insert success -> remove working
+        // insert working -> check success -> remove failed -> work -> insert success/failed -> remove working
         // `working_tasks` play the role of lock
         let res = self.task_manager.working_tasks.insert_async(task_id.clone()).await;
         if res.is_err() {
@@ -152,27 +154,29 @@ impl AsyncTasksRecoder {
         });
     }
 
-    // TODO 判断命题
-    /// Priority: success_tasks -> failed_tasks -> working_tasks. \
+    /// Query the state of a task by `task_id`.
+    ///
+    /// Container Priority: `success_tasks` -> `failed_tasks` -> `working_tasks`.
+    ///
     /// If not found in all tasks, be `Failed`.
-    pub async fn query_task_state(&self, cid: &str) -> TaskStatus {
-        if self.task_manager.success_tasks.contains_async(cid).await {
+    pub async fn query_task_state(&self, task_id: &str) -> TaskStatus {
+        if self.task_manager.success_tasks.contains_async(task_id).await {
             return TaskStatus::Success;
         }
 
-        if self.task_manager.failed_tasks.contains_async(cid).await {
+        if self.task_manager.failed_tasks.contains_async(task_id).await {
             return TaskStatus::Failed;
         }
 
-        if self.task_manager.working_tasks.contains_async(cid).await {
+        if self.task_manager.working_tasks.contains_async(task_id).await {
             return TaskStatus::Working;
         }
 
         TaskStatus::Failed
     }
 
-    /// Get a cloned `Arc` of `task_manager`. Then you can do anything you want.
-    pub fn get_task_manager(&self) -> Arc<TaskManager> {
+    /// Get a cloned `Arc` of `task_manager`. Then you can do anything you want. Usually not used.
+    pub fn get_raw_task_manager(&self) -> Arc<TaskManager> {
         self.task_manager.clone()
     }
 }
