@@ -125,9 +125,7 @@ pub enum TaskStatus {
 /// This results in `count.add(1)` being called only once, too. Q.E.D.
 ///
 /// ## P02
-/// **Task failure is not harmful, and the related operations have been well optimized.**
-///
-/// `failed task` is only for optimizing the failure judgment.
+/// **Task failure is not harmful for recorder, and the related operations have been well optimized.**
 ///
 /// Considering the situation of failure, the pseudocode becomes like this:
 ///
@@ -158,6 +156,20 @@ pub enum TaskStatus {
 /// In a launch (critical section by `working_tasks`), the initial value of failed is ignored.
 /// Therefore, it's not important whether `failed_tasks` changes are atomic for launches.
 ///
+/// From the perspective of `query_task_state`,
+/// `failed_tasks` is only meaningful when `task_id` is in it.
+///
+/// `task_id` is in `failed_tasks` only when it become `real_failed` and before redo (next `real_working`).
+/// Very good.
+///
+/// ## P03
+/// **`failed_tasks` is only for optimizing the failure judgment.**
+///
+/// If there is no `failed_tasks`, and a `task_id` is deleted from all containers if it's failed,
+/// what would happen?
+///
+/// Answer: I have to query `working_tasks` to know it's failed everytime, even no next launch.
+/// It cause great contention.
 ///
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder {
@@ -165,6 +177,7 @@ pub struct AsyncTasksRecoder {
 }
 
 impl AsyncTasksRecoder {
+    /// Create a completely new `AsyncTasksRecoder`.
     pub fn new() -> Self {
         AsyncTasksRecoder {
             task_manager: TaskManager::default().into()
