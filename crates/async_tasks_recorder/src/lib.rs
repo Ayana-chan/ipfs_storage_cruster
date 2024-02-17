@@ -1,5 +1,12 @@
 //! # Introduction
 //!
+//! A struct to record async tasks' execution status with lock-free and async methods.
+//!
+//! Use this crate if:
+//! - Easy to generate an **unique** `task_id` for a future (task).
+//! - Tasks might fail, and then you want to run it again, while you don't want it to success more then once.
+//! - Want to record and query all succeeded tasks and failed tasks.
+//!
 //! > It is recommended to directly look at the source code if there is any confusion.
 //!
 //! # Usage
@@ -48,10 +55,7 @@
 //!
 
 // TODO Arc化String
-//TODO redo example
-//TODO 添加机制，在success更新的时候能直接拿到，最大开销是每个task一个通道。
-//TODO 如果失败的话，task的拷贝如何复用？甚至有没有可能复用future？
-// TODO 超时机制
+// TODO 添加机制，在success更新的时候能直接拿到，最大开销是每个task一个通道。
 
 use std::future::Future;
 use std::sync::Arc;
@@ -268,7 +272,10 @@ impl AsyncTasksRecoder {
         TaskStatus::Working
     }
 
-    /// Get a cloned `Arc` of `task_manager`. Then you can do anything you want. Usually not used.
+    /// Get a cloned `Arc` of `task_manager`.
+    /// Then you can do anything you want (Every containers are public).
+    ///
+    /// Usually not used.
     pub fn get_raw_task_manager(&self) -> Arc<TaskManager> {
         self.task_manager.clone()
     }
