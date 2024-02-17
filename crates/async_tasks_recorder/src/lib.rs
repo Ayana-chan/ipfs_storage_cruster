@@ -19,7 +19,7 @@
 //! ### About Task State
 //! 1. If a task's state is `Success`, it must be `real_success`, i.e. $\text{Success}(id) \rightarrow \text{real\_success}(id)$.
 //! 2. If a task's state is `Failed`, it may be in any status, but mostly `real_failed`.
-//! 3. If a task's state is `Working`, it may be in any status, but mostly `working`.
+//! 3. If a task's state is `Working`, it may be in any status, but mostly `real_working`.
 //!
 //! ### About Task State Transition
 //! 1. Any task's state can be **queried** at any time, even before the task has been launched.

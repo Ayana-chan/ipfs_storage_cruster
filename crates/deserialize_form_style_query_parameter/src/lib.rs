@@ -90,27 +90,34 @@
 //! # Provided Functions
 //!
 //! ## `fn form_vec_deserialize`
-//! A deserialize function for `Vec<T: FromStr>`. \
-//! Add `#[serde(deserialize_with = "form_vec_deserialize")]` above field to enable. \
+//! A deserialize function for `Vec<T: FromStr>`.
+//!
+//! Add `#[serde(deserialize_with = "form_vec_deserialize")]` above field to enable.
+//!
 //! This function use struct `FormVecVisitor` to deserialize,
 //! which only accept string, and split it into a `Vec<String>` by ','.
 //! Then execute `T::from_str(s).ok()` for every items (**illegal items will be discarded**).
 //!
 //! ## `fn option_form_vec_deserialize`
-//! A deserialize function for `Option<Vec<T: FromStr>>`. \
+//! A deserialize function for `Option<Vec<T: FromStr>>`.
+//!
 //! Add `#[serde(deserialize_with = "form_vec_deserialize", default)]` above field to enable.
-//! The `default` means this field would be `None` if its value is **not present**. \
+//! The `default` means this field would be `None` if its value is **not present**.
+//!
 //! More details about **serde's field attributes**: [serde.rs field-attrs](https://serde.rs/field-attrs.html).
 //!
 //! ## `fn pure_from_str`
-//! A deserialize function for `T: FromStr`. \
-//! Add `#[serde(deserialize_with = "pure_from_str")]` above field to enable. \
+//! A deserialize function for `T: FromStr`.
+//!
+//! Add `#[serde(deserialize_with = "pure_from_str")]` above field to enable.
+//!
 //! This function use struct `PureFromStrVisitor` to deserialize,
 //! which only accept string, and just call `T::from_str`.
 //! An error would be thrown when `T::from_str` failed.
 //!
 //! ## `fn option_pure_from_str`
-//! A deserialize function for `Option<T: FromStr>`. \
+//! A deserialize function for `Option<T: FromStr>`.
+//!
 //! Add `#[serde(deserialize_with = "option_pure_from_str", default)]` above field to enable.
 //! The `default` means this field would be `None` if its value is **not present**.
 //!
@@ -166,15 +173,18 @@
 //! ## Why bug
 //! In [axum::extract::Query source code](https://docs.rs/axum/latest/src/axum/extract/query.rs.html),
 //! we found that the `from_request_parts` use `serde_urlencoded::from_str` to deserialize query parameters.
-//! This crate is not powerful enough to deserialize complex query parameters. \
+//! This crate is not powerful enough to deserialize complex query parameters.
+//!
 //! After replacing `serde_urlencoded` with `serde_qs`, which claiming to be skilled in handling query parameters,
 //! nothing changed. Crate `serde_qs` only support array like`arr[]=55&arr[]=66` and `arr[0]=55&arr[1]=66`.
-//! This might be an [unresolved bug](https://github.com/samscott89/serde_qs/issues/83). \
+//! This might be an [unresolved bug](https://github.com/samscott89/serde_qs/issues/83).
+//!
 //! Very similarly, both of them can't recognize form style object.
 //!
 //! ## Why this crate works
 //! Luckily, both `serde_urlencoded::from_str` and `serde_qs::from_str`
-//! recognize form style arrays and objects as Strings, and then execute their deserialize functions. \
+//! recognize form style arrays and objects as Strings, and then execute their deserialize functions.
+//!
 //! So this crate provide some deserialize functions, and user could use `deserialize_with`
 //! to enable them.
 //!
