@@ -7,6 +7,10 @@
 //! - Tasks might fail, and then you want to run it again, while you don't want it to success more then once.
 //! - Want to record and query all succeeded tasks and failed tasks.
 //!
+//! And the type of `task_id` should be:
+//! - Eq + Hash + Clone + Send + Sync + 'static
+//! - Cheap to clone.
+//!
 //! > It is recommended to directly look at the source code if there is any confusion.
 //!
 //! # Usage
@@ -54,7 +58,6 @@
 //! Use [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick) for less contention.
 //!
 
-// TODO Arc化String
 // TODO 添加机制，在success更新的时候能直接拿到，最大开销是每个task一个通道。
 
 use std::future::Future;
