@@ -73,27 +73,28 @@ pub enum TaskStatus {
 /// And before `remove` from `working_tasks`, the succeeded `task_id` has been in `success_tasks`.
 ///
 /// An equivalent pseudocode can be obtained.
-/// - `working_tasks` become a **mutex** for one `task_id`.
+/// - `working_tasks` become a **mutex** (maybe a **spin lock**) for one `task_id`.
 /// - `success_tasks` become an atomic boolean, which can only change from false to true.
 /// - An execution of a task becomes adding on an atomic int (`count`).
 ///
 /// Therefore, if the `count` is never greater than 1, it means that the task will only be called once.
 ///
 /// ```not_rust
-/// let working_tasks = mutex::new();
-/// let success_tasks = atomic(false);
+/// let working_task_id = mutex::new();
+/// let success_task_id = atomic(false);
 /// let count = atomic(0);
-/// loop_multi_thread {
-///     working_tasks.lock();
-///     if success_tasks.get() {
+/// launch_multi_thread {
+///     working_task_id.lock();
+///     if success_task_id.get() {
 ///         exit();
 ///     }
 ///     count.add(1);
-///     success_tasks.set(true);
-///     working_tasks.unlock();
+///     success_task_id.set(true);
+///     working_task_id.unlock();
 /// }
 /// assert_eq!(count.get(), 1);
 /// ```
+///
 /// Obviously, `success_tasks.set(true)` can only be executed once.
 /// After that, `exit()` is always called.
 /// This results in `count.add(1)` being called only once, too. Q.E.D.
@@ -102,6 +103,39 @@ pub enum TaskStatus {
 /// **Task failure is not harmful, and the related operations have been well optimized.**
 ///
 /// `failed task` is only for optimizing the failure judgment. TODO proof TODO redo example TODO channel for success
+///
+/// Considering the situation of failure, the pseudocode becomes like this:
+///
+/// ```not_rust
+/// let working_task_id = mutex::new();
+/// let success_task_id = atomic(false);
+/// let failed_task_id = atomic(false); // Initially not in `failed_tasks`, but not important
+/// let count = atomic(0);
+/// launch_multi_thread {
+///     working_task_id.lock();
+///     if success_task_id.get() {
+///         exit();
+///     }
+///     // Here should be `real_working`
+///     failed_task_id.set(false); // So it shouldn't be `Failed`, just remove from `failed_tasks`
+///     count.add(1);
+///     if real_success {
+///         success_task_id.set(true);
+///     } else {
+///         // `real_failed`
+///         failed_task_id.set(true); // Become `Failed`
+///     }
+///     working_task_id.unlock();
+/// }
+/// assert_eq!(count.get(), 1);
+/// ```
+///
+/// In a launch (critical section by `working_tasks`), the initial value of failed is ignored.
+/// Therefore, it's not important whether `failed_tasks` changes are atomic for launches.
+///
+/// the task_id become in or not in `failed_tasks`,
+/// which is atomized by `working_tasks`.
+/// And
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder {
     task_manager: Arc<TaskManager>,
@@ -147,7 +181,6 @@ impl AsyncTasksRecoder {
                 let _ = task_manager.success_tasks.insert_async(task_id.clone()).await;
                 task_manager.working_tasks.remove_async(&task_id).await;
             } else {
-                // more contention or more memory copy?
                 let _ = task_manager.failed_tasks.insert_async(task_id.clone()).await;
                 task_manager.working_tasks.remove_async(&task_id).await;
             }
@@ -158,7 +191,10 @@ impl AsyncTasksRecoder {
     ///
     /// Container Priority: `success_tasks` -> `failed_tasks` -> `working_tasks`.
     ///
+    /// **NOTE**: `working_tasks` usually has large contention.
+    ///
     /// If not found in all tasks, be `Failed`.
+    /// Only occurs before the launch or in a very short period of time after the first launch.
     pub async fn query_task_state(&self, task_id: &str) -> TaskStatus {
         if self.task_manager.success_tasks.contains_async(task_id).await {
             return TaskStatus::Success;
@@ -173,6 +209,23 @@ impl AsyncTasksRecoder {
         }
 
         TaskStatus::Failed
+    }
+
+    /// Return `TaskStatus::Working` if not in either `success_tasks` or `failed_tasks`.
+    /// No query in `working_tasks`, so less contention.
+    ///
+    /// Use it if you are certain that its launch must occur at some point in the past or future,
+    /// and don't care about when the launch occurs.
+    pub async fn query_task_state_quick(&self, task_id: &str) -> TaskStatus {
+        if self.task_manager.success_tasks.contains_async(task_id).await {
+            return TaskStatus::Success;
+        }
+
+        if self.task_manager.failed_tasks.contains_async(task_id).await {
+            return TaskStatus::Failed;
+        }
+
+        TaskStatus::Working
     }
 
     /// Get a cloned `Arc` of `task_manager`. Then you can do anything you want. Usually not used.
