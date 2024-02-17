@@ -63,8 +63,8 @@ use std::sync::Arc;
 
 /// Thread-safe.
 #[derive(Default, Debug)]
-pub struct TaskManager<T = String>
-    where T: Eq + Hash + Clone + Send + Sync + 'static {
+pub struct TaskManager<T>
+    where T: Eq + Hash {
     /// hot
     pub working_tasks: scc::HashSet<T>,
     pub success_tasks: scc::HashSet<T>,
@@ -243,6 +243,8 @@ impl<T> AsyncTasksRecoder<T>
     ///
     /// If not found in all tasks, be `Failed`.
     /// Only occurs before the launch or in a very short period of time after the first launch.
+    ///
+    /// Note, if `T` is `String`, then argument `task_id` is `&String` instead of `&str`.
     pub async fn query_task_state(&self, task_id: &T) -> TaskStatus {
         if self.task_manager.success_tasks.contains_async(task_id).await {
             return TaskStatus::Success;
