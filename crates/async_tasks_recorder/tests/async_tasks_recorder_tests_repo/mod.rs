@@ -23,7 +23,7 @@ pub async fn test_once() {
     let mut task_id_generator = tools::get_task_id_generator();
 
     let id = task_id_generator();
-    manager.launch(&id, task::success_task(13, id.clone())).await;
+    manager.launch(id.clone(), task::success_task(13, id.clone())).await;
     check::check_success(&manager, &id, None, None, 60).await;
 }
 
@@ -32,7 +32,7 @@ pub async fn test_once_fail() {
     let mut task_id_generator = tools::get_task_id_generator();
 
     let id = task_id_generator();
-    manager.launch(&id, task::fail_task(13, id.clone())).await;
+    manager.launch(id.clone(), task::fail_task(13, id.clone())).await;
     check::check_success(&manager, &id, None, Some(100), 60).await;
 }
 
@@ -52,7 +52,7 @@ pub async fn test_once_redo() {
     let mut task_id_generator = tools::get_task_id_generator();
 
     let id = task_id_generator();
-    manager.launch(&id, task::fail_task(13, id.clone())).await;
+    manager.launch(id.clone(), task::fail_task(13, id.clone())).await;
     check::check_success_auto_redo(&manager, &id, None, Some(100), 200,
                                    13, 100).await;
 }

@@ -82,7 +82,7 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
                 // redo
                 println!("redo {}", task_id);
                 let task = random_task(redo_task_latency, redo_task_success_probability, task_id.to_string());
-                manager.launch(task_id, task).await;
+                manager.launch(task_id.to_string(), task).await;
             }
             TaskStatus::Working => {}
         }

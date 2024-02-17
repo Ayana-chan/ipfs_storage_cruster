@@ -18,7 +18,7 @@ pub async fn launch_vec<Range>(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Ve
         // println!("spawn launch: {} latency: {}", mapped_index, latency);
         let task = random_task(latency, task_success_probability, task_id.clone());
         let fut = async move {
-            manager_backup.launch(&task_id,
+            manager_backup.launch(task_id,
                                   task).await;
         };
         tokio::spawn(fut);

@@ -101,7 +101,7 @@ pub enum TaskStatus {
 /// ## P02
 /// **Task failure is not harmful, and the related operations have been well optimized.**
 ///
-/// `failed task` is only for optimizing the failure judgment. TODO proof
+/// `failed task` is only for optimizing the failure judgment. TODO proof TODO redo example
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder {
     task_manager: Arc<TaskManager>,
@@ -114,42 +114,40 @@ impl AsyncTasksRecoder {
         }
     }
 
-    /// Launch task. \ TODO redo
+    /// Launch task.
     /// `task`: an async closure to add pin (truly interact with IPFS without modifying manager).
-    pub async fn launch<Fut, R, E>(&self, task_id: &str, task: Fut)
+    pub async fn launch<Fut, R, E>(&self, task_id: String, task: Fut)
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
               E: Send {
         // insert working -> check success -> remove failed -> work -> insert success -> remove working
         // `working_tasks` play the role of lock
-        let res = self.task_manager.working_tasks.insert_async(task_id.to_string()).await;
+        let res = self.task_manager.working_tasks.insert_async(task_id.clone()).await;
         if res.is_err() {
             // on working
             return;
         }
         // modify status
-        if self.task_manager.success_tasks.contains_async(task_id).await {
+        if self.task_manager.success_tasks.contains_async(&task_id).await {
             // succeeded
             return;
         }
         // remove from `failed_tasks` if contained
-        self.task_manager.failed_tasks.remove_async(task_id).await;
+        self.task_manager.failed_tasks.remove_async(&task_id).await;
 
         // adjust args
         let task_manager = self.task_manager.clone();
-        let cid = task_id.to_string();
 
         // start
         let _task = tokio::spawn(async move {
             let add_pin_res = task.await;
-            // TODO 优化这里的string clone
             if add_pin_res.is_ok() {
-                let _ = task_manager.success_tasks.insert_async(cid.clone()).await;
-                task_manager.working_tasks.remove_async(&cid).await;
+                let _ = task_manager.success_tasks.insert_async(task_id.clone()).await;
+                task_manager.working_tasks.remove_async(&task_id).await;
             } else {
                 // more contention or more memory copy?
-                task_manager.working_tasks.remove_async(&cid).await;
-                let _ = task_manager.failed_tasks.insert_async(cid).await;
+                let _ = task_manager.failed_tasks.insert_async(task_id.clone()).await;
+                task_manager.working_tasks.remove_async(&task_id).await;
             }
         });
     }
