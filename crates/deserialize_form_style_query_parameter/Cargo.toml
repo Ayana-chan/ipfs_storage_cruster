@@ -1,6 +1,6 @@
 [package]
 name = "deserialize_form_style_query_parameter"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 description = "Deserialize Form style Query parameters with Serde."
 license = "MIT OR Apache-2.0"
