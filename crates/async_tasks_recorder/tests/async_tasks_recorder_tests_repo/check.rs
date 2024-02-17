@@ -7,7 +7,7 @@ use crate::async_tasks_recorder_tests_repo::tools::get_shuffled_index_map;
 /// If `redo` is `Some(t)`, it will be redo after a delay after the task is found to have failed.
 /// Check per `interval_ms`. \
 /// Err when the time consumption reaches `timeout_ms`.
-pub async fn check_success(manager: &AsyncTasksRecoder, task_id: &str,
+pub async fn check_success(manager: &AsyncTasksRecoder<String>, task_id: &String,
                            interval_ms: Option<u64>, timeout_ms: Option<u128>,
                            suffix_query_time: u128) {
     let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
@@ -55,7 +55,7 @@ pub async fn check_success(manager: &AsyncTasksRecoder, task_id: &str,
 /// A task will redo after it is found to have failed.
 /// Check per `interval_ms`. \
 /// Err when the time consumption reaches `timeout_ms`.
-pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
+pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder<String>, task_id: &String,
                                      interval_ms: Option<u64>, timeout_ms: Option<u128>,
                                      suffix_query_time: u128, redo_task_latency: u64,
                                      redo_task_success_probability: u8) {
@@ -112,7 +112,7 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder, task_id: &str,
 
 /// Check all task_id in a vec randomly and parallelly.
 /// Return after all checks finish.
-pub async fn check_success_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>,
+pub async fn check_success_vec(manager: &AsyncTasksRecoder<String>, task_id_vec: &Arc<Vec<String>>,
                                interval_ms: Option<u64>, timeout_ms: Option<u128>,
                                suffix_query_time: u128) {
     let task_num = task_id_vec.len();
@@ -142,7 +142,7 @@ pub async fn check_success_vec(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Ve
 
 /// Check all task_id in a vec randomly and parallelly.
 /// Return after all checks finish.
-pub async fn check_success_vec_auto_redo(manager: &AsyncTasksRecoder, task_id_vec: &Arc<Vec<String>>,
+pub async fn check_success_vec_auto_redo(manager: &AsyncTasksRecoder<String>, task_id_vec: &Arc<Vec<String>>,
                                          interval_ms: Option<u64>, timeout_ms: Option<u128>,
                                          suffix_query_time: u128, redo_task_latency: u64,
                                          redo_task_success_probability: u8) {

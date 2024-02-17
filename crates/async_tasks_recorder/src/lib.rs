@@ -58,15 +58,17 @@
 // TODO 添加机制，在success更新的时候能直接拿到，最大开销是每个task一个通道。
 
 use std::future::Future;
+use std::hash::Hash;
 use std::sync::Arc;
 
 /// Thread-safe.
 #[derive(Default, Debug)]
-pub struct TaskManager {
+pub struct TaskManager<T = String>
+    where T: Eq + Hash + Clone + Send + Sync + 'static {
     /// hot
-    pub working_tasks: scc::HashSet<String>,
-    pub success_tasks: scc::HashSet<String>,
-    pub failed_tasks: scc::HashSet<String>,
+    pub working_tasks: scc::HashSet<T>,
+    pub success_tasks: scc::HashSet<T>,
+    pub failed_tasks: scc::HashSet<T>,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -176,15 +178,21 @@ pub enum TaskStatus {
 /// It cause great contention.
 ///
 #[derive(Default, Debug, Clone)]
-pub struct AsyncTasksRecoder {
-    task_manager: Arc<TaskManager>,
+pub struct AsyncTasksRecoder<T>
+    where T: Eq + Hash + Clone + Send + Sync + 'static {
+    task_manager: Arc<TaskManager<T>>,
 }
 
-impl AsyncTasksRecoder {
+impl<T> AsyncTasksRecoder<T>
+    where T: Eq + Hash + Clone + Send + Sync + 'static {
     /// Create a completely new `AsyncTasksRecoder`.
     pub fn new() -> Self {
         AsyncTasksRecoder {
-            task_manager: TaskManager::default().into()
+            task_manager: TaskManager {
+                working_tasks: scc::HashSet::new(),
+                success_tasks: scc::HashSet::new(),
+                failed_tasks: scc::HashSet::new(),
+            }.into(),
         }
     }
 
@@ -192,7 +200,7 @@ impl AsyncTasksRecoder {
     ///
     /// - `task_id`: Uniquely mark a task. Different `Future` with **the same `task_id`** is considered **the same task**.
     /// - `task`: A `Future` to be executed automatically.
-    pub async fn launch<Fut, R, E>(&self, task_id: String, task: Fut)
+    pub async fn launch<Fut, R, E>(&self, task_id: T, task: Fut)
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
               E: Send {
@@ -235,7 +243,7 @@ impl AsyncTasksRecoder {
     ///
     /// If not found in all tasks, be `Failed`.
     /// Only occurs before the launch or in a very short period of time after the first launch.
-    pub async fn query_task_state(&self, task_id: &str) -> TaskStatus {
+    pub async fn query_task_state(&self, task_id: &T) -> TaskStatus {
         if self.task_manager.success_tasks.contains_async(task_id).await {
             return TaskStatus::Success;
         }
@@ -260,7 +268,7 @@ impl AsyncTasksRecoder {
     /// Use this if you are certain that the task's launch must occur at some point in the past or future,
     /// and don't care about when the launch occurs
     /// (because first launch always turns into `Working` at some point).
-    pub async fn query_task_state_quick(&self, task_id: &str) -> TaskStatus {
+    pub async fn query_task_state_quick(&self, task_id: &T) -> TaskStatus {
         if self.task_manager.success_tasks.contains_async(task_id).await {
             return TaskStatus::Success;
         }
@@ -276,8 +284,10 @@ impl AsyncTasksRecoder {
     /// Then you can do anything you want (Every containers are public).
     ///
     /// Usually not used.
-    pub fn get_raw_task_manager(&self) -> Arc<TaskManager> {
+    pub fn get_raw_task_manager(&self) -> Arc<TaskManager<T>> {
         self.task_manager.clone()
     }
 }
+
+
 
