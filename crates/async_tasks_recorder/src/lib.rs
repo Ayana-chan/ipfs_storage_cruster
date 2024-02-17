@@ -1,18 +1,36 @@
 //! # Introduction
 //!
 //! A struct to record async tasks' execution status with lock-free and async methods.
-//! Can host `Future`s and query whether they are successful, failed, or running.
+//!
+//! Can host `Future`s and query whether they are **successful**, **failed**, or **running**.
+//!
+//! - Depend on `tokio` with feature `rt`, so cannot use other async runtimes.
+//! - Depend on [scc](https://crates.io/crates/scc) for lock-free and async `HashSet`.
 //!
 //! Use this crate if:
 //! - Easy to generate an **unique** `task_id` (not necessarily be `String`) for a future (task).
 //! - Tasks might fail, and then you want to run it again, while you don't want it to success more then once.
 //! - Want to record and query all succeeded tasks and failed tasks.
+//! - Want to handling every task in the same state (e.g. `success`).
 //!
 //! And the type of `task_id` should be:
-//! - Eq + Hash + Clone + Send + Sync + 'static
-//! - Cheap to clone.
+//! - `Eq + Hash + Clone + Send + Sync + 'static`
+//! - Cheap to clone (sometimes can use `Arc`).
 //!
-//! > It is recommended to directly look at the source code if there is any confusion.
+//! And remember, you can add **anything** in the `Future` to achieve the functionality you want.
+//! For example:
+//! - Handle your `Result` in `Future`, and then return empty result `Result<(),()>`.
+//! - Send a message to a one shot channel at the end of the `Future` to notify upper level that "This task is done".
+//! Don't forget to consider using `tokio::spawn` when the channel may not complete sending immediately.
+//! - Set other callback functions.
+//!
+//! > It is recommended to directly look at the source code (about 100 line) if there is any confusion.
+//!
+//! This crate use three `HashSet` to make it easy to handle all tasks in the same state.
+//! But `scc::HashSet` have less contention in `single` access when it grows larger.
+//! Therefore, if you don't need handling every task in the same state,
+//! just use `scc::HashMap` (`task_id` \-\> `task_status`) to build a simpler implementation,
+//! which might have less contention and clone, but more expansive to iterator.
 //!
 //! # Usage
 //!
@@ -58,8 +76,6 @@
 //!
 //! Use [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick) for less contention.
 //!
-
-// TODO 添加机制，在success更新的时候能直接拿到，最大开销是每个task一个通道。
 
 use std::future::Future;
 use std::hash::Hash;
@@ -179,11 +195,11 @@ pub enum TaskStatus {
 /// what would happen?
 ///
 /// Answer: I have to query `working_tasks` to know it's failed everytime, even no next launch.
-/// It cause great contention.
+/// It would cause more contention.
 ///
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder<T>
-    where T: Eq + Hash + Clone + Send + Sync + 'static {
+    where T: Eq + Hash + Clone + Send + 'static {
     task_manager: Arc<TaskManager<T>>,
 }
 
@@ -246,12 +262,12 @@ impl<T> AsyncTasksRecoder<T>
     ///
     /// Query priority of containers : `success_tasks` -> `failed_tasks` -> `working_tasks`.
     ///
-    /// **NOTE**: `working_tasks` usually has large contention.
+    /// **NOTE**: `working_tasks` usually has more contention.
     ///
     /// If not found in all tasks, be `Failed`.
     /// Only occurs before the launch or in a very short period of time after the first launch.
     ///
-    /// Note, if `T` is `String`, then argument `task_id` is `&String` instead of `&str`.
+    /// Note, if `T` is `String`, then parameter `task_id` would be `&String` instead of `&str`.
     pub async fn query_task_state(&self, task_id: &T) -> TaskStatus {
         if self.task_manager.success_tasks.contains_async(task_id).await {
             return TaskStatus::Success;
@@ -291,10 +307,35 @@ impl<T> AsyncTasksRecoder<T>
 
     /// Get a cloned `Arc` of `task_manager`.
     /// Then you can do anything you want (Every containers are public).
-    ///
-    /// Usually not used.
     pub fn get_raw_task_manager(&self) -> Arc<TaskManager<T>> {
         self.task_manager.clone()
+    }
+
+    /// Get a reference of `success_tasks`.
+    pub fn get_success_tasks_ref(&self) -> &scc::HashSet<T> {
+        &self.task_manager.success_tasks
+    }
+
+    /// Get a reference of `working_tasks`.
+    pub fn get_working_tasks_ref(&self) -> &scc::HashSet<T> {
+        &self.task_manager.working_tasks
+    }
+
+    /// Get a reference of `failed_tasks`.
+    pub fn get_failed_tasks_ref(&self) -> &scc::HashSet<T> {
+        &self.task_manager.failed_tasks
+    }
+
+    pub fn retain_success_tasks(&self) {
+
+    }
+
+    pub fn delete_failed_task(&self) -> bool{
+        false
+    }
+
+    pub fn clear_failed_tasks(&self) {
+
     }
 }
 
