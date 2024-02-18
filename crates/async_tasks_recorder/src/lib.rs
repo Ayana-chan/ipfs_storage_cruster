@@ -8,10 +8,12 @@
 //! - Depend on [scc](https://crates.io/crates/scc) for lock-free and async `HashSet`.
 //!
 //! Use this crate if:
-//! - Easy to generate an **unique** `task_id` (not necessarily be `String`) for a future (task).
+//! - Easy to generate an **unique** `task_id` (not necessarily `String`) for a future (task).
 //! - Tasks might fail, and then you want to run it again, while you don't want it to success more then once.
 //! - Want to record and query all succeeded tasks and failed tasks.
 //! - Want to handling every task in the same state (e.g. `success`).
+//!
+//! One recorder can only use one `task_id` type.
 //!
 //! And the type of `task_id` should be:
 //! - `Eq + Hash + Clone + Send + Sync + 'static`
@@ -113,7 +115,8 @@ pub enum TaskStatus {
     Failed,
 }
 
-/// Arc was used internally, so after `clone`, the same `TaskManager` was used.
+/// Arc was used internally, so after `clone`, the same `TaskManager` was used,
+/// which means you can share `AsyncTasksRecoder` by clone.
 ///
 /// # Usage
 ///
