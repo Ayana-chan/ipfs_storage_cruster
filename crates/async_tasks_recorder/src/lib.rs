@@ -108,7 +108,7 @@ impl<T> TaskManager<T>
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
-pub enum TaskStatus {
+pub enum TaskState {
     /// running or pending
     Working,
     Success,
@@ -295,20 +295,20 @@ impl<T> AsyncTasksRecoder<T>
     /// Only occurs before the launch or in a very short period of time after the first launch.
     ///
     /// Note, if `T` is `String`, then parameter `task_id` would be `&String` instead of `&str`.
-    pub async fn query_task_state(&self, task_id: &T) -> TaskStatus {
+    pub async fn query_task_state(&self, task_id: &T) -> TaskState {
         if self.task_manager.success_tasks.contains_async(task_id).await {
-            return TaskStatus::Success;
+            return TaskState::Success;
         }
 
         if self.task_manager.failed_tasks.contains_async(task_id).await {
-            return TaskStatus::Failed;
+            return TaskState::Failed;
         }
 
         if self.task_manager.working_tasks.contains_async(task_id).await {
-            return TaskStatus::Working;
+            return TaskState::Working;
         }
 
-        TaskStatus::Failed
+        TaskState::Failed
     }
 
     /// Return `Working` if not in either `success_tasks` or `failed_tasks`.
@@ -320,16 +320,16 @@ impl<T> AsyncTasksRecoder<T>
     /// Use this if you are certain that the task's launch must occur at some point in the past or future,
     /// and don't care about when the launch occurs
     /// (because first launch always turns into `Working` at some point).
-    pub async fn query_task_state_quick(&self, task_id: &T) -> TaskStatus {
+    pub async fn query_task_state_quick(&self, task_id: &T) -> TaskState {
         if self.task_manager.success_tasks.contains_async(task_id).await {
-            return TaskStatus::Success;
+            return TaskState::Success;
         }
 
         if self.task_manager.failed_tasks.contains_async(task_id).await {
-            return TaskStatus::Failed;
+            return TaskState::Failed;
         }
 
-        TaskStatus::Working
+        TaskState::Working
     }
 
     /// Get a cloned `Arc` of `task_manager`.

@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use async_tasks_recorder::{AsyncTasksRecoder, TaskStatus};
+use async_tasks_recorder::{AsyncTasksRecoder, TaskState};
 use crate::async_tasks_recorder_tests_repo::{DEFAULT_CHECK_INTERVAL_MS, DEFAULT_CHECK_TIMEOUT_MS};
 use crate::async_tasks_recorder_tests_repo::task::random_task;
 use crate::async_tasks_recorder_tests_repo::tools::get_shuffled_index_map;
@@ -24,7 +24,7 @@ pub async fn check_success(manager: &AsyncTasksRecoder<String>, task_id: &String
         }
 
         task_status = manager.query_task_state(task_id).await;
-        if task_status == TaskStatus::Success {
+        if task_status == TaskState::Success {
             println!("{:?} | success {}, used time: {}", std::time::Instant::now(), task_id, start_time.elapsed().as_millis());
             break;
         }
@@ -44,7 +44,7 @@ pub async fn check_success(manager: &AsyncTasksRecoder<String>, task_id: &String
         }
 
         task_status = manager.query_task_state(task_id).await;
-        if task_status != TaskStatus::Success {
+        if task_status != TaskState::Success {
             panic!("{:?} | Task {} change from success to {:?}", std::time::Instant::now(), task_id, task_status);
         }
 
@@ -74,17 +74,17 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder<String>, task_i
 
         task_status = manager.query_task_state(task_id).await;
         match task_status {
-            TaskStatus::Success => {
+            TaskState::Success => {
                 println!("{:?} | success {}, used time: {}", std::time::Instant::now(), task_id, start_time.elapsed().as_millis());
                 break;
             }
-            TaskStatus::Failed => {
+            TaskState::Failed => {
                 // redo
                 println!("{:?} | redo {}", std::time::Instant::now(), task_id);
                 let task = random_task(redo_task_latency, redo_task_success_probability, task_id.to_string());
                 manager.launch(task_id.to_string(), task).await;
             }
-            TaskStatus::Working => {}
+            TaskState::Working => {}
         }
 
         tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;
@@ -102,7 +102,7 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder<String>, task_i
         }
 
         task_status = manager.query_task_state(task_id).await;
-        if task_status != TaskStatus::Success {
+        if task_status != TaskState::Success {
             panic!("{:?} | Task {} change from success to {:?}",std::time::Instant::now() ,  task_id, task_status);
         }
 

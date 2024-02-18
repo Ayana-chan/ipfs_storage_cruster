@@ -16,7 +16,7 @@ struct UploadFileTaskId {
     destination: String,
 }
 
-enum UploadTaskStatus {
+enum UploadTaskState {
     Uploading,
     Failed,
     Success,
@@ -69,8 +69,8 @@ async fn upload_file(recorder: AsyncTasksRecoder<UploadFileTaskId>, args: Upload
     recorder.launch(task_id, fut).await;
 }
 
-async fn check_upload() -> UploadTaskStatus {
-    UploadTaskStatus::Success
+async fn check_upload_state() -> UploadTaskState {
+    UploadTaskState::Success
 }
 
 // other functions ------------
