@@ -82,6 +82,8 @@ use std::hash::Hash;
 use std::sync::Arc;
 
 /// Thread-safe.
+///
+/// Everything is public, so hash functions and initial capacity can be customized.
 #[derive(Default, Debug)]
 pub struct TaskManager<T>
     where T: Eq + Hash {
@@ -93,6 +95,7 @@ pub struct TaskManager<T>
 
 impl<T> TaskManager<T>
     where T: Eq + Hash {
+    /// Create default and empty `TaskManager`
     pub fn new() -> Self {
         TaskManager {
             working_tasks: scc::HashSet::new(),
