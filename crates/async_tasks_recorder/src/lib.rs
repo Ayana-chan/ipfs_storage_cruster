@@ -91,6 +91,17 @@ pub struct TaskManager<T>
     pub failed_tasks: scc::HashSet<T>,
 }
 
+impl<T> TaskManager<T>
+    where T: Eq + Hash {
+    pub fn new() -> Self {
+        TaskManager {
+            working_tasks: scc::HashSet::new(),
+            success_tasks: scc::HashSet::new(),
+            failed_tasks: scc::HashSet::new(),
+        }
+    }
+}
+
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum TaskStatus {
     /// running or pending
@@ -208,11 +219,21 @@ impl<T> AsyncTasksRecoder<T>
     /// Create a completely new `AsyncTasksRecoder`.
     pub fn new() -> Self {
         AsyncTasksRecoder {
-            task_manager: TaskManager {
-                working_tasks: scc::HashSet::new(),
-                success_tasks: scc::HashSet::new(),
-                failed_tasks: scc::HashSet::new(),
-            }.into(),
+            task_manager: TaskManager::new().into(),
+        }
+    }
+
+    /// Create by `TaskManager`
+    pub fn new_with_task_manager(task_manager: TaskManager<T>) -> Self {
+        AsyncTasksRecoder {
+            task_manager: task_manager.into(),
+        }
+    }
+
+    /// Create by `Arc` of `TaskManager`
+    pub fn new_with_task_manager_arc(task_manager: Arc<TaskManager<T>>) -> Self {
+        AsyncTasksRecoder {
+            task_manager,
         }
     }
 
@@ -307,7 +328,7 @@ impl<T> AsyncTasksRecoder<T>
 
     /// Get a cloned `Arc` of `task_manager`.
     /// Then you can do anything you want (Every containers are public).
-    pub fn get_raw_task_manager(&self) -> Arc<TaskManager<T>> {
+    pub fn get_task_manager(&self) -> Arc<TaskManager<T>> {
         self.task_manager.clone()
     }
 
@@ -324,18 +345,6 @@ impl<T> AsyncTasksRecoder<T>
     /// Get a reference of `failed_tasks`.
     pub fn get_failed_tasks_ref(&self) -> &scc::HashSet<T> {
         &self.task_manager.failed_tasks
-    }
-
-    pub fn retain_success_tasks(&self) {
-
-    }
-
-    pub fn delete_failed_task(&self) -> bool{
-        false
-    }
-
-    pub fn clear_failed_tasks(&self) {
-
     }
 }
 

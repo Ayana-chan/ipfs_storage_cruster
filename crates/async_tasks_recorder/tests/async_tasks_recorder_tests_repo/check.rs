@@ -17,15 +17,15 @@ pub async fn check_success(manager: &AsyncTasksRecoder<String>, task_id: &String
     let mut task_status;
 
     loop {
-        // println!("check {}, interval: {}", task_id, interval_ms);
+        // println!("{:?} | check {}, interval: {}", std::time::Instant::now(), task_id, interval_ms);
         // timeout
         if start_time.elapsed().as_millis() >= timeout_ms {
-            panic!("Timeout before success. task_id: {:?}", task_id);
+            panic!("{:?} | Timeout before success. task_id: {:?}", std::time::Instant::now(), task_id);
         }
 
         task_status = manager.query_task_state(task_id).await;
         if task_status == TaskStatus::Success {
-            println!("success {}, used time: {}", task_id, start_time.elapsed().as_millis());
+            println!("{:?} | success {}, used time: {}", std::time::Instant::now(), task_id, start_time.elapsed().as_millis());
             break;
         }
 
@@ -39,13 +39,13 @@ pub async fn check_success(manager: &AsyncTasksRecoder<String>, task_id: &String
         time_used_ms = start_time.elapsed().as_millis() - first_success_time_start_ms;
         // timeout
         if time_used_ms >= suffix_query_time {
-            println!("suffer check {} finish", task_id);
+            println!("{:?} | suffer check {} finish", std::time::Instant::now(), task_id);
             break;
         }
 
         task_status = manager.query_task_state(task_id).await;
         if task_status != TaskStatus::Success {
-            panic!("Task {} change from success to {:?}", task_id, task_status);
+            panic!("{:?} | Task {} change from success to {:?}", std::time::Instant::now(), task_id, task_status);
         }
 
         tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;
@@ -66,21 +66,21 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder<String>, task_i
     let mut task_status;
 
     loop {
-        // println!("check {}, interval: {}", task_id, interval_ms);
+        // println!("{:?} | check {}, interval: {}", std::time::Instant::now(), task_id, interval_ms);
         // timeout
         if start_time.elapsed().as_millis() >= timeout_ms {
-            panic!("Timeout before success. task_id: {:?}", task_id);
+            panic!("{:?} | Timeout before success. task_id: {:?}", std::time::Instant::now(), task_id);
         }
 
         task_status = manager.query_task_state(task_id).await;
         match task_status {
             TaskStatus::Success => {
-                println!("success {}, used time: {}", task_id, start_time.elapsed().as_millis());
+                println!("{:?} | success {}, used time: {}", std::time::Instant::now(), task_id, start_time.elapsed().as_millis());
                 break;
             }
             TaskStatus::Failed => {
                 // redo
-                println!("redo {}", task_id);
+                println!("{:?} | redo {}", std::time::Instant::now(), task_id);
                 let task = random_task(redo_task_latency, redo_task_success_probability, task_id.to_string());
                 manager.launch(task_id.to_string(), task).await;
             }
@@ -97,13 +97,13 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder<String>, task_i
         time_used_ms = start_time.elapsed().as_millis() - first_success_time_start_ms;
         // timeout
         if time_used_ms >= suffix_query_time {
-            println!("suffer check {} finish", task_id);
+            println!("{:?} | suffer check {} finish",std::time::Instant::now() ,  task_id);
             break;
         }
 
         task_status = manager.query_task_state(task_id).await;
         if task_status != TaskStatus::Success {
-            panic!("Task {} change from success to {:?}", task_id, task_status);
+            panic!("{:?} | Task {} change from success to {:?}",std::time::Instant::now() ,  task_id, task_status);
         }
 
         tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;
@@ -122,7 +122,7 @@ pub async fn check_success_vec(manager: &AsyncTasksRecoder<String>, task_id_vec:
         let manager_backup = manager.clone();
         let task_id_vec = task_id_vec.clone();
         let mapped_index = shuffled_map[i];
-        // println!("spawn check {}", mapped_index);
+        // println!("{:?} | spawn check {}", std::time::Instant::now(), mapped_index);
         let fut = async move {
             check_success(&manager_backup, &task_id_vec[mapped_index],
                           interval_ms.clone(), timeout_ms.clone(),
@@ -153,7 +153,7 @@ pub async fn check_success_vec_auto_redo(manager: &AsyncTasksRecoder<String>, ta
         let manager_backup = manager.clone();
         let task_id_vec = task_id_vec.clone();
         let mapped_index = shuffled_map[i];
-        // println!("spawn check {}", mapped_index);
+        // println!("{:?} | spawn check {}", std::time::Instant::now(), mapped_index);
         let fut = async move {
             check_success_auto_redo(&manager_backup, &task_id_vec[mapped_index],
                                     interval_ms.clone(), timeout_ms.clone(),

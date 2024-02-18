@@ -17,13 +17,13 @@ impl TaskExecCountChecker {
 
     pub async fn check_async(&self, task_id: &str) {
         if self.task_exec_recorder.contains_async(task_id).await {
-            panic!("Task {} executed after success!", task_id);
+            panic!("{:?} | Task {} executed after success!", std::time::Instant::now(), task_id);
         }
     }
 
     pub async fn check_and_record_async(&self, task_id: String) {
         if self.task_exec_recorder.contains_async(&task_id).await {
-            panic!("Task {} success more than once!", task_id);
+            panic!("{:?} | Task {} success more than once!", std::time::Instant::now(), task_id);
         }
         let _ = self.task_exec_recorder.insert_async(task_id).await;
     }
@@ -34,7 +34,7 @@ impl TaskExecCountChecker {
 pub async fn success_task(latency_ms: u64, task_id: String) -> Result<(), ()> {
     // must use `sleep` of std
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
-    println!("---->finish {}, task latency: {}", task_id, latency_ms);
+    println!("{:?} | ---->finish {}, task latency: {}", std::time::Instant::now(), task_id, latency_ms);
     TASK_EXEC_RECODER_CHECKER.check_and_record_async(task_id).await;
     Ok(())
 }
@@ -42,7 +42,7 @@ pub async fn success_task(latency_ms: u64, task_id: String) -> Result<(), ()> {
 /// A task always return err.
 pub async fn fail_task(latency_ms: u64, task_id: String) -> Result<(), ()> {
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
-    println!("---->fail {}, task latency: {}", task_id, latency_ms);
+    println!("{:?} | ---->fail {}, task latency: {}", std::time::Instant::now(), task_id, latency_ms);
     Err(())
 }
 
@@ -53,11 +53,11 @@ pub async fn random_task(latency_ms: u64, success_probability: u8, task_id: Stri
     std::thread::sleep(std::time::Duration::from_millis(latency_ms));
     let rand_point = fastrand::u8(0..100);
     if rand_point < success_probability {
-        println!("---->rand Ok {}, point: {} < {}, task latency: {}", task_id, rand_point, success_probability, latency_ms);
+        println!("{:?} | ---->rand Ok {}, point: {} < {}, task latency: {}", std::time::Instant::now(), task_id, rand_point, success_probability, latency_ms);
         TASK_EXEC_RECODER_CHECKER.check_and_record_async(task_id).await;
         Ok(())
     } else {
-        println!("rand Err {}, point: {} >= {}, task latency: {}", task_id, rand_point, success_probability, latency_ms);
+        println!("{:?} | rand Err {}, point: {} >= {}, task latency: {}", std::time::Instant::now(), task_id, rand_point, success_probability, latency_ms);
         Err(())
     }
 }
