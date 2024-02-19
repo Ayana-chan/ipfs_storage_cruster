@@ -14,6 +14,14 @@ pub async fn add_pin(
     State(state): State<AdminAppState>,
     Json(args): Json<models::PinFileArgs>)
     -> StandardApiResult<()> {
+    if args.async == Some(false) {
+        add_pin_sync(state, args).await
+    } else {
+        add_pin_async(state, args).await
+    }
+}
+
+async fn add_pin_sync(state: AdminAppState, args: models::PinFileArgs) -> StandardApiResult<()> {
     info!("Add Pin cid: {}", args.cid);
     let _ipfs_res = state.app_state.ipfs_client
         .add_pin_recursive(
@@ -27,11 +35,7 @@ pub async fn add_pin(
 
 /// Pin file to IPFS node.
 /// Return immediately.
-#[axum_macros::debug_handler]
-pub async fn add_pin_async(
-    State(state): State<AdminAppState>,
-    Json(args): Json<models::PinFileArgs>)
-    -> StandardApiResultStatus<()> {
+pub async fn add_pin_async(state: AdminAppState, args: models::PinFileArgs) -> StandardApiResultStatus<()> {
     info!("Add Pin Async cid: {}", args.cid);
     let app_state = state.app_state.clone();
     let cid_backup = args.cid.clone();
@@ -56,3 +60,14 @@ pub async fn add_pin_async(
     Ok((StatusCode::ACCEPTED, ().into()))
 }
 
+/// Check whether pin succeed.
+/// Just query local recorder, so maybe return `Failed` when not found.
+#[axum_macros::debug_handler]
+pub async fn check_pin(
+    State(state): State<AdminAppState>,
+    Json(args): Json<models::PinFileArgs>)
+    -> StandardApiResultStatus<()> {
+    info!("Check Pin cid: {}", args.cid);
+    // TODO Path para
+    Ok(().into())
+}
