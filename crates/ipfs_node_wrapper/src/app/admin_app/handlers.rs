@@ -1,4 +1,4 @@
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
 #[allow(unused_imports)]
@@ -21,6 +21,8 @@ pub async fn add_pin(
     }
 }
 
+/// Pin file to IPFS node.
+/// Return until pin finishes.
 async fn add_pin_sync(state: AdminAppState, args: models::PinFileArgs) -> StandardApiResult<()> {
     info!("Add Pin cid: {}", args.cid);
     let _ipfs_res = state.app_state.ipfs_client
@@ -35,7 +37,7 @@ async fn add_pin_sync(state: AdminAppState, args: models::PinFileArgs) -> Standa
 
 /// Pin file to IPFS node.
 /// Return immediately.
-pub async fn add_pin_async(state: AdminAppState, args: models::PinFileArgs) -> StandardApiResultStatus<()> {
+async fn add_pin_async(state: AdminAppState, args: models::PinFileArgs) -> StandardApiResultStatus<()> {
     info!("Add Pin Async cid: {}", args.cid);
     let app_state = state.app_state.clone();
     let cid_backup = args.cid.clone();
@@ -65,9 +67,8 @@ pub async fn add_pin_async(state: AdminAppState, args: models::PinFileArgs) -> S
 #[axum_macros::debug_handler]
 pub async fn check_pin(
     State(state): State<AdminAppState>,
-    Json(args): Json<models::PinFileArgs>)
+    Path(cid): Path<String>)
     -> StandardApiResultStatus<()> {
-    info!("Check Pin cid: {}", args.cid);
-    // TODO Path para
+    info!("Check Pin cid: {}", cid);
     Ok(().into())
 }
