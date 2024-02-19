@@ -1,6 +1,6 @@
 //! # Introduction
 //!
-//! A struct to record async tasks' execution status with lock-free and async methods.
+//! A struct for recording execution status of async tasks with lock-free and async methods.
 //!
 //! Can host `Future`s and query whether they are **successful**, **failed**, or **running**.
 //!
@@ -13,9 +13,9 @@
 //! - Want to record and query all succeeded tasks and failed tasks.
 //! - Want to handling every task in the same state (e.g. `success`).
 //!
-//! One recorder can only use one `task_id` type.
+//! [Example](https://github.com/Ayana-chan/ipfs_storage_cruster/tree/master/crates/async_tasks_recorder/examples).
 //!
-//! And the type of `task_id` should be:
+//! A recorder can only use one `task_id` type. The type of `task_id` should be:
 //! - `Eq + Hash + Clone + Send + Sync + 'static`
 //! - Cheap to clone (sometimes can use `Arc`).
 //!
@@ -28,7 +28,7 @@
 //!
 //! > It is recommended to directly look at the source code (about 100 line) if there is any confusion.
 //!
-//! This crate use three `HashSet` to make it easy to handle all tasks in the same state.
+//! **NOTE**: This crate use three `HashSet` to make it easy to handle all tasks in the same state.
 //! But `scc::HashSet` have less contention in **single** access when it grows larger.
 //! Therefore, if you don't need handling every tasks in the same state,
 //! then just use `scc::HashMap` (`task_id` \-\> `task_status`) to build a simpler implementation,
