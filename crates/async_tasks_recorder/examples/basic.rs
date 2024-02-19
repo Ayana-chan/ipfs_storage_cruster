@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use async_tasks_recorder::AsyncTasksRecoder;
 
 struct SimulatedStream {}
@@ -6,14 +7,6 @@ struct UploadFileArgs {
     /// file stream
     stream: SimulatedStream,
     md5: String,
-}
-
-#[derive(Eq, PartialEq, Hash, Clone)]
-struct UploadFileTaskId {
-    /// file's md5
-    md5: String,
-    /// storage destination
-    destination: String,
 }
 
 enum UploadTaskState {
@@ -44,13 +37,9 @@ async fn simulate_requests() {
 
 // APIs -----------
 
-async fn upload_file(recorder: AsyncTasksRecoder<UploadFileTaskId>, args: UploadFileArgs) {
+async fn upload_file(recorder: AsyncTasksRecoder<Arc<String>>, args: UploadFileArgs) {
     println!("REQUEST: upload_file");
     let destination = "some place".to_string(); // decided by some algorithm
-    let task_id = UploadFileTaskId {
-        md5: args.md5,
-        destination: destination.clone(),
-    };
     let fut = async move {
         println!("upload_to_destination start!");
         let res = upload_to_destination(args.stream, destination).await;
@@ -66,7 +55,8 @@ async fn upload_file(recorder: AsyncTasksRecoder<UploadFileTaskId>, args: Upload
         }
     };
 
-    recorder.launch(task_id, fut).await;
+    // launch `Arc<String>` and `Future`
+    recorder.launch(args.md5.into(), fut).await;
 }
 
 async fn check_upload_state() -> UploadTaskState {
