@@ -33,11 +33,10 @@ pub async fn add_pin_async(
     Json(args): Json<models::PinFileArgs>)
     -> StandardApiResultStatus<()> {
     info!("Add Pin Async cid: {}", args.cid);
-    state.add_pin_manager.launch(
-        &state.app_state.ipfs_client,
-        &args.cid,
-        args.name.as_deref(),
-    ).await;
+    // state.add_pin_recorder.launch(
+    //     args.cid.into(),
+    //     state.app_state.ipfs_client.add_pin_recursive()
+    // ).await;
 
     Ok((StatusCode::ACCEPTED, ().into()))
 }

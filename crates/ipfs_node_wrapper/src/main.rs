@@ -7,7 +7,6 @@ mod models;
 mod error;
 mod ipfs_client;
 mod common;
-mod add_pin_manager;
 
 fn config_tracing(){
     let console_subscriber = tracing_subscriber::fmt::layer()
