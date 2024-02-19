@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
-use async_trait::async_trait;
+use axum::async_trait;
 use axum::extract::FromRequestParts;
 use axum::http;
 use axum::http::request::Parts;
