@@ -7,8 +7,8 @@ use serde::Serialize;
 
 pub type ApiResult<T> = Result<T, error::ResponseError>;
 pub type ApiResponseResult = ApiResult<Response>;
-pub type StandardApiResult<T> = Result<StandardApiJsonBody<T>, error::ResponseError>;
-pub type StandardApiResultStatus<T> = Result<(http::StatusCode, StandardApiJsonBody<T>), error::ResponseError>;
+pub type StandardApiResult<T> = ApiResult<StandardApiJsonBody<T>>;
+pub type StandardApiResultStatus<T> = ApiResult<(http::StatusCode, StandardApiJsonBody<T>)>;
 
 // TODO untested
 #[derive(Clone, Debug, Serialize)]

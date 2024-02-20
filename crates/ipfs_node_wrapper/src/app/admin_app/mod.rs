@@ -19,7 +19,8 @@ pub struct AdminAppState {
 pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
     let app = Router::new()
         .route("/pin/:cid", get(check_pin))
-        .route("/pin", post(add_pin));
+        .route("/pin", post(add_pin))
+        .route("/info", get(get_ipfs_node_info));
 
     let admin_app_state = AdminAppState {
         app_state: app_state.clone(),

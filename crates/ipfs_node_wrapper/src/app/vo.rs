@@ -22,3 +22,9 @@ pub struct CheckPinResponse {
     pub status: models::PinStatus,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetIpfsNodeInfoResponse {
+    /// peer ID
+    pub id: String,
+}
+

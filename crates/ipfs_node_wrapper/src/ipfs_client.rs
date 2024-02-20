@@ -32,7 +32,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get file from IPFS gateway.
-    pub async fn get_file_gateway(&self, cid: &str, file_name: Option<&str>) -> ApiResult<Response> {
+    pub async fn get_file_by_gateway(&self, cid: &str, file_name: Option<&str>) -> ApiResult<Response> {
         let url = format!("http://{addr}/ipfs/{cid}?filename={file_name}&download=true",
                           addr = &self.ipfs_node_metadata.read().gateway_address,
                           cid = cid,
@@ -86,6 +86,33 @@ impl ReqwestIpfsClient {
             _ if status.is_success() => {
                 debug!("Success add pin. cid: {}, pin_name: {}", cid, pin_name);
                 Ok(res)
+            }
+            err => Err(handle_rpc_error(err))
+        }
+    }
+
+    /// Get IPFS node's peer ID.
+    pub async fn get_id(&self) -> ApiResult<String> {
+        let url = format!("http://{addr}/api/v0/id?format=\"<id>\\n\"",
+                          addr = &self.ipfs_node_metadata.read().rpc_address,
+        );
+
+        let res = self.client
+            .post(url)
+            .send()
+            .await.map_err(|_e| {
+            error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log_error(_e)
+        }
+        )?;
+
+        let status = res.status();
+        match status {
+            _ if status.is_success() => {
+                let peer_id = res.text().await.map_err(|_e| {
+                    error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log_error(_e)
+                })?;
+                debug!("Success get peer id");
+                Ok(peer_id)
             }
             err => Err(handle_rpc_error(err))
         }

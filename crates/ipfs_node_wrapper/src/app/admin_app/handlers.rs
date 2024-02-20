@@ -10,6 +10,17 @@ use crate::app::vo;
 use crate::common::{StandardApiResult, StandardApiResultStatus};
 use crate::models;
 
+/// Get IPFS node's information.
+#[axum_macros::debug_handler]
+pub async fn get_ipfs_node_info(State(state): State<AdminAppState>) -> StandardApiResult<vo::GetIpfsNodeInfoResponse> {
+    let peer_id = state.app_state.ipfs_client.get_id().await?;
+
+    let res = vo::GetIpfsNodeInfoResponse {
+        id: peer_id,
+    };
+    Ok(res.into())
+}
+
 /// Pin file to IPFS node.
 /// Return after pin completed.
 #[axum_macros::debug_handler]
@@ -23,6 +34,31 @@ pub async fn add_pin(
         add_pin_async(state, args).await.into_response()
     }
 }
+
+/// Check whether pin succeed.
+/// Just query local recorder, so maybe return `Failed` when not found.
+#[axum_macros::debug_handler]
+pub async fn check_pin(
+    State(state): State<AdminAppState>,
+    Path(cid): Path<String>)
+    -> StandardApiResult<vo::CheckPinResponse> {
+    info!("Check Pin cid: {}", cid);
+    let task_state = state.add_pin_recorder.query_task_state(&cid.into()).await;
+    let status = match task_state {
+        TaskState::Success => models::PinStatus::Pinned,
+        TaskState::Working => models::PinStatus::Pinning,
+        TaskState::Failed => models::PinStatus::Failed,
+    };
+    let res = vo::CheckPinResponse {
+        status,
+    };
+    Ok(res.into())
+}
+
+// TODO verify pin
+// TODO recorder的fail外加个NotFound.看看能不能证明NotFound只有可能在最初存在
+
+// --------------------------------------------------------------------------------
 
 /// Pin file to IPFS node.
 /// Return until pin finishes.
@@ -63,24 +99,4 @@ async fn add_pin_async(state: AdminAppState, args: vo::PinFileArgs) -> StandardA
     ).await;
 
     Ok((StatusCode::ACCEPTED, ().into()))
-}
-
-/// Check whether pin succeed.
-/// Just query local recorder, so maybe return `Failed` when not found.
-#[axum_macros::debug_handler]
-pub async fn check_pin(
-    State(state): State<AdminAppState>,
-    Path(cid): Path<String>)
-    -> StandardApiResult<vo::CheckPinResponse> {
-    info!("Check Pin cid: {}", cid);
-    let task_state = state.add_pin_recorder.query_task_state(&cid.into()).await;
-    let status = match task_state {
-        TaskState::Success => models::PinStatus::Pinned,
-        TaskState::Working => models::PinStatus::Pinning,
-        TaskState::Failed => models::PinStatus::Failed,
-    };
-    let res = vo::CheckPinResponse {
-        status,
-    };
-    Ok(res.into())
 }

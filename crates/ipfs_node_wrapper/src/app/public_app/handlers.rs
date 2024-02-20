@@ -18,7 +18,7 @@ pub async fn get_file(
     -> ApiResponseResult {
     info!("Get File cid: {}", cid);
     let ipfs_res = state.app_state.ipfs_client
-        .get_file_gateway(
+        .get_file_by_gateway(
             &cid,
             query.filename.as_deref(),
         ).await?;
