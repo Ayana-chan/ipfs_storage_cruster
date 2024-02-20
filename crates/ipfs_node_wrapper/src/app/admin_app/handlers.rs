@@ -49,6 +49,7 @@ pub async fn check_pin(
         TaskState::Success => models::PinStatus::Pinned,
         TaskState::Working => models::PinStatus::Pinning,
         TaskState::Failed => models::PinStatus::Failed,
+        TaskState::NotFound => models::PinStatus::NotFound,
     };
     let res = vo::CheckPinResponse {
         status,
@@ -56,8 +57,7 @@ pub async fn check_pin(
     Ok(res.into())
 }
 
-// TODO verify pin
-// TODO recorder的fail外加个NotFound.看看能不能证明NotFound只有可能在最初存在
+// TODO verify pin，可以供NotFound时深入检查
 
 // --------------------------------------------------------------------------------
 

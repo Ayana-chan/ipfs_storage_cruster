@@ -8,4 +8,6 @@ pub enum PinStatus {
     Pinned,
     #[serde(rename = "failed")]
     Failed,
+    #[serde(rename = "not_found")]
+    NotFound,
 }
