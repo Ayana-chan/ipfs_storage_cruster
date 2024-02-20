@@ -2,7 +2,7 @@
 //!
 //! A struct for recording execution status of async tasks with lock-free and async methods.
 //!
-//! Can host `Future`s and query whether they are **successful**, **failed**, or **running**.
+//! Can host `Future`s and query whether they are **not found**, **successful**, **failed**, or **running**.
 //!
 //! - Depend on `tokio` with feature `rt`, so cannot use other async runtimes.
 //! - Depend on [scc](https://crates.io/crates/scc) for lock-free and async `HashSet`.
@@ -45,11 +45,17 @@
 //!
 //! ## Abstract Model
 //! Here is the three-level structure for thinking about tasks' status:
-//! - Level 0: `real_failed`, `real_working`, `real_success` : **Exact status** of the tasks in the CPU (seen by God).
+//! - Level 0: `real_none`, `real_failed`, `real_working`, `real_success` : **Exact status** of the tasks in the CPU (seen by God).
 //! - Level 1: `failed_tasks`, `working_tasks`, `success_tasks` : **Containers** to store `task_id`s (a `task_id` can be stored in 0 to 2 containers simultaneously).
-//! - Level 2: `Failed`, `Working`, `Success` : **States** of the task that could be obtained by `query_task_state`.
+//! - Level 2: `Not Found`, `Failed`, `Working`, `Success` : **States** of the task that could be obtained by `query_task_state`.
 //!
 //! ## State Transition Diagram
+//! - `Not Found` \-\-\-\-\> `Working`
+//! - `Working` \<\-\-\-\> `Failed`
+//! - `Working` \-\-\-\-\> `Success`
+//!
+//! If you equivalent `Not Found` to `Failed`, then:
+//!
 //! `Failed` \<\-\-\-\> `Working` \-\-\-\-\> `Success`
 //!
 //! ## Nature
@@ -63,11 +69,12 @@
 //! 1. If a task's state is `Success`, it must be `real_success`, i.e. $\text{Success}(id) \rightarrow \text{real\_success}(id)$.
 //! 2. If a task's state is `Failed`, it may be in any status, but mostly `real_failed`.
 //! 3. If a task's state is `Working`, it may be in any status, but mostly `real_working`.
+//! 4. If a task's state is `Not Found`, it may be in any status, but mostly `real_none`.
 //!
 //! ### About Task State Transition
-//! 1. Any task's state can be **queried** at any time, even before the task has been launched.
-//! 2. The initial state of the task is `Failed`.
-//! 3. Always, when launch a task whose state is `Failed`, it will be `Working` at some future moment.
+//! 1. Any task's state can be **queried** at any time.
+//! 2. The initial state of the task is `Not Found`, and won't change immediately after `launch`.
+//! 3. Always, when a task whose state is `Failed` or `NotFound` is launched, it will be `Working` at some future moment.
 //! 4. Always, when a task is `Working`, it would eventually be `Fail` or `Success`, i.e. $\Box (\text{Working}(id) \rightarrow \lozenge(\text{Fail}(id) \vee \text{Success}(id)))$.
 //! 5. Always, when a task is `Success`, it would be `Success` forever, i.e. $\Box (\text{Success}(id) \rightarrow \Box \text{Success}(id))$.
 //!
@@ -169,7 +176,7 @@ pub enum TaskState {
 /// This results in `count.add(1)` being called only once, too. Q.E.D.
 ///
 /// ## P02
-/// **Task failure is not harmful for recorder, and the related operations have been well optimized.**
+/// **Task failure is not harmful for recorder.**
 ///
 /// Considering the situation of failure, the pseudocode becomes like this:
 ///
@@ -190,7 +197,7 @@ pub enum TaskState {
 ///         success_task_id.set(true);
 ///     } else {
 ///         // `real_failed`
-///         failed_task_id.set(true); // Become `Failed`
+///         failed_task_id.set(true); // become `Failed`
 ///     }
 ///     working_task_id.unlock();
 /// }
@@ -207,14 +214,27 @@ pub enum TaskState {
 /// Very good.
 ///
 /// ## P03
-/// **`failed_tasks` is only for optimizing the failure judgment.**
+/// **No state would turn back to `Not found`.**
 ///
-/// If there is no `failed_tasks`, and a `task_id` is deleted from all containers if it's failed,
-/// what would happen?
+/// From the pseudocode in **P02**:
 ///
-/// Answer: I have to query `working_tasks` to know it's failed everytime, even no next launch.
-/// It would cause more contention.
+/// ```not_rust
+/// // entry `working_task_id`
+/// if real_success {
+///     success_task_id.set(true);
+/// } else {
+///     // `real_failed`
+///     failed_task_id.set(true); // Become `Failed`
+/// }
+/// // leave `working_task_id`
+/// ```
 ///
+/// It can be found that as long as the task has entered `working_tasks` once,
+/// when exiting `working_tasks`,
+/// the task must already be in one of the `failed_tasks` or `success_tasks` options.
+///
+/// So after first `Working`, the task must be in one of `tasks`,
+/// then it won't be `Not found` again. Q.E.D.
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder<T>
     where T: Eq + Hash + Clone + Send + 'static {
@@ -335,7 +355,7 @@ impl<T> AsyncTasksRecoder<T>
 
     /// Get a cloned `Arc` of `task_manager`.
     /// Then you can do anything you want (Every containers are public).
-    pub fn get_task_manager(&self) -> Arc<TaskManager<T>> {
+    pub fn get_task_manager_arc(&self) -> Arc<TaskManager<T>> {
         self.task_manager.clone()
     }
 

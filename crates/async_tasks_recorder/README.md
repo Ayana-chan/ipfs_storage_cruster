@@ -2,7 +2,7 @@
 
 A struct for recording execution status of async tasks with lock-free and async methods.
 
-Can host `Future`s and query whether they are **successful**, **failed**, or **running**.
+Can host `Future`s and query whether they are **not found**, **successful**, **failed**, or **running**.
 
 - Depend on `tokio` with feature `rt`, so cannot use other async runtimes.
 - Depend on [scc](https://crates.io/crates/scc) for lock-free and async `HashSet`.
