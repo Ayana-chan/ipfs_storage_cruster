@@ -101,7 +101,7 @@ impl ReqwestIpfsClient {
         match status {
             _ if status.is_success() => {
                 let peer_id = res.json().await.map_err(|_e| {
-                    error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log_error(_e)
+                    error::IPFS_FAIL.clone_to_error_with_log_error(_e)
                 })?;
                 debug!("Success get peer id");
                 Ok(peer_id)
