@@ -36,7 +36,7 @@ pub async fn add_pin(
     }
 }
 
-/// Check whether pin succeed.
+/// Check status of adding pin.
 /// Just query local recorder, so maybe return `Failed` when not found.
 #[axum_macros::debug_handler]
 pub async fn check_pin(
