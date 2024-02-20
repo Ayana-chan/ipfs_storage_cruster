@@ -1,12 +1,12 @@
 use serde::{Serialize, Deserialize};
 use crate::models;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct GetFileArgs {
     pub filename: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct PinFileArgs {
     /// cid of the target IPFS object
     pub cid: String,
@@ -16,15 +16,16 @@ pub struct PinFileArgs {
     pub r#async: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct CheckPinResponse {
     /// cid of the target IPFS object
     pub status: models::PinStatus,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct GetIpfsNodeInfoResponse {
     /// peer ID
     pub id: String,
 }
+
 

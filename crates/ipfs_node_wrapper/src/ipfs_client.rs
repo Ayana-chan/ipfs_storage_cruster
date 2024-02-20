@@ -2,6 +2,7 @@ use std::sync::Arc;
 #[allow(unused_imports)]
 use tracing::{error, debug};
 use reqwest::{Client, Response, StatusCode};
+use serde::Deserialize;
 use crate::app::AppConfig;
 use crate::error;
 use crate::common::ApiResult;
@@ -92,10 +93,12 @@ impl ReqwestIpfsClient {
     }
 
     /// Get IPFS node's peer ID.
-    pub async fn get_id(&self) -> ApiResult<String> {
-        let url = format!("http://{addr}/api/v0/id?format=\"<id>\\n\"",
+    pub async fn get_id(&self) -> ApiResult<IdResponse> {
+        // TODO format arg无效
+        let url = format!("http://{addr}/api/v0/id",
                           addr = &self.ipfs_node_metadata.read().rpc_address,
         );
+        debug!("get id url: {}", url);
 
         let res = self.client
             .post(url)
@@ -108,7 +111,7 @@ impl ReqwestIpfsClient {
         let status = res.status();
         match status {
             _ if status.is_success() => {
-                let peer_id = res.text().await.map_err(|_e| {
+                let peer_id = res.json().await.map_err(|_e| {
                     error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log_error(_e)
                 })?;
                 debug!("Success get peer id");
@@ -139,5 +142,17 @@ fn handle_rpc_error(status: StatusCode) -> error::ResponseError {
         }
         _ => error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log(),
     }
+}
+
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct IdResponse {
+    #[serde(rename = "ID")]
+    pub id: String,
+    pub public_key: String,
+    pub addresses: Vec<String>,
+    pub agent_version: String,
+    pub protocols: Vec<String>,
 }
 

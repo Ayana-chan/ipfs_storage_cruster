@@ -13,10 +13,11 @@ use crate::models;
 /// Get IPFS node's information.
 #[axum_macros::debug_handler]
 pub async fn get_ipfs_node_info(State(state): State<AdminAppState>) -> StandardApiResult<vo::GetIpfsNodeInfoResponse> {
-    let peer_id = state.app_state.ipfs_client.get_id().await?;
+    let peer_id_res = state.app_state.ipfs_client.get_id().await?;
+    trace!("peer_id_res: {:?}", peer_id_res);
 
     let res = vo::GetIpfsNodeInfoResponse {
-        id: peer_id,
+        id: peer_id_res.id,
     };
     Ok(res.into())
 }
