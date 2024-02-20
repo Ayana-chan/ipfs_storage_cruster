@@ -84,7 +84,7 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder<String>, task_i
                 let task = random_task(redo_task_latency, redo_task_success_probability, task_id.to_string());
                 manager.launch(task_id.to_string(), task).await;
             }
-            TaskState::Working => {}
+            _ => {}
         }
 
         tokio::time::sleep(tokio::time::Duration::from_millis(interval_ms.clone())).await;

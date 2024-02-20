@@ -113,6 +113,7 @@ pub enum TaskState {
     Working,
     Success,
     Failed,
+    NotFound,
 }
 
 /// Arc was used internally, so after `clone`, the same `TaskManager` was used,
@@ -291,7 +292,7 @@ impl<T> AsyncTasksRecoder<T>
     ///
     /// **NOTE**: `working_tasks` usually has more contention.
     ///
-    /// If not found in all tasks, be `Failed`.
+    /// If not found in all tasks, be `NotFound`.
     /// Only occurs before the launch or in a very short period of time after the first launch.
     ///
     /// Note, if `T` is `String`, then parameter `task_id` would be `&String` instead of `&str`.
@@ -308,7 +309,7 @@ impl<T> AsyncTasksRecoder<T>
             return TaskState::Working;
         }
 
-        TaskState::Failed
+        TaskState::NotFound
     }
 
     /// Return `Working` if not in either `success_tasks` or `failed_tasks`.

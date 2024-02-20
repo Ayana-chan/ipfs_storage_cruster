@@ -14,8 +14,9 @@ struct UploadFileArgs {
 #[derive(Debug, Eq, PartialEq)]
 enum UploadTaskState {
     Uploading,
-    Failed,
     Success,
+    Failed,
+    NotFound,
 }
 
 fn main() {
@@ -35,9 +36,9 @@ async fn simulate_requests() {
     println!("REQUEST: check_upload_state {}", fake_md5);
     let result = check_upload_state(
         recorder.clone(),
-        fake_md5.to_string()
+        fake_md5.to_string(),
     ).await;
-    assert_eq!(result, UploadTaskState::Failed);
+    assert_eq!(result, UploadTaskState::NotFound);
     println!("RESPONSE: check_upload_state {}: {:?}", fake_md5, result);
 
     println!("REQUEST: upload_file {}", fake_md5);
@@ -51,7 +52,7 @@ async fn simulate_requests() {
     println!("REQUEST: check_upload_state {}", fake_md5);
     let result = check_upload_state(
         recorder.clone(),
-        fake_md5.to_string()
+        fake_md5.to_string(),
     ).await;
     assert_eq!(result, UploadTaskState::Uploading);
     println!("RESPONSE: check_upload_state {}: {:?}", fake_md5, result);
@@ -62,7 +63,7 @@ async fn simulate_requests() {
     println!("REQUEST: check_upload_state {}", fake_md5);
     let result = check_upload_state(
         recorder.clone(),
-        fake_md5.to_string()
+        fake_md5.to_string(),
     ).await;
     assert_eq!(result, UploadTaskState::Success);
     println!("RESPONSE: check_upload_state {}: {:?}", fake_md5, result);
@@ -98,6 +99,7 @@ async fn check_upload_state(recorder: AsyncTasksRecoder<Arc<String>>, arg_md5: S
     match res {
         TaskState::Success => UploadTaskState::Success,
         TaskState::Failed => UploadTaskState::Failed,
+        TaskState::NotFound => UploadTaskState::NotFound,
         TaskState::Working => UploadTaskState::Uploading,
     }
 }
