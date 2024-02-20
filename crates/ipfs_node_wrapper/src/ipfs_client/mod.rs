@@ -1,6 +1,5 @@
 #[allow(unused_imports)]
-use tracing::{error, debug};
-use reqwest::{Response, StatusCode};
+use tracing::{error, debug, warn};
 use crate::app::AppConfig;
 use crate::error;
 use crate::common::ApiResult;
@@ -22,7 +21,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get file from IPFS gateway.
-    pub async fn get_file_by_gateway(&self, cid: &str, file_name: Option<&str>) -> ApiResult<Response> {
+    pub async fn get_file_by_gateway(&self, cid: &str, file_name: Option<&str>) -> ApiResult<reqwest::Response> {
         let url = format!("http://{addr}/ipfs/{cid}?filename={file_name}&download=true",
                           addr = &self.ipfs_node_metadata.read().gateway_address,
                           cid = cid,
@@ -43,33 +42,25 @@ impl ReqwestIpfsClient {
                 debug!("Success get file");
                 Ok(res)
             }
-            StatusCode::NOT_FOUND => {
+            reqwest::StatusCode::NOT_FOUND => {
                 Err(error::IPFS_GATEWAY_NOT_FOUND.clone_to_error_with_log())
             }
             _ => {
+                warn!("IPFS gateway responded unhandled status code: {}", status);
                 Err(error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log())
             }
         }
     }
 
     /// Send `/pin/add` RPC to add a recursive pin object.
-    pub async fn add_pin_recursive(&self, cid: &str, pin_name: Option<&str>) -> ApiResult<Response> {
+    pub async fn add_pin_recursive(&self, cid: &str, pin_name: Option<&str>) -> ApiResult<reqwest::Response> {
         let pin_name = pin_name.unwrap_or("untitled");
 
-        let url = format!("http://{addr}/api/v0/pin/add?arg={cid}&name={pin_name}",
-                          addr = &self.ipfs_node_metadata.read().rpc_address,
+        let url_content = format!("/pin/add?arg={cid}&name={pin_name}",
                           cid = cid,
                           pin_name = pin_name,
         );
-        // debug!("add pin url: {}", url);
-
-        let res = self.client
-            .post(url)
-            .send()
-            .await.map_err(|_e| {
-            error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log_error(_e)
-        }
-        )?;
+        let res = self.ipfs_rpc_request(url_content).await?;
 
         let status = res.status();
         match status {
@@ -84,18 +75,7 @@ impl ReqwestIpfsClient {
     /// Get IPFS node's peer ID.
     pub async fn get_id(&self) -> ApiResult<IdResponse> {
         // TODO format arg无效
-        let url = format!("http://{addr}/api/v0/id",
-                          addr = &self.ipfs_node_metadata.read().rpc_address,
-        );
-        debug!("get id url: {}", url);
-
-        let res = self.client
-            .post(url)
-            .send()
-            .await.map_err(|_e| {
-            error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log_error(_e)
-        }
-        )?;
+        let res = self.ipfs_rpc_request("/id".to_string()).await?;
 
         let status = res.status();
         match status {
@@ -109,27 +89,51 @@ impl ReqwestIpfsClient {
             err => Err(handle_rpc_error(err))
         }
     }
+
+    /// Request's url is `"http://{addr}/api/v0{url_content}"`.
+    async fn ipfs_rpc_request(&self, url_content: String) -> ApiResult<reqwest::Response> {
+        let url = format!("http://{addr}/api/v0{url_content}",
+                          addr = &self.ipfs_node_metadata.read().rpc_address,
+                          url_content = url_content,
+        );
+        debug!("IPFS RPC url: {}", url);
+
+        self.client
+            .post(url)
+            .send()
+            .await.map_err(|_e| {
+            error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log_error(_e)
+        }
+        )
+    }
 }
 
 /// Convert RPC status error into `ResponseError`,
 /// and output log.
-fn handle_rpc_error(status: StatusCode) -> error::ResponseError {
+fn handle_rpc_error(status: reqwest::StatusCode) -> error::ResponseError {
     match status {
-        StatusCode::INTERNAL_SERVER_ERROR => error::IPFS_RPC_INTERNAL_ERROR.clone_to_error_with_log(),
-        StatusCode::BAD_REQUEST => {
+        reqwest::StatusCode::INTERNAL_SERVER_ERROR => error::IPFS_RPC_INTERNAL_ERROR.clone_to_error_with_log(),
+        reqwest::StatusCode::BAD_REQUEST => {
             error!("IPFS Bad Request: malformed RPC, argument type error, etc");
             error::IPFS_RPC_REJECT.clone_to_error()
         }
-        StatusCode::FORBIDDEN => {
+        reqwest::StatusCode::FORBIDDEN => {
             error!("IPFS RPC call forbidden");
             error::IPFS_RPC_REJECT.clone_to_error()
         }
-        StatusCode::NOT_FOUND => error::IPFS_RPC_NOT_FOUND.clone_to_error_with_log(),
-        StatusCode::METHOD_NOT_ALLOWED => {
+        reqwest::StatusCode::NOT_FOUND => error::IPFS_RPC_NOT_FOUND.clone_to_error_with_log(),
+        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
             error!("IPFS RPC method not allowed");
             error::IPFS_RPC_REJECT.clone_to_error()
         }
-        _ => error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log(),
+        reqwest::StatusCode::BAD_GATEWAY => {
+            error!("IPFS RPC server responded Bad Gateway");
+            error::IPFS_RPC_INTERNAL_ERROR.clone_to_error()
+        }
+        status => {
+            warn!("IPFS RPC responded unhandled status code: {}", status);
+            error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log()
+        },
     }
 }
 
