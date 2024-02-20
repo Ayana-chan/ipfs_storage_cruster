@@ -1,25 +1,14 @@
-use std::sync::Arc;
 #[allow(unused_imports)]
 use tracing::{error, debug};
-use reqwest::{Client, Response, StatusCode};
-use serde::Deserialize;
+use reqwest::{Response, StatusCode};
 use crate::app::AppConfig;
 use crate::error;
 use crate::common::ApiResult;
+pub use models::*;
 
-#[derive(Default, Clone, Debug)]
-pub struct IpfsNodeMetadata {
-    pub gateway_address: String,
-    pub rpc_address: String,
-}
+mod models;
 
-/// Safe to clone.
-#[derive(Default, Debug, Clone)]
-pub struct ReqwestIpfsClient {
-    pub client: Client,
-    pub ipfs_node_metadata: Arc<parking_lot::RwLock<IpfsNodeMetadata>>,
-}
-
+//TODO 封装RPC调用
 impl ReqwestIpfsClient {
     /// Create ipfs client by `AppConfig`
     pub fn new_from_config(app_config: &AppConfig) -> Self {
@@ -145,14 +134,5 @@ fn handle_rpc_error(status: StatusCode) -> error::ResponseError {
 }
 
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct IdResponse {
-    #[serde(rename = "ID")]
-    pub id: String,
-    pub public_key: String,
-    pub addresses: Vec<String>,
-    pub agent_version: String,
-    pub protocols: Vec<String>,
-}
+
 
