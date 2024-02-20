@@ -1,9 +1,12 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
+use axum::response::{IntoResponse, Response};
 #[allow(unused_imports)]
 use tracing::{info, trace, error};
+use async_tasks_recorder::TaskState;
 use crate::app::admin_app::AdminAppState;
+use crate::app::vo;
 use crate::common::{StandardApiResult, StandardApiResultStatus};
 use crate::models;
 
@@ -12,18 +15,18 @@ use crate::models;
 #[axum_macros::debug_handler]
 pub async fn add_pin(
     State(state): State<AdminAppState>,
-    Json(args): Json<models::PinFileArgs>)
-    -> StandardApiResult<()> {
-    if args.async == Some(false) {
-        add_pin_sync(state, args).await
+    Json(args): Json<vo::PinFileArgs>)
+    -> Response {
+    if args.r#async == Some(false) {
+        add_pin_sync(state, args).await.into_response()
     } else {
-        add_pin_async(state, args).await
+        add_pin_async(state, args).await.into_response()
     }
 }
 
 /// Pin file to IPFS node.
 /// Return until pin finishes.
-async fn add_pin_sync(state: AdminAppState, args: models::PinFileArgs) -> StandardApiResult<()> {
+async fn add_pin_sync(state: AdminAppState, args: vo::PinFileArgs) -> StandardApiResult<()> {
     info!("Add Pin cid: {}", args.cid);
     let _ipfs_res = state.app_state.ipfs_client
         .add_pin_recursive(
@@ -37,7 +40,7 @@ async fn add_pin_sync(state: AdminAppState, args: models::PinFileArgs) -> Standa
 
 /// Pin file to IPFS node.
 /// Return immediately.
-async fn add_pin_async(state: AdminAppState, args: models::PinFileArgs) -> StandardApiResultStatus<()> {
+async fn add_pin_async(state: AdminAppState, args: vo::PinFileArgs) -> StandardApiResultStatus<()> {
     info!("Add Pin Async cid: {}", args.cid);
     let app_state = state.app_state.clone();
     let cid_backup = args.cid.clone();
@@ -68,7 +71,16 @@ async fn add_pin_async(state: AdminAppState, args: models::PinFileArgs) -> Stand
 pub async fn check_pin(
     State(state): State<AdminAppState>,
     Path(cid): Path<String>)
-    -> StandardApiResultStatus<()> {
+    -> StandardApiResult<vo::CheckPinResponse> {
     info!("Check Pin cid: {}", cid);
-    Ok(().into())
+    let task_state = state.add_pin_recorder.query_task_state(&cid.into()).await;
+    let status = match task_state {
+        TaskState::Success => models::PinStatus::Pinned,
+        TaskState::Working => models::PinStatus::Pinning,
+        TaskState::Failed => models::PinStatus::Failed,
+    };
+    let res = vo::CheckPinResponse {
+        status,
+    };
+    Ok(res.into())
 }

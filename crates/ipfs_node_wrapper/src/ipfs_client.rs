@@ -48,7 +48,7 @@ impl ReqwestIpfsClient {
         )?;
 
         let status = res.status();
-        return match status {
+        match status {
             _ if status.is_success() => {
                 debug!("Success get file");
                 Ok(res)
@@ -59,7 +59,7 @@ impl ReqwestIpfsClient {
             _ => {
                 Err(error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log())
             }
-        };
+        }
     }
 
     /// Send `/pin/add` RPC to add a recursive pin object.
@@ -82,13 +82,13 @@ impl ReqwestIpfsClient {
         )?;
 
         let status = res.status();
-        return match status {
+        match status {
             _ if status.is_success() => {
                 debug!("Success add pin. cid: {}, pin_name: {}", cid, pin_name);
                 Ok(res)
             }
             err => Err(handle_rpc_error(err))
-        };
+        }
     }
 }
 

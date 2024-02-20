@@ -7,6 +7,7 @@ use crate::ipfs_client::ReqwestIpfsClient;
 
 mod public_app;
 mod admin_app;
+mod vo;
 
 pub struct AppConfig {
     // server config
