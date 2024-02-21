@@ -23,6 +23,12 @@ pub struct AppConfig {
     pub ipfs_rpc_address: SocketAddr,
 }
 
+impl Default for AppConfig {
+    fn default() -> Self {
+        AppConfigBuilder::new().finish()
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Default)]
 pub struct AppConfigBuilder {

@@ -3,9 +3,25 @@ use tracing::{error, debug, warn};
 use crate::app::AppConfig;
 use crate::error;
 use crate::common::ApiResult;
+use reqwest::Client;
+use std::sync::Arc;
 pub use models::*;
 
 mod models;
+
+#[derive(Default, Clone, Debug)]
+pub struct IpfsNodeMetadata {
+    pub gateway_address: String,
+    pub rpc_address: String,
+}
+
+/// An IPFS client depend on Reqwest.
+/// Safe to clone.
+#[derive(Debug, Clone)]
+pub struct ReqwestIpfsClient {
+    pub client: Client,
+    pub ipfs_node_metadata: Arc<parking_lot::RwLock<IpfsNodeMetadata>>,
+}
 
 impl ReqwestIpfsClient {
     /// Create ipfs client by `AppConfig`
@@ -51,15 +67,34 @@ impl ReqwestIpfsClient {
         }
     }
 
+    /// Get IPFS node's basic information.
+    pub async fn get_id_info(&self) -> ApiResult<IdResponse> {
+        // TODO format arg无效
+        let url_content = "/id";
+        let res = self.ipfs_rpc_request(url_content).await?;
+
+        let status = res.status();
+        match status {
+            _ if status.is_success() => {
+                let peer_id = res.json().await.map_err(|_e| {
+                    error::IPFS_FAIL.clone_to_error_with_log_error(_e)
+                })?;
+                debug!("Success get id info");
+                Ok(peer_id)
+            }
+            err => Err(handle_rpc_error(err))
+        }
+    }
+
     /// Send `/pin/add` RPC to add a recursive pin object.
     pub async fn add_pin_recursive(&self, cid: &str, pin_name: Option<&str>) -> ApiResult<reqwest::Response> {
         let pin_name = pin_name.unwrap_or("untitled");
 
         let url_content = format!("/pin/add?arg={cid}&name={pin_name}",
-                          cid = cid,
-                          pin_name = pin_name,
+                                  cid = cid,
+                                  pin_name = pin_name,
         );
-        let res = self.ipfs_rpc_request(url_content).await?;
+        let res = self.ipfs_rpc_request(&url_content).await?;
 
         let status = res.status();
         match status {
@@ -71,10 +106,16 @@ impl ReqwestIpfsClient {
         }
     }
 
-    /// Get IPFS node's peer ID.
-    pub async fn get_id_info(&self) -> ApiResult<IdResponse> {
-        // TODO format arg无效
-        let res = self.ipfs_rpc_request("/id".to_string()).await?;
+    // TODO 刚启动时或者周期性地用此方法来同步success表
+    /// List all recursive pins that is pinned
+    pub async fn list_recursive_pins_pinned(&self, with_pin_name: bool) -> ApiResult<ListPinsResponse> {
+        let url_content;
+        if with_pin_name {
+            url_content = "/pin/ls?type=recursive&names=true";
+        } else {
+            url_content = "/pin/ls?type=recursive";
+        }
+        let res = self.ipfs_rpc_request(url_content).await?;
 
         let status = res.status();
         match status {
@@ -82,7 +123,7 @@ impl ReqwestIpfsClient {
                 let peer_id = res.json().await.map_err(|_e| {
                     error::IPFS_FAIL.clone_to_error_with_log_error(_e)
                 })?;
-                debug!("Success get peer id");
+                debug!("Success list recursive pins that is pinned");
                 Ok(peer_id)
             }
             err => Err(handle_rpc_error(err))
@@ -90,7 +131,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Request's url is `"http://{addr}/api/v0{url_content}"`.
-    async fn ipfs_rpc_request(&self, url_content: String) -> ApiResult<reqwest::Response> {
+    async fn ipfs_rpc_request(&self, url_content: &str) -> ApiResult<reqwest::Response> {
         let url = format!("http://{addr}/api/v0{url_content}",
                           addr = &self.ipfs_node_metadata.read().rpc_address,
                           url_content = url_content,
@@ -104,6 +145,12 @@ impl ReqwestIpfsClient {
             error::IPFS_COMMUCATION_FAIL.clone_to_error_with_log_error(_e)
         }
         )
+    }
+}
+
+impl Default for ReqwestIpfsClient {
+    fn default() -> Self {
+        ReqwestIpfsClient::new_from_config(&AppConfig::default())
     }
 }
 
@@ -132,10 +179,26 @@ fn handle_rpc_error(status: reqwest::StatusCode) -> error::ResponseError {
         status => {
             warn!("IPFS RPC responded unhandled status code: {}", status);
             error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log()
-        },
+        }
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-
+    #[tokio::test]
+    #[ignore]
+    async fn test_ipfs_client() {
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::TRACE)
+            .init();
+        let span = tracing::info_span!("test_ipfs_client");
+        let _guard = span.enter();
+        tracing::info!("try");
+        let ipfs_client = ReqwestIpfsClient::default();
+        let ans = ipfs_client.list_recursive_pins_pinned(true).await;
+        println!("list_recursive_pins_pinned: {:?}", ans);
+    }
+}
 
