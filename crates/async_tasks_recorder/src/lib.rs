@@ -272,16 +272,21 @@ impl<T> AsyncTasksRecoder<T>
         }
     }
 
-    /// Launch task that returns `Result`.
+    /// Launch a task that returns `Result<R, E>`.
     ///
     /// - `task_id`: Uniquely mark a task. Different `Future` with **the same `task_id`** is considered **the same task**.
     /// - `task`: A `Future` to be executed automatically.
+    ///
+    /// The returned value can just be ignored.
+    ///
+    /// - Return `Ok(())` if this launch effectively gets the task into working.
+    /// - Return `Err(TaskState)` if launch canceled because the task is at `TaskState` state.
     ///
     /// The return value of task is ignored, so please use other methods to handle the return value,
     /// such as channel or shared variable.
     ///
     /// If you query after `launch().await`, you will get changed result (**P04** at [AsyncTasksRecoder](crate::AsyncTasksRecoder)).
-    pub async fn launch<Fut, R, E>(&self, task_id: T, task: Fut)
+    pub async fn launch<Fut, R, E>(&self, task_id: T, task: Fut) -> Result<(), TaskState>
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
               E: Send {
@@ -290,12 +295,12 @@ impl<T> AsyncTasksRecoder<T>
         let res = self.task_manager.working_tasks.insert_async(task_id.clone()).await;
         if res.is_err() {
             // on working
-            return;
+            return Err(TaskState::Working);
         }
         // modify status
         if self.task_manager.success_tasks.contains_async(&task_id).await {
             // succeeded
-            return;
+            return Err(TaskState::Success);
         }
         // remove from `failed_tasks` if contained
         self.task_manager.failed_tasks.remove_async(&task_id).await;
@@ -314,9 +319,12 @@ impl<T> AsyncTasksRecoder<T>
                 task_manager.working_tasks.remove_async(&task_id).await;
             }
         });
+        Ok(())
     }
 
     /// Block until task finishes ("block" means it will keep `await` until finishing).
+    ///
+    /// [launch](crate::AsyncTasksRecoder::launch) for more detail.
     ///
     /// Can be mixed with launch.
     ///

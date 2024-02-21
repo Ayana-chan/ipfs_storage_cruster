@@ -90,7 +90,7 @@ async fn upload_file(recorder: AsyncTasksRecoder<Arc<String>>, args: UploadFileA
     };
 
     // launch `Arc<String>` and `Future`
-    recorder.launch(args.md5.into(), fut).await;
+    let _ = recorder.launch(args.md5.into(), fut).await;
 }
 
 async fn check_upload_state(recorder: AsyncTasksRecoder<Arc<String>>, arg_md5: String) -> UploadTaskState {
