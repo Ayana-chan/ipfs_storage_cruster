@@ -316,6 +316,35 @@ impl<T> AsyncTasksRecoder<T>
         });
     }
 
+    /// Block until task finishes ("block" means it will keep `await` until finishing).
+    ///
+    /// Can be mixed with launch.
+    ///
+    /// If you only need `launch_block`, then you probably don't need this crate.
+    pub async fn launch_block<Fut, R, E>(&self, task_id: T, task: Fut)
+        where Fut: Future<Output=Result<R, E>> + Send + 'static,
+              R: Send,
+              E: Send {
+        let res = self.task_manager.working_tasks.insert_async(task_id.clone()).await;
+        if res.is_err() {
+            return;
+        }
+        if self.task_manager.success_tasks.contains_async(&task_id).await {
+            return;
+        }
+        self.task_manager.failed_tasks.remove_async(&task_id).await;
+
+        // start (block)
+        let add_pin_res = task.await;
+        if add_pin_res.is_ok() {
+            let _ = self.task_manager.success_tasks.insert_async(task_id.clone()).await;
+            self.task_manager.working_tasks.remove_async(&task_id).await;
+        } else {
+            let _ = self.task_manager.failed_tasks.insert_async(task_id.clone()).await;
+            self.task_manager.working_tasks.remove_async(&task_id).await;
+        }
+    }
+
     /// Query the state of a task by `task_id`.
     ///
     /// Query priority of containers : `success_tasks` -> `failed_tasks` -> `working_tasks`.
