@@ -75,8 +75,8 @@
 //! 1. Any task's state can be **queried** at any time.
 //! 2. The initial state of the task is `Not Found`, and won't change immediately after `launch`.
 //! 3. Always, when a task whose state is `Failed` or `NotFound` is launched, it will be `Working` at some future moment.
-//! 4. Always, when a task is `Working`, it would eventually be `Fail` or `Success`, i.e. $\Box (\text{Working}(id) \rightarrow \lozenge(\text{Fail}(id) \vee \text{Success}(id)))$.
-//! 5. Always, when a task is `Success`, it would be `Success` forever, i.e. $\Box (\text{Success}(id) \rightarrow \Box \text{Success}(id))$.
+//! 4. Always, when a task is `Working`, it would eventually be `Fail` or `Success`.
+//! 5. Always, when a task is `Success`, it would be `Success` forever.
 //!
 //! ### Other
 //! Relationship between states and containers at [query_task_state](AsyncTasksRecoder::query_task_state).
