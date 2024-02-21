@@ -29,10 +29,10 @@
 //! > It is recommended to directly look at the source code (about 100 line) if there is any confusion.
 //!
 //! **NOTE**: This crate use three `HashSet` to make it easy to handle all tasks in the same state.
-//! But `scc::HashSet` have less contention in **single** access when it grows larger.
-//! Therefore, if you don't need handling every tasks in the same state,
+//! However, `scc::HashSet` have less contention in **single** access when it grows larger.
+//! Therefore, if you don't need handling every task in the same state,
 //! then just use `scc::HashMap` (`task_id` \-\> `task_status`) to build a simpler implementation,
-//! which might have less contention and clone, but more expansive to iterator.
+//! which might have less contention and cloning, but more expansive to iterate.
 //!
 //! # Usage
 //!

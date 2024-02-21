@@ -80,7 +80,10 @@ pub async fn rm_pin(
     state.app_state.ipfs_client
         .remove_pin_recursive(&args.cid)
         .await?;
-    // TODO 删掉recorder记录
+
+    // delete the success record of adding pin
+    // Something like this might happen: add -> remove -> mark not success -> mark success
+    state.add_pin_recorder.get_success_tasks_ref().remove_async(&args.cid).await;
 
     Ok(().into())
 }
