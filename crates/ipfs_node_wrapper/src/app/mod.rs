@@ -1,13 +1,16 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
+
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
+
 use crate::ipfs_client::ReqwestIpfsClient;
 
 mod public_app;
 mod admin_app;
 mod vo;
+mod models;
 
 pub struct AppConfig {
     // server config

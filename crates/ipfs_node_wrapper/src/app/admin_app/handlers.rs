@@ -8,7 +8,7 @@ use async_tasks_recorder::TaskState;
 use crate::app::admin_app::AdminAppState;
 use crate::app::vo;
 use crate::common::{StandardApiResult, StandardApiResultStatus};
-use crate::models;
+use crate::app::models;
 
 /// Get IPFS node's information.
 #[axum_macros::debug_handler]

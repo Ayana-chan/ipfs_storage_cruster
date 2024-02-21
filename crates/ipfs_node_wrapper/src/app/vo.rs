@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use crate::models;
+use crate::app::models;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct GetFileArgs {
