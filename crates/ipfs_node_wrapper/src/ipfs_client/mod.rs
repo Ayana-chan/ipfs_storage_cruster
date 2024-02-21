@@ -131,8 +131,20 @@ impl ReqwestIpfsClient {
     }
 
     /// Remove a recursive pin.
-    pub async fn remove_pin_recursive(&self) -> ApiResult<()>{
-        Ok(())
+    pub async fn remove_pin_recursive(&self, cid: &str) -> ApiResult<()>{
+        let url_content = format!("/pin/rm?arg={cid}",
+                                  cid = cid,
+        );
+        let res = self.ipfs_rpc_request(&url_content).await?;
+
+        let status = res.status();
+        match status {
+            _ if status.is_success() => {
+                debug!("Success remove pin. cid: {}", cid);
+                Ok(())
+            }
+            err => Err(handle_rpc_error(err))
+        }
     }
 
     /// Request's url is `"http://{addr}/api/v0{url_content}"`.
@@ -194,16 +206,36 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    async fn test_ipfs_client() {
+    async fn test_pin() {
         tracing_subscriber::fmt()
             .with_max_level(tracing::Level::TRACE)
             .init();
         let span = tracing::info_span!("test_ipfs_client");
         let _guard = span.enter();
-        tracing::info!("try");
+
         let ipfs_client = ReqwestIpfsClient::default();
-        let ans = ipfs_client.list_recursive_pins_pinned(true).await;
-        println!("list_recursive_pins_pinned: {:?}", ans);
+
+        let ans = ipfs_client
+            .list_recursive_pins_pinned(true).await.unwrap();
+        println!("list_recursive_pins_pinned: {:#?}", ans);
+
+        let cid = "QmRTV3h1jLcACW4FRfdisokkQAk4E4qDhUzGpgdrd4JAFy";
+
+        ipfs_client
+            .add_pin_recursive(cid, None).await.unwrap();
+        println!("add_pin_recursive: {}", cid);
+
+        let ans = ipfs_client
+            .list_recursive_pins_pinned(true).await.unwrap();
+        println!("list_recursive_pins_pinned: {:#?}", ans);
+
+        ipfs_client
+            .remove_pin_recursive(cid).await.unwrap();
+        println!("remove_pin_recursive: {}", cid);
+
+        let ans = ipfs_client
+            .list_recursive_pins_pinned(true).await.unwrap();
+        println!("list_recursive_pins_pinned: {:#?}", ans);
     }
 }
 
