@@ -18,6 +18,7 @@ pub struct AdminAppState {
 #[allow(unused_variables)]
 pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
     let app = Router::new()
+        .route("/pin", get(list_succeeded_pins))
         .route("/pin/:cid", get(check_pin))
         .route("/pin", post(add_pin))
         .route("/info", get(get_ipfs_node_info));

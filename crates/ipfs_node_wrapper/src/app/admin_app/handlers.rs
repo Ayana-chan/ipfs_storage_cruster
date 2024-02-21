@@ -36,6 +36,7 @@ pub async fn add_pin(
     }
 }
 
+// TODO 如果NotFound的话也许可以查一查IPFS节点，或者没必要的话再加一个强制查的API
 /// Check status of adding pin.
 /// Just query local recorder, so maybe return `Failed` when not found.
 #[axum_macros::debug_handler]
@@ -57,7 +58,17 @@ pub async fn check_pin(
     Ok(res.into())
 }
 
-// TODO verify pin，可以供NotFound时深入检查
+/// List all recursive pins that is pinned in IPFS node.
+#[axum_macros::debug_handler]
+pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> StandardApiResult<vo::ListSucceededPinsResponse> {
+    let list_res = state.app_state.ipfs_client
+        .list_recursive_pins_pinned(false).await?;
+    let cids = list_res.keys.into_keys().collect();
+    let res = vo::ListSucceededPinsResponse {
+        cids,
+    };
+    Ok(res.into())
+}
 
 // --------------------------------------------------------------------------------
 

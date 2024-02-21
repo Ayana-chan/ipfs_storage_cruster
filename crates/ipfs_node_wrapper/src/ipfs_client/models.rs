@@ -15,13 +15,13 @@ pub struct IdResponse {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ListPinsResponse {
-    keys: HashMap<String, PinsInfoInList>,
+    pub keys: HashMap<String, PinsInfoInList>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PinsInfoInList {
-    name: String,
-    r#type: String, // TODO type枚举类
+    pub name: String,
+    pub r#type: String, // TODO type枚举类
 }
 // TODO 把IPFS密切相关的类型写到这里

@@ -28,4 +28,8 @@ pub struct GetIpfsNodeInfoResponse {
     pub id: String,
 }
 
-
+#[derive(Debug, Clone, Serialize)]
+pub struct ListSucceededPinsResponse {
+    /// Result pin cids
+    pub cids: Vec<String>,
+}
