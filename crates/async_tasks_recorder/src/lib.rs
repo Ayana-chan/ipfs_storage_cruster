@@ -97,10 +97,14 @@ use std::sync::Arc;
 #[derive(Default, Debug)]
 pub struct TaskManager<T>
     where T: Eq + Hash {
-    /// hot
+    /// Tasks on execution. Usually more contention.
     pub working_tasks: scc::HashSet<T>,
+    /// Succeeded tasks.
     pub success_tasks: scc::HashSet<T>,
+    /// Failed tasks.
     pub failed_tasks: scc::HashSet<T>,
+    /// Tasks that is going to be revoked
+    pub revoke_tasks: scc::HashSet<T>,
 }
 
 impl<T> TaskManager<T>
@@ -111,6 +115,7 @@ impl<T> TaskManager<T>
             working_tasks: scc::HashSet::new(),
             success_tasks: scc::HashSet::new(),
             failed_tasks: scc::HashSet::new(),
+            revoke_tasks: scc::HashSet::new(),
         }
     }
 }
@@ -404,6 +409,44 @@ impl<T> AsyncTasksRecoder<T>
         TaskState::Working
     }
 
+    /// Revoke task. TODO doc
+    pub async fn revoke_task_block<Fut, R, E>(&self, target_task_id: T, revoke_task: Fut) -> Result<R, RevokeFailReason<E>>
+        where Fut: Future<Output=Result<R, E>> + Send + 'static,
+              R: Send,
+              E: Send {
+        // should in success
+        if !self.task_manager.success_tasks.contains_async(&target_task_id).await {
+            return Err(RevokeFailReason::NotSuccess);
+        }
+        // should not revoking
+        let res = self.task_manager.revoke_tasks.insert_async(target_task_id.clone()).await;
+        if res.is_err() {
+            return Err(RevokeFailReason::Revoking);
+        }
+
+        // start (block)
+        let revoke_task_res = revoke_task.await;
+
+        match revoke_task_res {
+            // revoke task is err
+            Err(e) => {
+                // set not revoke
+                self.task_manager.revoke_tasks.remove_async(&target_task_id).await;
+
+                Err(RevokeFailReason::RevokeTaskError(e))
+            },
+            // success
+            Ok(res) => {
+                // set not success
+                self.task_manager.success_tasks.remove_async(&target_task_id).await;
+                // set not revoke
+                self.task_manager.revoke_tasks.remove_async(&target_task_id).await;
+
+                Ok(res)
+            }
+        }
+    }
+
     /// Get a cloned `Arc` of `task_manager`.
     /// Then you can do anything you want (Every containers are public).
     pub fn get_task_manager_arc(&self) -> Arc<TaskManager<T>> {
@@ -426,5 +469,10 @@ impl<T> AsyncTasksRecoder<T>
     }
 }
 
-
+pub enum RevokeFailReason<E>
+    where E: Send {
+    NotSuccess,
+    Revoking,
+    RevokeTaskError(E),
+}
 
