@@ -22,20 +22,6 @@ pub async fn get_ipfs_node_info(State(state): State<AdminAppState>) -> StandardA
     Ok(res.into())
 }
 
-/// Pin file to IPFS node.
-/// Return after pin completed.
-#[axum_macros::debug_handler]
-pub async fn add_pin(
-    State(state): State<AdminAppState>,
-    Json(args): Json<vo::PinFileArgs>)
-    -> Response {
-    if args.r#async == Some(false) {
-        add_pin_sync(state, args).await.into_response()
-    } else {
-        add_pin_async(state, args).await.into_response()
-    }
-}
-
 // TODO 如果NotFound的话也许可以查一查IPFS节点，或者没必要的话再加一个强制查的API
 /// Check status of adding pin.
 /// Just query local recorder, so maybe return `Failed` when not found.
@@ -44,7 +30,7 @@ pub async fn check_pin(
     State(state): State<AdminAppState>,
     Path(cid): Path<String>)
     -> StandardApiResult<vo::CheckPinResponse> {
-    info!("Check Pin cid: {}", cid);
+    info!("Check Pin. cid: {}", cid);
     let task_state = state.add_pin_recorder.query_task_state(&cid.into()).await;
     let status = match task_state {
         TaskState::Success => models::PinStatus::Pinned,
@@ -61,6 +47,7 @@ pub async fn check_pin(
 /// List all recursive pins that is pinned in IPFS node.
 #[axum_macros::debug_handler]
 pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> StandardApiResult<vo::ListSucceededPinsResponse> {
+    info!("List Pins.");
     let list_res = state.app_state.ipfs_client
         .list_recursive_pins_pinned(false).await?;
     let cids = list_res.keys.into_keys().collect();
@@ -70,12 +57,40 @@ pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> Standard
     Ok(res.into())
 }
 
-// --------------------------------------------------------------------------------
+/// Add a pin to IPFS node.
+#[axum_macros::debug_handler]
+pub async fn add_pin(
+    State(state): State<AdminAppState>,
+    Json(args): Json<vo::AddPinArgs>)
+    -> Response {
+    if args.r#async == Some(false) {
+        add_pin_sync(state, args).await.into_response()
+    } else {
+        add_pin_async(state, args).await.into_response()
+    }
+}
 
 /// Pin file to IPFS node.
+#[axum_macros::debug_handler]
+pub async fn rm_pin(
+    State(state): State<AdminAppState>,
+    Json(args): Json<vo::RemovePinArgs>)
+    -> StandardApiResult<()> {
+    info!("Remove Pin. cid: {}", args.cid);
+    state.app_state.ipfs_client
+        .remove_pin_recursive(&args.cid)
+        .await?;
+    // TODO 删掉recorder记录
+
+    Ok(().into())
+}
+
+// --------------------------------------------------------------------------------
+
+/// Add a pin to IPFS node.
 /// Return until pin finishes.
-async fn add_pin_sync(state: AdminAppState, args: vo::PinFileArgs) -> StandardApiResult<()> {
-    info!("Add Pin cid: {}", args.cid);
+async fn add_pin_sync(state: AdminAppState, args: vo::AddPinArgs) -> StandardApiResult<()> {
+    info!("Add Pin. cid: {}", args.cid);
     state.app_state.ipfs_client
         .add_pin_recursive(
             &args.cid,
@@ -86,10 +101,10 @@ async fn add_pin_sync(state: AdminAppState, args: vo::PinFileArgs) -> StandardAp
     Ok(().into())
 }
 
-/// Pin file to IPFS node.
+/// Add a pin to IPFS node.
 /// Return immediately.
-async fn add_pin_async(state: AdminAppState, args: vo::PinFileArgs) -> StandardApiResultStatus<()> {
-    info!("Add Pin Async cid: {}", args.cid);
+async fn add_pin_async(state: AdminAppState, args: vo::AddPinArgs) -> StandardApiResultStatus<()> {
+    info!("Add Pin Async. cid: {}", args.cid);
     let app_state = state.app_state.clone();
     let cid_backup = args.cid.clone();
     let task = async move {

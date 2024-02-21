@@ -7,7 +7,7 @@ pub struct GetFileArgs {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct PinFileArgs {
+pub struct AddPinArgs {
     /// cid of the target IPFS object
     pub cid: String,
     /// pin's name
@@ -32,4 +32,9 @@ pub struct GetIpfsNodeInfoResponse {
 pub struct ListSucceededPinsResponse {
     /// Result pin cids
     pub cids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct RemovePinArgs {
+    pub cid: String,
 }

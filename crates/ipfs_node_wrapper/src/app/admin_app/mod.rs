@@ -1,7 +1,7 @@
 use tracing::error;
 use std::sync::Arc;
 use axum::Router;
-use axum::routing::{post, get};
+use axum::routing::{get, post, delete};
 use axum::http::{StatusCode, Uri};
 use tower_http::cors;
 use crate::app::{AppConfig, AppState};
@@ -18,10 +18,11 @@ pub struct AdminAppState {
 #[allow(unused_variables)]
 pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
     let app = Router::new()
+        .route("/info", get(get_ipfs_node_info))
         .route("/pin", get(list_succeeded_pins))
         .route("/pin/:cid", get(check_pin))
         .route("/pin", post(add_pin))
-        .route("/info", get(get_ipfs_node_info));
+        .route("/pin", delete(rm_pin));
 
     let admin_app_state = AdminAppState {
         app_state: app_state.clone(),

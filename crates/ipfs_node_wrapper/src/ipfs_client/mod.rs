@@ -228,6 +228,7 @@ mod tests {
         let ans = ipfs_client
             .list_recursive_pins_pinned(true).await.unwrap();
         println!("list_recursive_pins_pinned: {:#?}", ans);
+        assert!(ans.keys.contains_key(cid));
 
         ipfs_client
             .remove_pin_recursive(cid).await.unwrap();
@@ -236,6 +237,7 @@ mod tests {
         let ans = ipfs_client
             .list_recursive_pins_pinned(true).await.unwrap();
         println!("list_recursive_pins_pinned: {:#?}", ans);
+        assert!(!ans.keys.contains_key(cid));
     }
 }
 
