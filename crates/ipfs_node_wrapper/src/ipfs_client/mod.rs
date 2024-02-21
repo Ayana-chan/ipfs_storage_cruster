@@ -86,26 +86,6 @@ impl ReqwestIpfsClient {
         }
     }
 
-    /// Send `/pin/add` RPC to add a recursive pin object.
-    pub async fn add_pin_recursive(&self, cid: &str, pin_name: Option<&str>) -> ApiResult<reqwest::Response> {
-        let pin_name = pin_name.unwrap_or("untitled");
-
-        let url_content = format!("/pin/add?arg={cid}&name={pin_name}",
-                                  cid = cid,
-                                  pin_name = pin_name,
-        );
-        let res = self.ipfs_rpc_request(&url_content).await?;
-
-        let status = res.status();
-        match status {
-            _ if status.is_success() => {
-                debug!("Success add pin. cid: {}, pin_name: {}", cid, pin_name);
-                Ok(res)
-            }
-            err => Err(handle_rpc_error(err))
-        }
-    }
-
     // TODO 刚启动时用此方法来同步success表。
     /// List all recursive pins that is pinned
     pub async fn list_recursive_pins_pinned(&self, with_pin_name: bool) -> ApiResult<ListPinsResponse> {
@@ -128,6 +108,31 @@ impl ReqwestIpfsClient {
             }
             err => Err(handle_rpc_error(err))
         }
+    }
+
+    /// Add a recursive pin.
+    pub async fn add_pin_recursive(&self, cid: &str, pin_name: Option<&str>) -> ApiResult<()> {
+        let pin_name = pin_name.unwrap_or("untitled");
+
+        let url_content = format!("/pin/add?arg={cid}&name={pin_name}",
+                                  cid = cid,
+                                  pin_name = pin_name,
+        );
+        let res = self.ipfs_rpc_request(&url_content).await?;
+
+        let status = res.status();
+        match status {
+            _ if status.is_success() => {
+                debug!("Success add pin. cid: {}, pin_name: {}", cid, pin_name);
+                Ok(())
+            }
+            err => Err(handle_rpc_error(err))
+        }
+    }
+
+    /// Remove a recursive pin.
+    pub async fn remove_pin_recursive(&self) -> ApiResult<()>{
+        Ok(())
     }
 
     /// Request's url is `"http://{addr}/api/v0{url_content}"`.

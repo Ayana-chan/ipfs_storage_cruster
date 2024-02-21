@@ -76,7 +76,7 @@ pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> Standard
 /// Return until pin finishes.
 async fn add_pin_sync(state: AdminAppState, args: vo::PinFileArgs) -> StandardApiResult<()> {
     info!("Add Pin cid: {}", args.cid);
-    let _ipfs_res = state.app_state.ipfs_client
+    state.app_state.ipfs_client
         .add_pin_recursive(
             &args.cid,
             args.name.as_deref(),
