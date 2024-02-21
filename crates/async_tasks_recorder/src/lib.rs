@@ -281,6 +281,7 @@ impl<T> AsyncTasksRecoder<T>
     ///
     /// - Return `Ok(())` if this launch effectively gets the task into working.
     /// - Return `Err(TaskState)` if launch canceled because the task is at `TaskState` state.
+    /// - `TaskState` in `Err(TaskState)` can only be `Working` or `Success`.
     ///
     /// The return value of task is ignored, so please use other methods to handle the return value,
     /// such as channel or shared variable.
@@ -319,6 +320,7 @@ impl<T> AsyncTasksRecoder<T>
                 task_manager.working_tasks.remove_async(&task_id).await;
             }
         });
+
         Ok(())
     }
 
@@ -329,16 +331,16 @@ impl<T> AsyncTasksRecoder<T>
     /// Can be mixed with launch.
     ///
     /// If you only need `launch_block`, then you probably don't need this crate.
-    pub async fn launch_block<Fut, R, E>(&self, task_id: T, task: Fut)
+    pub async fn launch_block<Fut, R, E>(&self, task_id: T, task: Fut) -> Result<(), TaskState>
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
               E: Send {
         let res = self.task_manager.working_tasks.insert_async(task_id.clone()).await;
         if res.is_err() {
-            return;
+            return Err(TaskState::Working);
         }
         if self.task_manager.success_tasks.contains_async(&task_id).await {
-            return;
+            return Err(TaskState::Success);
         }
         self.task_manager.failed_tasks.remove_async(&task_id).await;
 
@@ -351,6 +353,8 @@ impl<T> AsyncTasksRecoder<T>
             let _ = self.task_manager.failed_tasks.insert_async(task_id.clone()).await;
             self.task_manager.working_tasks.remove_async(&task_id).await;
         }
+
+        Ok(())
     }
 
     /// Query the state of a task by `task_id`.
