@@ -54,6 +54,7 @@ async fn simulate_requests() {
         recorder.clone(),
         fake_md5.to_string(),
     ).await;
+    // Because the state is queried after `launch().await`, here must be `Uploading` (Too early to be `Success`).
     assert_eq!(result, UploadTaskState::Uploading);
     println!("RESPONSE: check_upload_state {}: {:?}", fake_md5, result);
 

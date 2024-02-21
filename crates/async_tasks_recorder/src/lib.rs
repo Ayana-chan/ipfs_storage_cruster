@@ -73,10 +73,11 @@
 //!
 //! ### About Task State Transition
 //! 1. Any task's state can be **queried** at any time.
-//! 2. The initial state of the task is `Not Found`, and won't change immediately after `launch`.
-//! 3. Always, when a task whose state is `Failed` or `NotFound` is launched, it will be `Working` at some future moment.
-//! 4. Always, when a task is `Working`, it would eventually be `Fail` or `Success`.
-//! 5. Always, when a task is `Success`, it would be `Success` forever.
+//! 2. The initial state of the task is `Not Found`.
+//! 3. Task's state won't change immediately after `launch` called. But if you query after `launch().await`, you will get changed result.
+//! 4. Always, when a task whose state is `Failed` or `NotFound` is launched, it will be `Working` at some future moment.
+//! 5. Always, when a task is `Working`, it would eventually be `Fail` or `Success`.
+//! 6. Always, when a task is `Success`, it would be `Success` forever.
 //!
 //! ### Other
 //! Relationship between states and containers at [query_task_state](AsyncTasksRecoder::query_task_state).
@@ -235,6 +236,13 @@ pub enum TaskState {
 ///
 /// So after first `Working`, the task must be in one of `tasks`,
 /// then it won't be `Not found` again. Q.E.D.
+///
+/// ## P04
+/// **If you query after `launch().await`, you will get changed result.**
+///
+/// `launch()` finishes just before `Future.await`.
+/// So before `launch()` finishes, all `tasks` has been changed,
+/// which means you won't get outdated `Failed` or `Not Found` after `launch().await`.
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder<T>
     where T: Eq + Hash + Clone + Send + 'static {
@@ -266,11 +274,13 @@ impl<T> AsyncTasksRecoder<T>
 
     /// Launch task that returns `Result`.
     ///
+    /// - `task_id`: Uniquely mark a task. Different `Future` with **the same `task_id`** is considered **the same task**.
+    /// - `task`: A `Future` to be executed automatically.
+    ///
     /// The return value of task is ignored, so please use other methods to handle the return value,
     /// such as channel or shared variable.
     ///
-    /// - `task_id`: Uniquely mark a task. Different `Future` with **the same `task_id`** is considered **the same task**.
-    /// - `task`: A `Future` to be executed automatically.
+    /// If you query after `launch().await`, you will get changed result (**P04** at [AsyncTasksRecoder](crate::AsyncTasksRecoder)).
     pub async fn launch<Fut, R, E>(&self, task_id: T, task: Fut)
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,

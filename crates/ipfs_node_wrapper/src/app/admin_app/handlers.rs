@@ -83,7 +83,7 @@ pub async fn rm_pin(
 
     // delete the success record of adding pin
     // Something like this might happen: add -> remove -> mark not success -> mark success
-    state.add_pin_recorder.get_success_tasks_ref().remove_async(&args.cid).await;
+    // state.add_pin_recorder.get_task_manager_arc()
 
     Ok(().into())
 }
