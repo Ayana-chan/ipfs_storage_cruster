@@ -103,7 +103,7 @@ pub struct TaskManager<T>
     pub success_tasks: scc::HashSet<T>,
     /// Failed tasks.
     pub failed_tasks: scc::HashSet<T>,
-    /// Tasks that is going to be revoked
+    /// Tasks that is going to be revoked. Just for [revoke_task_block](crate::AsyncTasksRecoder::revoke_task_block).
     pub revoke_tasks: scc::HashSet<T>,
 }
 
@@ -282,7 +282,7 @@ impl<T> AsyncTasksRecoder<T>
     /// - `task_id`: Uniquely mark a task. Different `Future` with **the same `task_id`** is considered **the same task**.
     /// - `task`: A `Future` to be executed automatically.
     ///
-    /// The returned value can just be ignored.
+    /// The returned result can just be ignored.
     ///
     /// - Return `Ok(())` if this launch effectively gets the task into working.
     /// - Return `Err(TaskState)` if launch canceled because the task is at `TaskState` state.
@@ -409,19 +409,36 @@ impl<T> AsyncTasksRecoder<T>
         TaskState::Working
     }
 
-    /// Revoke task. TODO doc
+    // TODO 失败的话future还回去
+    /// Revoke succeeded task.
+    /// Block until `revoke_task` finishes ("block" means it will keep `await` until finishing).
+    /// Linearizability guaranteed.
+    ///
+    /// - `target_task_id`: The `task_id` of the target task that you want to revoke.
+    /// - `revoke_task`: The `Future` to revoke the task (e.g. Delete a picture which is downloaded before).
+    ///
+    /// Ignoring the returned result can also keep linearizability.
+    ///
+    /// - Return `Ok(R)` if succeed (R is result of `revoke_task`). In this case, the `target_task_id` is removed from `success_tasks`.
+    /// - Return `Err(RevokeFailReason<E>)` if `revoke_task` canceled or `revoke_task` returns `Err(E)`.
+    ///
+    /// If you want to revoke asynchronously, you could (all deadlock-free):
+    /// 1. Use another `AsyncTasksRecoder`, and launch a `Future` that call `revoke_task_block` here.
+    /// 2. Create a new unique `task_id` for this `revoke_task`, and launch it in this `AsyncTasksRecoder`.
+    ///
+    /// check not revoking and set revoking -> check succeeded -> do revoke_task -> set not succeeded -> set not revoking
     pub async fn revoke_task_block<Fut, R, E>(&self, target_task_id: T, revoke_task: Fut) -> Result<R, RevokeFailReason<E>>
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
               E: Send {
-        // should in success
-        if !self.task_manager.success_tasks.contains_async(&target_task_id).await {
-            return Err(RevokeFailReason::NotSuccess);
-        }
         // should not revoking
         let res = self.task_manager.revoke_tasks.insert_async(target_task_id.clone()).await;
         if res.is_err() {
             return Err(RevokeFailReason::Revoking);
+        }
+        // should in success
+        if !self.task_manager.success_tasks.contains_async(&target_task_id).await {
+            return Err(RevokeFailReason::NotSuccess);
         }
 
         // start (block)
@@ -434,7 +451,7 @@ impl<T> AsyncTasksRecoder<T>
                 self.task_manager.revoke_tasks.remove_async(&target_task_id).await;
 
                 Err(RevokeFailReason::RevokeTaskError(e))
-            },
+            }
             // success
             Ok(res) => {
                 // set not success
@@ -466,6 +483,11 @@ impl<T> AsyncTasksRecoder<T>
     /// Get a reference of `failed_tasks`.
     pub fn get_failed_tasks_ref(&self) -> &scc::HashSet<T> {
         &self.task_manager.failed_tasks
+    }
+
+    /// Get a reference of `revoke_tasks`.
+    pub fn get_revoke_tasks_ref(&self) -> &scc::HashSet<T> {
+        &self.task_manager.revoke_tasks
     }
 }
 
