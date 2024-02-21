@@ -132,7 +132,7 @@ pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder<String>, task_i
                 // redo
                 println!("{:?} | redo {}", std::time::Instant::now(), task_id);
                 let task = random_task(redo_task_latency, redo_task_success_probability, task_id.to_string());
-                manager.launch(task_id.to_string(), task).await;
+                let _ = manager.launch(task_id.to_string(), task).await;
             }
             _ => {}
         }
