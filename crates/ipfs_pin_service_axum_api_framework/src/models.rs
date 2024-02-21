@@ -1,5 +1,4 @@
 use axum::response::{IntoResponse, Response};
-// TODO 删除from string等方法试试
 
 /// Pin object
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
