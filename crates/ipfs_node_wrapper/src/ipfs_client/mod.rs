@@ -7,7 +7,6 @@ pub use models::*;
 
 mod models;
 
-//TODO 封装RPC调用
 impl ReqwestIpfsClient {
     /// Create ipfs client by `AppConfig`
     pub fn new_from_config(app_config: &AppConfig) -> Self {
@@ -73,7 +72,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get IPFS node's peer ID.
-    pub async fn get_id(&self) -> ApiResult<IdResponse> {
+    pub async fn get_id_info(&self) -> ApiResult<IdResponse> {
         // TODO format arg无效
         let res = self.ipfs_rpc_request("/id".to_string()).await?;
 
