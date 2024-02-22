@@ -195,8 +195,7 @@ pub async fn test_simple_launch_and_check_and_revoke(task_num: usize) {
         let task_id_backup = task_id.clone();
         let task = async move {
             println!("task start {}", task_id_backup);
-            let latency = fastrand::u64(5..30);
-            tokio::time::sleep(tokio::time::Duration::from_millis(latency)).await;
+            tokio::time::sleep(tokio::time::Duration::from_micros(1)).await;
             println!("task finish {}", task_id_backup);
             Ok::<(), ()>(())
         };
@@ -234,9 +233,8 @@ pub async fn test_simple_launch_and_check_and_revoke(task_num: usize) {
                         return;
                     }
                     TaskState::Working => {
-                        // wait for a little random time
-                        let wait_time = fastrand::u64(1..100);
-                        tokio::time::sleep(tokio::time::Duration::from_micros(wait_time)).await;
+                        // wait for a little time
+                        tokio::time::sleep(tokio::time::Duration::from_micros(1)).await;
                     }
                     state => {
                         panic!("Unexpected task state {}: {:?}", task_id, state);

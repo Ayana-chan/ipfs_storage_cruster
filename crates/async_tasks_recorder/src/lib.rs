@@ -119,6 +119,8 @@ pub use scc;
 #[derive(Default, Debug)]
 pub struct TaskManager<T>
     where T: Eq + Hash {
+    /// All tasks launched
+    pub all_tasks: scc::HashSet<T>,
     /// Tasks on execution. Usually more contention.
     pub working_tasks: scc::HashSet<T>,
     /// Succeeded tasks.
@@ -134,6 +136,7 @@ impl<T> TaskManager<T>
     /// Create default and empty `TaskManager`
     pub fn new() -> Self {
         TaskManager {
+            all_tasks: scc::HashSet::new(),
             working_tasks: scc::HashSet::new(),
             success_tasks: scc::HashSet::new(),
             failed_tasks: scc::HashSet::new(),
@@ -318,16 +321,17 @@ impl<T> AsyncTasksRecoder<T>
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
               E: Send {
-        // insert working -> check success -> remove failed -> work -> insert success/failed -> remove working
+        // insert all -> insert working -> check success -> remove failed -> work -> insert success/failed -> remove working
+        let _ = self.task_manager.all_tasks.insert_async(task_id.clone()).await;
+
         // `working_tasks` play the role of lock
         let res = self.task_manager.working_tasks.insert_async(task_id.clone()).await;
         if res.is_err() {
             // on working
             return Err((TaskState::Working, task));
         }
-        // modify status
+        // check succeeded
         if self.task_manager.success_tasks.contains_async(&task_id).await {
-            // succeeded
             return Err((TaskState::Success, task));
         }
         // remove from `failed_tasks` if contained
@@ -362,6 +366,8 @@ impl<T> AsyncTasksRecoder<T>
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
               E: Send {
+        let _ = self.task_manager.all_tasks.insert_async(task_id.clone()).await;
+
         let res = self.task_manager.working_tasks.insert_async(task_id.clone()).await;
         if res.is_err() {
             return Err((TaskState::Working, task));
@@ -395,15 +401,12 @@ impl<T> AsyncTasksRecoder<T>
     pub async fn query_task_state<Q>(&self, task_id: &Q) -> TaskState
         where T: Borrow<Q>,
               Q: Hash + Eq + ?Sized {
-        if self.task_manager.success_tasks.contains_async(task_id).await {
-            return TaskState::Success;
+
+        // quick check `Not Found`
+        if !self.task_manager.all_tasks.contains_async(task_id).await {
+            return TaskState::NotFound;
         }
 
-        if self.task_manager.failed_tasks.contains_async(task_id).await {
-            return TaskState::Failed;
-        }
-
-        // After removed from working_tasks
         if self.task_manager.working_tasks.contains_async(task_id).await {
             return TaskState::Working;
         }
@@ -416,12 +419,17 @@ impl<T> AsyncTasksRecoder<T>
             return TaskState::Failed;
         }
 
-        TaskState::NotFound
+        // maybe has become the next state of `Success` or `Failed`
+        if self.task_manager.all_tasks.contains_async(task_id).await {
+            TaskState::Working // next of `Failed`
+        } else {
+            TaskState::NotFound // next of `Success`
+        }
     }
 
     /// Return `Working` if not in either `success_tasks` or `failed_tasks`.
     ///
-    /// No query in `working_tasks`, so less contention.
+    /// Less Query and much less contention.
     ///
     /// Even when the `task_id`'s launch have not occurred, return `Working`.
     ///
@@ -486,6 +494,8 @@ impl<T> AsyncTasksRecoder<T>
             }
             // success
             Ok(res) => {
+                // set not ever launched
+                self.task_manager.all_tasks.remove_async(&target_task_id).await;
                 // set not success
                 self.task_manager.success_tasks.remove_async(&target_task_id).await;
                 // set not revoke
