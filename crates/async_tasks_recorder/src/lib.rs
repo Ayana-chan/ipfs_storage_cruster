@@ -403,8 +403,17 @@ impl<T> AsyncTasksRecoder<T>
             return TaskState::Failed;
         }
 
+        // After removed from working_tasks
         if self.task_manager.working_tasks.contains_async(task_id).await {
             return TaskState::Working;
+        }
+
+        if self.task_manager.success_tasks.contains_async(task_id).await {
+            return TaskState::Success;
+        }
+
+        if self.task_manager.failed_tasks.contains_async(task_id).await {
+            return TaskState::Failed;
         }
 
         TaskState::NotFound
