@@ -53,7 +53,7 @@ fn check_state_transition(pre: &TaskState, now: &TaskState) -> bool {
 /// If `redo` is `Some(t)`, it will be redo after a delay after the task is found to have failed.
 /// Check per `interval_ms`. \
 /// Err when the time consumption reaches `timeout_ms`.
-pub async fn check_success(manager: &AsyncTasksRecoder<String>, task_id: &String,
+pub async fn check_success(manager: &AsyncTasksRecoder<String>, task_id: &str,
                            interval_ms: Option<u64>, timeout_ms: Option<u128>,
                            suffix_query_time: u128) {
     let interval_ms = interval_ms.unwrap_or(DEFAULT_CHECK_INTERVAL_MS.clone());
@@ -103,7 +103,7 @@ pub async fn check_success(manager: &AsyncTasksRecoder<String>, task_id: &String
 /// A task will redo after it is found to have failed.
 /// Check per `interval_ms`. \
 /// Err when the time consumption reaches `timeout_ms`.
-pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder<String>, task_id: &String,
+pub async fn check_success_auto_redo(manager: &AsyncTasksRecoder<String>, task_id: &str,
                                      interval_ms: Option<u64>, timeout_ms: Option<u128>,
                                      suffix_query_time: u128, redo_task_latency: u64,
                                      redo_task_success_probability: u8) {
