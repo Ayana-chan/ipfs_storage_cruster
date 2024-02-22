@@ -24,8 +24,13 @@
 //!
 //! ## When Shouldn't Use This Crate
 //!
-//! This crate use **three `HashSet`** to make it easy to operate all tasks in the same state.
-//! However, `scc::HashSet` have less contention in **single** access when it grows larger.
+//! The consumption of all operations in this crate and cloning times
+//! is about two to three times that of the implementation using `scc::Hashmap`.
+//!
+//! This crate use **three `HashSet`** to make it easy to operate all tasks in the same state,
+//! And two more `HashSet` for linearizability of query and supporting revoking operation.
+//!
+//! Note that `scc`'s containers have less contention in **single** access when it grows larger.
 //!
 //! Therefore, if you don't need operating every task in the same state,
 //! then just use `scc::HashMap` (`task_id` \-\> `task_status`) to build a simpler implementation,
@@ -392,12 +397,9 @@ impl<T> AsyncTasksRecoder<T>
 
     /// Query the state of a task by `task_id`.
     ///
-    /// Query priority of containers : `success_tasks` -> `failed_tasks` -> `working_tasks`.
+    /// Linearizability TODO
     ///
     /// **NOTE**: `working_tasks` usually has more contention.
-    ///
-    /// If not found in all tasks, be `NotFound`.
-    /// Only occurs before the launch or in a very short period of time after the first launch.
     pub async fn query_task_state<Q>(&self, task_id: &Q) -> TaskState
         where T: Borrow<Q>,
               Q: Hash + Eq + ?Sized {
@@ -466,7 +468,7 @@ impl<T> AsyncTasksRecoder<T>
     /// 1. Use another `AsyncTasksRecoder`, and launch a `Future` that call `revoke_task_block` here.
     /// 2. Create a new unique `task_id` for this `revoke_task`, and launch it in this `AsyncTasksRecoder`.
     ///
-    /// check not revoking and set revoking -> check succeeded -> do revoke_task -> set not succeeded -> set not revoking
+    /// check not revoking and set revoking -> check succeeded -> do revoke_task -> set not launched -> set not succeeded -> set not revoking
     pub async fn revoke_task_block<Fut, R, E>(&self, target_task_id: T, revoke_task: Fut) -> Result<R, RevokeFailReason<Fut, E>>
         where Fut: Future<Output=Result<R, E>> + Send + 'static,
               R: Send,
@@ -530,6 +532,11 @@ impl<T> AsyncTasksRecoder<T>
     /// Get a reference of `revoking_tasks`. Not commonly used.
     pub fn get_revoking_tasks_ref(&self) -> &scc::HashSet<T> {
         &self.task_manager.revoking_tasks
+    }
+
+    /// Get a reference of `all_tasks`. Not commonly used.
+    pub fn get_all_tasks_ref(&self) -> &scc::HashSet<T> {
+        &self.task_manager.all_tasks
     }
 }
 
