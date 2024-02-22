@@ -2,16 +2,19 @@
 //!
 //! A struct for recording execution status of async tasks with lock-free and async methods.
 //!
-//! Can host `Future`s and query whether they are **not found**, **successful**, **failed**, or **running**.
+//! Functions:
+//! - Able to host `Future`s and query whether they are **not found**, **successful**, **failed**, or **running**.
+//! - Able to host `Future`s to revoke the succeeded `Future`s and make them **not found**.
 //!
+//! Dependency:
 //! - Depend on `tokio` with feature `rt`, so cannot use other async runtimes.
 //! - Depend on [scc](https://crates.io/crates/scc) for lock-free and async `HashSet`.
 //!
 //! Use this crate if:
 //! - Easy to generate an **unique** `task_id` (not necessarily `String`) for a future (task).
-//! - Tasks might fail, and then you want to run it again, while you don't want it to success more then once.
+//! - Don't want tasks with the same `task_id` to succeed more then once.
 //! - Want to record and query all succeeded tasks and failed tasks.
-//! - Want to handling every task in the same state (e.g. `success`).
+//! - Want to handling every task in the same state (not just focus on one state).
 //!
 //! [Example](https://github.com/Ayana-chan/ipfs_storage_cruster/tree/master/crates/async_tasks_recorder/examples).
 //!
@@ -19,20 +22,20 @@
 //! - `Eq + Hash + Clone + Send + Sync + 'static`
 //! - Cheap to clone (sometimes can use `Arc`).
 //!
-//! And remember, you can add **anything** in the `Future` to achieve the functionality you want.
-//! For example:
-//! - Handle your `Result` in `Future`, and then return empty result `Result<(),()>`.
-//! - Send a message to a one shot channel at the end of the `Future` to notify upper level that "This task is done".
-//! Don't forget to consider using `tokio::spawn` when the channel may not complete sending immediately.
-//! - Set other callback functions.
+//! ## When Shouldn't Use This Crate
 //!
-//! > It is recommended to directly look at the source code (about 100 line) if there is any confusion.
-//!
-//! **NOTE**: This crate use three `HashSet` to make it easy to handle all tasks in the same state.
+//! This crate use **three `HashSet`** to make it easy to operate all tasks in the same state.
 //! However, `scc::HashSet` have less contention in **single** access when it grows larger.
-//! Therefore, if you don't need handling every task in the same state,
+//!
+//! Therefore, if you don't need operating every task in the same state,
 //! then just use `scc::HashMap` (`task_id` \-\> `task_status`) to build a simpler implementation,
 //! which might have less contention and cloning, but more expansive to iterate.
+//! And the `scc::HashMap::update_async` could be a powerful tool for atomic operations.
+//!
+//! You should also avoid using this crate if you just want to handle every tasks in only one state.
+//! For example, if you just want to manage the failed tasks,
+//! then you should use `scc::HashMap` to record tasks' states,
+//! and insert the failed tasks into a external `Arc<scc::HashSet>` in `Future`.
 //!
 //! # Usage
 //!
@@ -40,6 +43,20 @@
 //!
 //! Query the state of the task with its `task_id`
 //! by [query_task_state](AsyncTasksRecoder::query_task_state) or [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick).
+//!
+//!
+//! ## Skills
+//!
+//! Remember that you can add **anything** in the `Future` to achieve the functionality you want.
+//! For example:
+//! - Handle your `Result` in `Future`, and then return empty result `Result<(),()>`.
+//! - Send a message to a one shot channel at the end of the `Future` to notify upper level that "This task is done".
+//! Don't forget to consider using `tokio::spawn` when the channel may not complete sending immediately.
+//! - Set other callback functions.
+//!
+//! It's still efficient to store metadata of tasks at external `scc::HashMap` (`task_id` \-\> metadata).
+//!
+//! > It is recommended to directly look at the source code (about 150 line) if there is any confusion.
 //!
 //! # Theory & Design
 //!
@@ -87,8 +104,9 @@
 //! Use [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick) for less contention.
 //!
 
-// TODO 撤销 相关的介绍。 使用hashmap的话可能要用CAS，试一下CAS能不能放进hashmap，然后写入doc。但是CAS本身就是冲突，这样会导致每一项都会和自己冲突好几次？ 即使用了hashmap，如果要遍历某个state的话就要在future里面自行调整set，依然会面对相应的对set的操作冲突问题。
+// TODO 撤销 相关的介绍。
 // TODO 发布前先转移repo，看看换git后能不能发布
+// TODO 重新搞README。 re-export scc
 
 use std::borrow::Borrow;
 use std::future::Future;
