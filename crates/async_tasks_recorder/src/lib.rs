@@ -1,4 +1,4 @@
-//! > A big bug has just been fixed, so there may be some errors in the documentation, but don't worry too much
+//! > A big bug has just been fixed, so the document may not be complete, but don't worry too much
 //!
 //! # Introduction
 //!
