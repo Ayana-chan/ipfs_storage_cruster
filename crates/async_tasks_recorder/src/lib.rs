@@ -87,7 +87,8 @@
 //! Use [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick) for less contention.
 //!
 
-// TODO 撤销 相关的介绍
+// TODO 撤销 相关的介绍。 使用hashmap的话可能要用CAS，试一下CAS能不能放进hashmap，然后写入doc。但是CAS本身就是冲突，这样会导致每一项都会和自己冲突好几次？ 即使用了hashmap，如果要遍历某个state的话就要在future里面自行调整set，依然会面对相应的对set的操作冲突问题。
+// TODO 发布前先转移repo，看看换git后能不能发布
 
 use std::future::Future;
 use std::hash::Hash;
