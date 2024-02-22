@@ -173,3 +173,12 @@ fn test_stress_large_task_latency_range() {
                         60),
     );
 }
+
+#[test]
+#[parallel]
+fn test_launch_await_and_revoke_multi() {
+    do_async_test(
+        RuntimeType::MultiThread,
+        test_launch_await_and_revoke(200),
+    );
+}
