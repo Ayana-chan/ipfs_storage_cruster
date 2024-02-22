@@ -119,7 +119,7 @@ pub use scc;
 #[derive(Default, Debug)]
 pub struct TaskManager<T>
     where T: Eq + Hash {
-    /// All tasks launched
+    /// All tasks that have launched
     pub all_tasks: scc::HashSet<T>,
     /// Tasks on execution. Usually more contention.
     pub working_tasks: scc::HashSet<T>,

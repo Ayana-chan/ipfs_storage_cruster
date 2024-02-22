@@ -179,7 +179,7 @@ fn test_stress_large_task_latency_range() {
 fn test_simple_launch_and_check_multi() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_simple_launch_and_check(1000),
+        test_simple_launch_and_check(20000),
     );
 }
 
@@ -188,6 +188,6 @@ fn test_simple_launch_and_check_multi() {
 fn test_simple_launch_and_check_and_revoke_multi() {
     do_async_test(
         RuntimeType::MultiThread,
-        test_simple_launch_and_check_and_revoke(800),
+        test_simple_launch_and_check_and_revoke(20000),
     );
 }

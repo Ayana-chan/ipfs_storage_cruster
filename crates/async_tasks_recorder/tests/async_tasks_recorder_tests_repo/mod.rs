@@ -133,12 +133,12 @@ pub async fn test_simple_launch_and_check(task_num: usize) {
     for _ in 0..task_num {
         let manager = manager.clone();
         let task_id = task_id_generator();
-        let task_id_backup = task_id.clone();
+        // let task_id_backup = task_id.clone();
         let task = async move {
-            println!("task start {}", task_id_backup);
+            // println!("task start {}", task_id_backup);
             let latency = fastrand::u64(5..30);
             tokio::time::sleep(tokio::time::Duration::from_millis(latency)).await;
-            println!("task finish {}", task_id_backup);
+            // println!("task finish {}", task_id_backup);
             Ok::<(), ()>(())
         };
 
@@ -159,7 +159,7 @@ pub async fn test_simple_launch_and_check(task_num: usize) {
                 match manager.query_task_state(&task_id).await {
                     TaskState::Success => {
                         // finish
-                        println!("Judge success {}", task_id);
+                        // println!("Judge success {}", task_id);
                         return;
                     }
                     TaskState::Working => {
@@ -192,11 +192,11 @@ pub async fn test_simple_launch_and_check_and_revoke(task_num: usize) {
     for _ in 0..task_num {
         let manager = manager.clone();
         let task_id = task_id_generator();
-        let task_id_backup = task_id.clone();
+        // let task_id_backup = task_id.clone();
         let task = async move {
-            println!("task start {}", task_id_backup);
+            // println!("task start {}", task_id_backup);
             tokio::time::sleep(tokio::time::Duration::from_micros(1)).await;
-            println!("task finish {}", task_id_backup);
+            // println!("task finish {}", task_id_backup);
             Ok::<(), ()>(())
         };
 
@@ -217,11 +217,11 @@ pub async fn test_simple_launch_and_check_and_revoke(task_num: usize) {
                 match manager.query_task_state(&task_id).await {
                     TaskState::Success => {
                         // revoke. only once
-                        let task_id_backup = task_id.clone();
+                        // let task_id_backup = task_id.clone();
                         let revoke_task = async move {
-                            println!("revoke task start {}", task_id_backup);
+                            // println!("revoke task start {}", task_id_backup);
                             tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-                            println!("revoke task finish {}", task_id_backup);
+                            // println!("revoke task finish {}", task_id_backup);
                             Ok::<(), ()>(())
                         };
                         let res = manager.revoke_task_block(task_id.clone(), revoke_task).await;
@@ -229,7 +229,7 @@ pub async fn test_simple_launch_and_check_and_revoke(task_num: usize) {
                         assert_eq!(manager.query_task_state(&task_id).await, TaskState::NotFound);
 
                         // finish
-                        println!("Judge success {}", task_id);
+                        // println!("Judge success {}", task_id);
                         return;
                     }
                     TaskState::Working => {
