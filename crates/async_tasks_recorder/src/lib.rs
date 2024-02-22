@@ -1,3 +1,5 @@
+//! > A big bug has just been fixed, so there may be some errors in the documentation, but don't worry too much
+//!
 //! # Introduction
 //!
 //! A struct for recording execution status of async tasks with lock-free and async methods.
@@ -15,12 +17,34 @@
 //! - Don't want tasks with the same `task_id` to succeed more then once.
 //! - Want to record and query all succeeded tasks and failed tasks.
 //! - Want to handling every task in the same state (not just focus on one state).
+//! - Need linearizable query.
+//! - Want to revoke a task.
 //!
 //! [Example](https://github.com/Ayana-chan/ipfs_storage_cruster/tree/master/crates/async_tasks_recorder/examples).
 //!
 //! A recorder can only use one `task_id` type. The type of `task_id` should be:
 //! - `Eq + Hash + Clone + Send + Sync + 'static`
 //! - Cheap to clone (sometimes can use `Arc`).
+//!
+//! # Usage
+//!
+//! Launch a task with a **unique** `task_id` and a `Future` by [launch](AsyncTasksRecoder::launch).
+//!
+//! Query the state of the task with its `task_id`
+//! by [query_task_state](AsyncTasksRecoder::query_task_state) or [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick).
+//!
+//! ## Skills
+//!
+//! Remember that you can add **anything** in the `Future` to achieve the functionality you want.
+//! For example:
+//! - Handle your `Result` in `Future`, and then return empty result `Result<(),()>`.
+//! - Send a message to a one shot channel at the end of the `Future` to notify upper level that "This task is done".
+//! Don't forget to consider using `tokio::spawn` when the channel may not complete sending immediately.
+//! - Set other callback functions.
+//!
+//! It's still efficient to store metadata of tasks at external `scc::HashMap` (`task_id` \-\> metadata).
+//!
+//! > It is recommended to directly look at the source code (about 150 line) if there is any confusion.
 //!
 //! ## When Shouldn't Use This Crate
 //!
@@ -42,27 +66,6 @@
 //! then you should use `scc::HashMap` to record tasks' states,
 //! and insert the failed tasks into a external `Arc<scc::HashSet>` in `Future`.
 //!
-//! # Usage
-//!
-//! Launch a task with a **unique** `task_id` and a `Future` by [launch](AsyncTasksRecoder::launch).
-//!
-//! Query the state of the task with its `task_id`
-//! by [query_task_state](AsyncTasksRecoder::query_task_state) or [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick).
-//!
-//!
-//! ## Skills
-//!
-//! Remember that you can add **anything** in the `Future` to achieve the functionality you want.
-//! For example:
-//! - Handle your `Result` in `Future`, and then return empty result `Result<(),()>`.
-//! - Send a message to a one shot channel at the end of the `Future` to notify upper level that "This task is done".
-//! Don't forget to consider using `tokio::spawn` when the channel may not complete sending immediately.
-//! - Set other callback functions.
-//!
-//! It's still efficient to store metadata of tasks at external `scc::HashMap` (`task_id` \-\> metadata).
-//!
-//! > It is recommended to directly look at the source code (about 150 line) if there is any confusion.
-//!
 //! # Theory & Design
 //!
 //! ## Abstract Model
@@ -82,7 +85,7 @@
 //!
 //! `Failed` \<\-\-\-\> `Working` \-\-\-\-\> `Success`
 //!
-//! ## Nature
+//! ## Nature TODO fix
 //! ### About Task
 //! 1. A task is **launched** by passing a `Future<Output=Result<R, E>>` with unique `task_id`.
 //! 2. A task is `real_success` when return `Ok(R)`, and `real_failed` when return `Err(E)`.
@@ -104,9 +107,9 @@
 //! 6. Always, when a task is `Success`, it would be `Success` forever.
 //!
 //! # Other
-//! Relationship between states and containers at [query_task_state](AsyncTasksRecoder::query_task_state).
-//!
 //! Further propositions and proofs at [AsyncTasksRecoder](AsyncTasksRecoder).
+//!
+//! Relationship between states and containers at [query_task_state](AsyncTasksRecoder::query_task_state).
 //!
 //! Use [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick) for less contention.
 //!
@@ -278,6 +281,75 @@ pub enum TaskState {
 /// `launch()` finishes just before `Future.await`.
 /// So before `launch()` finishes, all `tasks` has been changed,
 /// which means you won't get outdated `Failed` or `Not Found` after `launch().await`.
+///
+/// ## P05
+/// **Query is linearizable.**
+///
+/// Query logic:
+/// 1. check `all_task` -> `Not Found`
+/// 2. check `working_tasks` -> `Working`
+/// 3. check `success_tasks` -> `Success`
+/// 4. check `failed_tasks` -> `Failed`
+/// 5. check `all_tasks` -> `Working` if contained, otherwise `Not Found`
+///
+/// Linearizability: An event can be considered to occur at a moment
+/// during the time period between a request and a response.
+/// If all events can be sorted on a linear timeline,
+/// then the model is linearizable.
+///
+/// For example, task might still be in `working_tasks` when `real_failed` or `real_success`,
+/// but it is still linearizable to return `Working` at this moment.
+/// Because as soon as the task is removed from `working_tasks`,
+/// any query later won't return outdated `Working`.
+///
+/// The same reasoning can be used to prove situations 1, 2, 3 and 4.
+///
+/// We seem to be able to draw this conclusion:
+/// If I mark a path in state transition diagram,
+/// and label each step with number `1, 2, .., n` ,
+/// then it is linearizable when
+/// the number corresponding to the query result **never** decreases.
+///
+/// Don't worry, the delay is usually none or occasionally very low
+/// (This can be proven, but it's too difficult to explain clearly. I'll skip it here).
+///
+/// What is the situation when we cannot find the target in 4 tasks (situation 5)?
+///
+/// This is like a turtle and rabbit race.
+/// Because the `all_tasks` is checked first,
+/// so let's assume that the task begins at `Working`.
+/// If its actual path is:
+/// 1. `Fail` (from `Working`)
+/// 2. `Working`
+/// 3. `Fail`
+/// 4. `Working`
+/// 5. `Success`
+/// 6. `Not Found`
+/// 7. `Working`
+/// 8. ...
+///
+/// At step 1, the task has left `working_tasks` and has been in `failed_tasks`
+/// when we are querying `working_tasks`.
+/// And at step 2, it has come back to `working_tasks`
+/// when we are querying `failed_tasks`.
+/// Then it maybe continue to jump several steps.
+/// In this case, it is still linearizable when `Working` (step 2) returned,
+/// because every query later won't return earlier steps.
+/// Always returning `Failed` (step 1) in this case also keeps it linearizable, but not good.
+///
+/// Note that the task can jump any steps, so it might have been `Working` 10 times between your query.
+///
+/// Obviously, we only need to select one of `Working` or `NotFound` to return.
+/// - If failed once, could return `Working` (next step of `Failed`).
+/// - If succeeded once, could return `NotFound` (next step of `Success`).
+///
+/// Therefore, we just need to know whether the task failed or succeeded at the end.
+/// The "end" can be represented by the last query in `all_tasks`.
+/// - If the task is not in `all_tasks`, then it must have been `Not Found` before.
+/// - Otherwise, it must have been `Working` before.
+///
+/// Q.E.D.
+///
 #[derive(Default, Debug, Clone)]
 pub struct AsyncTasksRecoder<T>
     where T: Eq + Hash + Clone + Send + 'static {
@@ -397,7 +469,7 @@ impl<T> AsyncTasksRecoder<T>
 
     /// Query the state of a task by `task_id`.
     ///
-    /// Linearizability TODO
+    /// Linearizability guaranteed (**P05** at [AsyncTasksRecoder](crate::AsyncTasksRecoder)).
     ///
     /// **NOTE**: `working_tasks` usually has more contention.
     pub async fn query_task_state<Q>(&self, task_id: &Q) -> TaskState
