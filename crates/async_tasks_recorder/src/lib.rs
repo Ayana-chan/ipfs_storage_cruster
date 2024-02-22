@@ -67,11 +67,13 @@
 //! - Level 2: `Not Found`, `Failed`, `Working`, `Success` : **States** of the task that could be obtained by `query_task_state`.
 //!
 //! ## State Transition Diagram
-//! - `Not Found` \-\-\-\-\> `Working`
-//! - `Working` \<\-\-\-\> `Failed`
-//! - `Working` \-\-\-\-\> `Success`
+//! - `Not Found` \-\-\-\-\> `Working` (first launch)
+//! - `Working` \-\-\-\-\> `Failed` (task failed)
+//! - `Failed` \-\-\-\-\> `Working` (first launch after failed)
+//! - `Working` \-\-\-\-\> `Success` (task success)
+//! - `Success` \-\-\-\-\> `Not Found` (revoke)
 //!
-//! If you equivalent `Not Found` to `Failed`, then:
+//! If you equivalent `Not Found` to `Failed`, and ignore `revoke`, then:
 //!
 //! `Failed` \<\-\-\-\> `Working` \-\-\-\-\> `Success`
 //!
@@ -96,7 +98,7 @@
 //! 5. Always, when a task is `Working`, it would eventually be `Fail` or `Success`.
 //! 6. Always, when a task is `Success`, it would be `Success` forever.
 //!
-//! ### Other
+//! # Other
 //! Relationship between states and containers at [query_task_state](AsyncTasksRecoder::query_task_state).
 //!
 //! Further propositions and proofs at [AsyncTasksRecoder](AsyncTasksRecoder).
@@ -104,14 +106,12 @@
 //! Use [query_task_state_quick](AsyncTasksRecoder::query_task_state_quick) for less contention.
 //!
 
-// TODO 撤销 相关的介绍。
-// TODO 发布前先转移repo，看看换git后能不能发布
-// TODO 重新搞README。 re-export scc
-
 use std::borrow::Borrow;
 use std::future::Future;
 use std::hash::Hash;
 use std::sync::Arc;
+
+pub use scc;
 
 /// Thread-safe.
 ///
