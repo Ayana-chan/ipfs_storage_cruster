@@ -4,7 +4,6 @@ use axum::Json;
 use axum::response::{IntoResponse, Response};
 #[allow(unused_imports)]
 use tracing::{info, trace, error};
-use async_tasks_recorder::TaskState;
 use crate::app::admin_app::AdminAppState;
 use crate::app::vo;
 use crate::common::{StandardApiResult, StandardApiResultStatus};
@@ -31,17 +30,7 @@ pub async fn check_pin(
     Path(cid): Path<String>)
     -> StandardApiResult<vo::CheckPinResponse> {
     info!("Check Pin. cid: {}", cid);
-    let task_state = state.add_pin_recorder.query_task_state(&cid.into()).await;
-    let status = match task_state {
-        TaskState::Success => models::PinStatus::Pinned,
-        TaskState::Working => models::PinStatus::Pinning,
-        TaskState::Failed => models::PinStatus::Failed,
-        TaskState::NotFound => models::PinStatus::NotFound,
-    };
-    let res = vo::CheckPinResponse {
-        status,
-    };
-    Ok(res.into())
+    todo!()
 }
 
 /// List all recursive pins that is pinned in IPFS node.
@@ -81,10 +70,6 @@ pub async fn rm_pin(
         .remove_pin_recursive(&args.cid)
         .await?;
 
-    // delete the success record of adding pin
-    // Something like this might happen: add -> remove -> mark not success -> mark success
-    // state.add_pin_recorder.get_task_manager_arc()
-
     Ok(().into())
 }
 
@@ -123,10 +108,7 @@ async fn add_pin_async(state: AdminAppState, args: vo::AddPinArgs) -> StandardAp
         }
     };
 
-    state.add_pin_recorder.launch(
-        args.cid.into(),
-        task,
-    ).await;
+    todo!();
 
     Ok((StatusCode::ACCEPTED, ().into()))
 }
