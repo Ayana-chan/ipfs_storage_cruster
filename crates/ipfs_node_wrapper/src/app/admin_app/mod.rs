@@ -1,5 +1,6 @@
 use tracing::error;
 use std::sync::Arc;
+use async_tasks_state_map::AsyncTasksRecorder;
 use axum::Router;
 use axum::routing::{get, post, delete};
 use axum::http::{StatusCode, Uri};
@@ -12,6 +13,7 @@ mod handlers;
 #[derive(Default, Clone, Debug)]
 pub struct AdminAppState {
     pub app_state: Arc<AppState>,
+    pub add_pin_task_recorder: AsyncTasksRecorder<String>,
 }
 
 #[allow(unused_variables)]
@@ -25,6 +27,7 @@ pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> 
 
     let admin_app_state = AdminAppState {
         app_state: app_state.clone(),
+        add_pin_task_recorder: AsyncTasksRecorder::new(),
     };
 
     let tracing_layer = tower_http::trace::TraceLayer::new_for_http()

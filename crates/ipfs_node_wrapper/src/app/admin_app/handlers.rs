@@ -1,9 +1,10 @@
+use async_tasks_state_map::{TaskState, RevokeFailReason};
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 #[allow(unused_imports)]
-use tracing::{info, trace, error};
+use tracing::{info, trace, error, warn, debug};
 use crate::app::admin_app::AdminAppState;
 use crate::app::vo;
 use crate::common::{StandardApiResult, StandardApiResultStatus};
@@ -30,7 +31,18 @@ pub async fn check_pin(
     Path(cid): Path<String>)
     -> StandardApiResult<vo::CheckPinResponse> {
     info!("Check Pin. cid: {}", cid);
-    todo!()
+    let task_state = state.add_pin_task_recorder.query_task_state(&cid).await;
+    let status = match task_state {
+        TaskState::Success | TaskState::Revoking => models::PinStatus::Pinned,
+        TaskState::Working => models::PinStatus::Pinning,
+        TaskState::Failed => models::PinStatus::Failed,
+        TaskState::NotFound => models::PinStatus::NotFound,
+    };
+
+    let res = vo::CheckPinResponse {
+        status
+    };
+    Ok(res.into())
 }
 
 /// List all recursive pins that is pinned in IPFS node.
@@ -66,10 +78,23 @@ pub async fn rm_pin(
     Json(args): Json<vo::RemovePinArgs>)
     -> StandardApiResult<()> {
     info!("Remove Pin. cid: {}", args.cid);
-    state.app_state.ipfs_client
-        .remove_pin_recursive(&args.cid)
-        .await?;
+    let app_state = state.app_state.clone();
+    let cid_backup = args.cid.clone();
+    let task = async move {
+        app_state.ipfs_client
+            .remove_pin_recursive(&cid_backup)
+            .await
+    };
 
+    let revoke_res = state.add_pin_task_recorder
+        .revoke_task_block(&args.cid, task).await;
+    // IPFS err
+    if let Err(RevokeFailReason::RevokeTaskError(e)) = revoke_res {
+        debug!("Failed to remove pin for IPFS error. cid: {}, ", args.cid);
+        return Err(e);
+    }
+
+    // Return ok even the unpin didn't actually occurred.
     Ok(().into())
 }
 
@@ -96,19 +121,15 @@ async fn add_pin_async(state: AdminAppState, args: vo::AddPinArgs) -> StandardAp
     let app_state = state.app_state.clone();
     let cid_backup = args.cid.clone();
     let task = async move {
-        let res = app_state.ipfs_client.add_pin_recursive(&cid_backup, args.name.as_deref()).await;
-        // ignore specific error types
-        match res {
-            Ok(_) => {
-                Ok(())
-            }
-            Err(_) => {
-                Err(())
-            }
-        }
+        app_state.ipfs_client
+            .add_pin_recursive(
+                &cid_backup,
+                args.name.as_deref())
+            .await
     };
 
-    todo!();
+    let _ = state.add_pin_task_recorder
+        .launch(args.cid, task).await;
 
     Ok((StatusCode::ACCEPTED, ().into()))
 }
