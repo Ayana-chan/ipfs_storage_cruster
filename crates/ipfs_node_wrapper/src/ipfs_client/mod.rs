@@ -77,7 +77,7 @@ impl ReqwestIpfsClient {
         match status {
             _ if status.is_success() => {
                 let peer_id = res.json().await.map_err(|_e| {
-                    error::IPFS_FAIL.clone_to_error_with_log_error(_e)
+                    error::IPFS_UNEXPECTED_RESPONSE_BODY.clone_to_error_with_log_error(_e)
                 })?;
                 debug!("Success get id info");
                 Ok(peer_id)
@@ -89,19 +89,18 @@ impl ReqwestIpfsClient {
     // TODO 刚启动时用此方法来同步success表。
     /// List all recursive pins that is pinned
     pub async fn list_recursive_pins_pinned(&self, with_pin_name: bool) -> ApiResult<ListPinsResponse> {
-        let url_content;
-        if with_pin_name {
-            url_content = "/pin/ls?type=recursive&names=true";
+        let url_content = if with_pin_name {
+            "/pin/ls?type=recursive&names=true"
         } else {
-            url_content = "/pin/ls?type=recursive";
-        }
+            "/pin/ls?type=recursive"
+        };
         let res = self.ipfs_rpc_request(url_content).await?;
 
         let status = res.status();
         match status {
             _ if status.is_success() => {
                 let pins = res.json().await.map_err(|_e| {
-                    error::IPFS_FAIL.clone_to_error_with_log_error(_e)
+                    error::IPFS_UNEXPECTED_RESPONSE_BODY.clone_to_error_with_log_error(_e)
                 })?;
                 debug!("Success list recursive pins that is pinned");
                 Ok(pins)
@@ -121,11 +120,11 @@ impl ReqwestIpfsClient {
             _ if status.is_success() => {
                 // pinned
                 let pins: ListPinsResponse = res.json().await.map_err(|_e| {
-                    error::IPFS_FAIL.clone_to_error_with_log_error(_e)
+                    error::IPFS_UNEXPECTED_RESPONSE_BODY.clone_to_error_with_log_error(_e)
                 })?;
 
                 if pins.keys.len() != 1 {
-                    return Err(error::IPFS_FAIL.clone_to_error_with_log_error(
+                    return Err(error::IPFS_UNEXPECTED_RESPONSE_BODY.clone_to_error_with_log_error(
                         format!("get_one_pin should get 1 pin, but get {}: {:?}", pins.keys.len(), pins)
                     ));
                 }
