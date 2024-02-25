@@ -39,7 +39,8 @@ pub async fn check_pin(
             // query in IPFS
             let pin = state.app_state.ipfs_client.get_one_pin(&cid, false).await?;
             if pin.is_some() {
-                // TODO 设置本地recorder
+                // record to local (cache)
+                let _ = state.add_pin_task_recorder.modify_to_success_before_work(cid).await;
                 models::PinStatus::Pinned
             } else {
                 models::PinStatus::NotFound
