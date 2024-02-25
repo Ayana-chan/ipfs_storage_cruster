@@ -1,11 +1,10 @@
 //! Provide some helper functions about IPFS.
 #[allow(unused_imports)]
-use tracing::{error, debug, warn, info, trace, info_span};
+use tracing::{error, debug, warn, info, trace};
 use crate::app::admin_app::AdminAppState;
 
 static CACHE_PINS_INTERVAL_TIME_MS: u64 = 1000;
 
-// TODO tracing span
 /// Initial works when start contact IPFS node.
 pub fn init_ipfs_contact(state: &AdminAppState) {
     let state = state.clone();
@@ -14,7 +13,7 @@ pub fn init_ipfs_contact(state: &AdminAppState) {
     });
 }
 
-/// Regularly try until get pins list successfully.
+/// Regularly try until get pins list successfully once.
 #[tracing::instrument(skip_all)]
 pub async fn cache_recursive_pins(state: &AdminAppState) {
     let pins;
