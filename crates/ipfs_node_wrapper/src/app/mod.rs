@@ -98,6 +98,14 @@ pub struct AppState {
 
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
+    info!("--- Server Start ---");
+
+    info!("public service listen at: {}:{}", app_config.public_server_ip, app_config.public_server_port);
+    info!("admin  service listen at: {}:{}", app_config.admin_server_ip, app_config.admin_server_port);
+
+    info!("IPFS Node gateway at: {}", app_config.ipfs_gateway_address);
+    info!("IPFS Node rpc     at: {}", app_config.ipfs_rpc_address);
+
     let app_state = Arc::new(AppState {
         ipfs_client: ReqwestIpfsClient::new_from_config(&app_config)
     });
@@ -110,14 +118,6 @@ pub async fn serve(app_config: AppConfig) {
         (app_config.admin_server_ip, app_config.admin_server_port),
         admin_app::generate_admin_app(&app_config, &app_state),
     );
-
-    info!("--- Server Start ---");
-
-    info!("public service listen at: {}:{}", app_config.public_server_ip, app_config.public_server_port);
-    info!("admin  service listen at: {}:{}", app_config.admin_server_ip, app_config.admin_server_port);
-
-    info!("IPFS Node gateway at: {}", app_config.ipfs_gateway_address);
-    info!("IPFS Node rpc     at: {}", app_config.ipfs_rpc_address);
 
     tokio::join!(public_server, admin_server);
 }
