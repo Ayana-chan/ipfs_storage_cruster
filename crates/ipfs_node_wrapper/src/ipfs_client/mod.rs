@@ -86,7 +86,6 @@ impl ReqwestIpfsClient {
         }
     }
 
-    // TODO 刚启动时用此方法来同步success表。
     /// List all recursive pins that is pinned
     pub async fn list_recursive_pins_pinned(&self, with_pin_name: bool) -> ApiResult<ListPinsResponse> {
         let url_content = if with_pin_name {
