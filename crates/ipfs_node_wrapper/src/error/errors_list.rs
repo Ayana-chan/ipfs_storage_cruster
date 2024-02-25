@@ -8,7 +8,7 @@ macro_rules! define_static_error {
         };
     };
 }
-
+// TODO response body 解析error
 define_static_error!(IPFS_FAIL, "C0600", "Fail about IPFS");
 define_static_error!(IPFS_COMMUCATION_FAIL, "C0601", "Fail to contact IPFS node");
 define_static_error!(IPFS_UNKNOWN_ERROR, "C0602", "IPFS node respond an unknown error");

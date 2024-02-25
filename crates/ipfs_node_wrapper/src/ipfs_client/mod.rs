@@ -82,7 +82,7 @@ impl ReqwestIpfsClient {
                 debug!("Success get id info");
                 Ok(peer_id)
             }
-            err => Err(handle_rpc_error(err))
+            err => Err(Self::handle_rpc_error(err))
         }
     }
 
@@ -100,13 +100,52 @@ impl ReqwestIpfsClient {
         let status = res.status();
         match status {
             _ if status.is_success() => {
-                let peer_id = res.json().await.map_err(|_e| {
+                let pins = res.json().await.map_err(|_e| {
                     error::IPFS_FAIL.clone_to_error_with_log_error(_e)
                 })?;
                 debug!("Success list recursive pins that is pinned");
-                Ok(peer_id)
+                Ok(pins)
             }
-            err => Err(handle_rpc_error(err))
+            err => Err(Self::handle_rpc_error(err))
+        }
+    }
+
+    /// Get a pin.
+    pub async fn get_one_pin(&self, cid: &str, with_pin_name: bool) -> ApiResult<Option<PinsInfoInList>> {
+        let url_content = format!("/pin/ls?arg={cid}&names={with_pin_name}",
+                                  cid = cid, with_pin_name = with_pin_name);
+        let res = self.ipfs_rpc_request(&url_content).await?;
+
+        let status = res.status();
+        match status {
+            _ if status.is_success() => {
+                // pinned
+                let pins: ListPinsResponse = res.json().await.map_err(|_e| {
+                    error::IPFS_FAIL.clone_to_error_with_log_error(_e)
+                })?;
+
+                if pins.keys.len() != 1 {
+                    return Err(error::IPFS_FAIL.clone_to_error_with_log_error(""));
+                }
+
+                debug!("Success get one pin");
+                let pin_info = pins.keys.into_values().next().unwrap();
+                Ok(Some(pin_info))
+            }
+            reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
+                // might not pinned
+                let error_response: ErrorResponse = res.json().await.map_err(|_e| {
+                    Self::handle_rpc_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR)
+                })?;
+
+                if error_response.message.contains("is not pinned") {
+                    // really not pinned
+                    Ok(None)
+                } else {
+                    Err(Self::handle_rpc_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR))
+                }
+            }
+            err => Err(Self::handle_rpc_error(err))
         }
     }
 
@@ -126,12 +165,12 @@ impl ReqwestIpfsClient {
                 debug!("Success add pin. cid: {}, pin_name: {}", cid, pin_name);
                 Ok(())
             }
-            err => Err(handle_rpc_error(err))
+            err => Err(Self::handle_rpc_error(err))
         }
     }
 
     /// Remove a recursive pin.
-    pub async fn remove_pin_recursive(&self, cid: &str) -> ApiResult<()>{
+    pub async fn remove_pin_recursive(&self, cid: &str) -> ApiResult<()> {
         let url_content = format!("/pin/rm?arg={cid}",
                                   cid = cid,
         );
@@ -143,7 +182,7 @@ impl ReqwestIpfsClient {
                 debug!("Success remove pin. cid: {}", cid);
                 Ok(())
             }
-            err => Err(handle_rpc_error(err))
+            err => Err(Self::handle_rpc_error(err))
         }
     }
 
@@ -171,31 +210,33 @@ impl Default for ReqwestIpfsClient {
     }
 }
 
-/// Convert RPC status error into `ResponseError`,
-/// and output log.
-fn handle_rpc_error(status: reqwest::StatusCode) -> error::ResponseError {
-    match status {
-        reqwest::StatusCode::INTERNAL_SERVER_ERROR => error::IPFS_RPC_INTERNAL_ERROR.clone_to_error_with_log(),
-        reqwest::StatusCode::BAD_REQUEST => {
-            error!("IPFS Bad Request: malformed RPC, argument type error, etc");
-            error::IPFS_RPC_REJECT.clone_to_error()
-        }
-        reqwest::StatusCode::FORBIDDEN => {
-            error!("IPFS RPC call forbidden");
-            error::IPFS_RPC_REJECT.clone_to_error()
-        }
-        reqwest::StatusCode::NOT_FOUND => error::IPFS_RPC_NOT_FOUND.clone_to_error_with_log(),
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            error!("IPFS RPC method not allowed");
-            error::IPFS_RPC_REJECT.clone_to_error()
-        }
-        reqwest::StatusCode::BAD_GATEWAY => {
-            error!("IPFS RPC server responded Bad Gateway");
-            error::IPFS_RPC_INTERNAL_ERROR.clone_to_error()
-        }
-        status => {
-            warn!("IPFS RPC responded unhandled status code: {}", status);
-            error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log()
+impl ReqwestIpfsClient {
+    /// Convert RPC status error into `ResponseError`,
+    /// and output log.
+    fn handle_rpc_error(status: reqwest::StatusCode) -> error::ResponseError {
+        match status {
+            reqwest::StatusCode::INTERNAL_SERVER_ERROR => error::IPFS_RPC_INTERNAL_ERROR.clone_to_error_with_log(),
+            reqwest::StatusCode::BAD_REQUEST => {
+                error!("IPFS Bad Request: malformed RPC, argument type error, etc");
+                error::IPFS_RPC_REJECT.clone_to_error()
+            }
+            reqwest::StatusCode::FORBIDDEN => {
+                error!("IPFS RPC call forbidden");
+                error::IPFS_RPC_REJECT.clone_to_error()
+            }
+            reqwest::StatusCode::NOT_FOUND => error::IPFS_RPC_NOT_FOUND.clone_to_error_with_log(),
+            reqwest::StatusCode::METHOD_NOT_ALLOWED => {
+                error!("IPFS RPC method not allowed");
+                error::IPFS_RPC_REJECT.clone_to_error()
+            }
+            reqwest::StatusCode::BAD_GATEWAY => {
+                error!("IPFS RPC server responded Bad Gateway");
+                error::IPFS_RPC_INTERNAL_ERROR.clone_to_error()
+            }
+            status => {
+                warn!("IPFS RPC responded unhandled status code: {}", status);
+                error::IPFS_UNKNOWN_ERROR.clone_to_error_with_log()
+            }
         }
     }
 }
@@ -238,6 +279,22 @@ mod tests {
             .list_recursive_pins_pinned(true).await.unwrap();
         println!("list_recursive_pins_pinned: {:#?}", ans);
         assert!(!ans.keys.contains_key(cid));
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_get_one_pin() {
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::TRACE)
+            .init();
+        let span = tracing::info_span!("test_ipfs_client");
+        let _guard = span.enter();
+
+        let ipfs_client = ReqwestIpfsClient::default();
+
+        let cid = "QmWeoysRLxatACwJQNmZLbBefTrFfdJoYcCQb3FoAZ2kt4";
+        let res = ipfs_client.get_one_pin(cid, true).await;
+        println!("get_one_pin_res: {:?}", res);
     }
 }
 

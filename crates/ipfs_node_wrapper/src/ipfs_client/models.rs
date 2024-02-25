@@ -3,6 +3,14 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+pub struct ErrorResponse {
+    pub message: String,
+    pub code: i32,
+    pub r#type: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct IdResponse {
     #[serde(rename = "ID")]
     pub id: String,
@@ -25,3 +33,4 @@ pub struct PinsInfoInList {
     pub r#type: String, // TODO type枚举类
 }
 // TODO 把IPFS密切相关的类型写到这里
+

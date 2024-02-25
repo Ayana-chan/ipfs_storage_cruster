@@ -45,6 +45,7 @@ pub async fn check_pin(
     Ok(res.into())
 }
 
+// TODO 本地化的API
 /// List all recursive pins that is pinned in IPFS node.
 #[axum_macros::debug_handler]
 pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> StandardApiResult<vo::ListSucceededPinsResponse> {
