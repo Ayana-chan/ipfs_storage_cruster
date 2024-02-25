@@ -22,7 +22,6 @@ pub async fn get_ipfs_node_info(State(state): State<AdminAppState>) -> StandardA
     Ok(res.into())
 }
 
-// TODO 如果NotFound的话也许可以查一查IPFS节点，或者没必要的话再加一个强制查的API
 /// Check status of adding pin.
 /// Just query local recorder, so maybe return `Failed` when not found.
 #[axum_macros::debug_handler]
@@ -36,7 +35,16 @@ pub async fn check_pin(
         TaskState::Success | TaskState::Revoking => models::PinStatus::Pinned,
         TaskState::Working => models::PinStatus::Pinning,
         TaskState::Failed => models::PinStatus::Failed,
-        TaskState::NotFound => models::PinStatus::NotFound,
+        TaskState::NotFound => {
+            // query in IPFS
+            let pin = state.app_state.ipfs_client.get_one_pin(&cid, false).await?;
+            if pin.is_some() {
+                // TODO 设置本地recorder
+                models::PinStatus::Pinned
+            } else {
+                models::PinStatus::NotFound
+            }
+        }
     };
 
     let res = vo::CheckPinResponse {
