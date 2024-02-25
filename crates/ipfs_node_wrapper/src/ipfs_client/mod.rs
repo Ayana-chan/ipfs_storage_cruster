@@ -125,7 +125,9 @@ impl ReqwestIpfsClient {
                 })?;
 
                 if pins.keys.len() != 1 {
-                    return Err(error::IPFS_FAIL.clone_to_error_with_log_error(""));
+                    return Err(error::IPFS_FAIL.clone_to_error_with_log_error(
+                        format!("get_one_pin should get 1 pin, but get {}: {:?}", pins.keys.len(), pins)
+                    ));
                 }
 
                 debug!("Success get one pin");
