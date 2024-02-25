@@ -20,11 +20,16 @@ pub async fn cache_recursive_pins(state: &AdminAppState) {
     loop {
         let res = state.app_state.ipfs_client
             .list_recursive_pins_pinned(false).await;
-        if let Ok(res) = res {
-            pins = res.keys;
-            break;
-        }
-        tokio::time::sleep(tokio::time::Duration::from_millis(CACHE_PINS_INTERVAL_TIME_MS)).await;
+        match res {
+            Ok(res) => {
+                pins = res.keys;
+                break;
+            },
+            Err(_e) => {
+                error!("Failed to cache recursive pins. Try again in {} ms ...", CACHE_PINS_INTERVAL_TIME_MS);
+                tokio::time::sleep(tokio::time::Duration::from_millis(CACHE_PINS_INTERVAL_TIME_MS)).await;
+            }
+        };
     }
 
     info!("Initially cached {} pins that have been pinned in IPFS node.", pins.len());
