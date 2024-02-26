@@ -9,6 +9,7 @@ use crate::app::admin_app::AdminAppState;
 use crate::app::vo;
 use crate::common::{StandardApiResult, StandardApiResultStatus};
 use crate::app::models;
+use crate::app::admin_app::ipfs_helper;
 
 /// Get IPFS node's information.
 #[axum_macros::debug_handler]
@@ -34,18 +35,10 @@ pub async fn check_pin(
     let status = match task_state {
         TaskState::Success | TaskState::Revoking => models::PinStatus::Pinned,
         TaskState::Working => models::PinStatus::Pinning,
-        TaskState::Failed => models::PinStatus::Failed,
-        TaskState::NotFound => {
-            // query in IPFS
-            let pin = state.app_state.ipfs_client.get_one_pin(&cid, false).await?;
-            if pin.is_some() {
-                // record to local (cache)
-                let _ = state.add_pin_task_recorder.modify_to_success_before_work(cid).await;
-                models::PinStatus::Pinned
-            } else {
-                models::PinStatus::NotFound
-            }
-        }
+        TaskState::Failed => ipfs_helper::check_pinned_and_cache(cid, &state).await?
+            .unwrap_or(models::PinStatus::Failed),
+        TaskState::NotFound => ipfs_helper::check_pinned_and_cache(cid, &state).await?
+            .unwrap_or(models::PinStatus::NotFound),
     };
 
     let res = vo::CheckPinResponse {
@@ -54,7 +47,6 @@ pub async fn check_pin(
     Ok(res.into())
 }
 
-// TODO 本地化的API
 /// List all recursive pins that is pinned in IPFS node.
 #[axum_macros::debug_handler]
 pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> StandardApiResult<vo::ListSucceededPinsResponse> {
@@ -119,6 +111,10 @@ async fn add_pin_sync(state: AdminAppState, args: vo::AddPinArgs) -> StandardApi
             &args.cid,
             args.name.as_deref(),
         ).await?;
+
+    // cache
+    let _ = state.add_pin_task_recorder
+        .modify_to_success_before_work(args.cid).await;
 
     // trace!("add pin res: {}", _ipfs_res.text().await.unwrap_or_default());
     Ok(().into())
