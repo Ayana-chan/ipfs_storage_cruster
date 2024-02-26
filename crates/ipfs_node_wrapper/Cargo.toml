@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async_tasks_state_map = {path = "../../../async_tasks_state_map"}
+async_tasks_state_map = { path = "../../../async_tasks_state_map" }
 
 tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
@@ -21,4 +21,4 @@ parking_lot = { version = "0.12", features = ["hardware-lock-elision"] }
 axum-macros = "0.4"
 bytes = "1.5"
 tower-http = { version = "0.5.0", features = ["cors", "trace"] }
-scc = "2.0"
+scc = { version = "2.0", features = ["serde"] }

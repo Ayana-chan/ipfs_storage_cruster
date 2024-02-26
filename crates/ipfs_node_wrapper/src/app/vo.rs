@@ -38,3 +38,8 @@ pub struct ListSucceededPinsResponse {
 pub struct RemovePinArgs {
     pub cid: String,
 }
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GetDownloadTimeListResponse {
+    pub list: scc::HashMap<String, usize>,
+}

@@ -24,7 +24,8 @@ pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> 
         .route("/pin", get(list_succeeded_pins))
         .route("/pin/:cid", get(check_pin))
         .route("/pin", post(add_pin))
-        .route("/pin", delete(rm_pin));
+        .route("/pin", delete(rm_pin))
+        .route("/traffic",get(get_download_time_list));
 
     let admin_app_state = AdminAppState {
         app_state: app_state.clone(),
