@@ -93,7 +93,10 @@ impl AppConfigBuilder {
 /// Should never be Cloned.
 #[derive(Default, Debug)]
 pub struct AppState {
+    /// Contact IPFS node.
     pub ipfs_client: ReqwestIpfsClient,
+    /// Count the number of downloads of files. `cid -> count`.
+    pub file_traffic_counter: scc::HashMap<String, usize>,
 }
 
 #[tracing::instrument(skip_all)]
@@ -107,7 +110,8 @@ pub async fn serve(app_config: AppConfig) {
     info!("IPFS Node rpc     at: {}", app_config.ipfs_rpc_address);
 
     let app_state = Arc::new(AppState {
-        ipfs_client: ReqwestIpfsClient::new_from_config(&app_config)
+        ipfs_client: ReqwestIpfsClient::new_from_config(&app_config),
+        file_traffic_counter: scc::HashMap::new(),
     });
 
     let public_server = generate_server(
