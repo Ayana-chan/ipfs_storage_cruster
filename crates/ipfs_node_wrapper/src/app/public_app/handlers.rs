@@ -22,6 +22,12 @@ pub async fn get_file(
             query.filename.as_deref(),
         ).await?;
 
+    // count traffic
+    state.app_state.file_traffic_counter
+        .entry_async(cid).await
+        .and_modify(|v| *v += 1)
+        .or_insert(1);
+
     // construct header
     let ipfs_res_header = ipfs_res.headers();
     // trace!("Header: {:#?}", ipfs_res_header);
