@@ -1,10 +1,9 @@
 #[allow(unused_imports)]
 use tracing::{error, debug, warn};
-use reqwest::Client;
 use std::sync::Arc;
 use crate::{IpfsClientError, models};
 
-type ApiResult<T> = Result<T, IpfsClientError>;
+pub type IpfsClientResult<T> = Result<T, IpfsClientError>;
 
 #[derive(Default, Clone, Debug)]
 pub struct IpfsNodeMetadata {
@@ -16,7 +15,7 @@ pub struct IpfsNodeMetadata {
 /// Safe to clone.
 #[derive(Debug, Clone)]
 pub struct ReqwestIpfsClient {
-    pub client: Client,
+    pub client: reqwest::Client,
     /// Mutable.
     pub ipfs_node_metadata: Arc<parking_lot::RwLock<IpfsNodeMetadata>>,
 }
@@ -30,7 +29,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get file from IPFS gateway.
-    pub async fn get_file_by_gateway(&self, cid: &str, file_name: Option<&str>) -> ApiResult<reqwest::Response> {
+    pub async fn get_file_by_gateway(&self, cid: &str, file_name: Option<&str>) -> IpfsClientResult<reqwest::Response> {
         let url = format!("http://{addr}/ipfs/{cid}?filename={file_name}&download=true",
                           addr = &self.ipfs_node_metadata.read().gateway_address,
                           cid = cid,
@@ -63,7 +62,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get IPFS node's basic information.
-    pub async fn get_id_info(&self) -> ApiResult<models::IdResponse> {
+    pub async fn get_id_info(&self) -> IpfsClientResult<models::IdResponse> {
         // TODO format arg无效
         let url_content = "/id";
         let res = self.ipfs_rpc_request(url_content).await?;
@@ -83,7 +82,7 @@ impl ReqwestIpfsClient {
     }
 
     /// List all recursive pins that is pinned
-    pub async fn list_recursive_pins_pinned(&self, with_pin_name: bool) -> ApiResult<models::ListPinsResponse> {
+    pub async fn list_recursive_pins_pinned(&self, with_pin_name: bool) -> IpfsClientResult<models::ListPinsResponse> {
         let url_content = if with_pin_name {
             "/pin/ls?type=recursive&names=true"
         } else {
@@ -106,7 +105,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get a pin.
-    pub async fn get_one_pin(&self, cid: &str, with_pin_name: bool) -> ApiResult<Option<models::PinsInfoInList>> {
+    pub async fn get_one_pin(&self, cid: &str, with_pin_name: bool) -> IpfsClientResult<Option<models::PinsInfoInList>> {
         let url_content = format!("/pin/ls?arg={cid}&names={with_pin_name}",
                                   cid = cid, with_pin_name = with_pin_name);
         let res = self.ipfs_rpc_request(&url_content).await?;
@@ -147,7 +146,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Add a recursive pin.
-    pub async fn add_pin_recursive(&self, cid: &str, pin_name: Option<&str>) -> ApiResult<()> {
+    pub async fn add_pin_recursive(&self, cid: &str, pin_name: Option<&str>) -> IpfsClientResult<()> {
         let pin_name = pin_name.unwrap_or("untitled");
 
         let url_content = format!("/pin/add?arg={cid}&name={pin_name}",
@@ -167,7 +166,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Remove a recursive pin.
-    pub async fn remove_pin_recursive(&self, cid: &str) -> ApiResult<()> {
+    pub async fn remove_pin_recursive(&self, cid: &str) -> IpfsClientResult<()> {
         let url_content = format!("/pin/rm?arg={cid}",
                                   cid = cid,
         );
@@ -184,7 +183,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Request's url is `"http://{addr}/api/v0{url_content}"`.
-    async fn ipfs_rpc_request(&self, url_content: &str) -> ApiResult<reqwest::Response> {
+    async fn ipfs_rpc_request(&self, url_content: &str) -> IpfsClientResult<reqwest::Response> {
         let url = format!("http://{addr}/api/v0{url_content}",
                           addr = &self.ipfs_node_metadata.read().rpc_address,
                           url_content = url_content,
