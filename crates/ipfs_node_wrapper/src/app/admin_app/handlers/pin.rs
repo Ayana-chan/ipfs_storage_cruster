@@ -92,6 +92,7 @@ pub async fn rm_pin(
 
 /// Add a pin to IPFS node.
 /// Return until pin finishes.
+/// Wouldn't be recorded into memory.
 async fn add_pin_sync(state: AdminAppState, args: vo::AddPinArgs) -> StandardApiResult<()> {
     info!("Add Pin. cid: {}", args.cid);
     state.app_state.ipfs_client
@@ -100,9 +101,9 @@ async fn add_pin_sync(state: AdminAppState, args: vo::AddPinArgs) -> StandardApi
             args.name.as_deref(),
         ).await?;
 
-    // cache
-    let _ = state.add_pin_task_recorder
-        .modify_to_success_before_work(args.cid).await;
+    // cache might break the consistency
+    // let _ = state.add_pin_task_recorder
+    //     .modify_to_success_before_work(args.cid).await;
 
     // trace!("add pin res: {}", _ipfs_res.text().await.unwrap_or_default());
     Ok(().into())
