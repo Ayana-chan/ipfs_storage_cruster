@@ -1,4 +1,4 @@
-use async_tasks_state_map::{TaskState, RevokeFailReason};
+use async_tasks_state_map::TaskState;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
@@ -79,12 +79,12 @@ pub async fn rm_pin(
     let revoke_res = state.add_pin_task_recorder
         .revoke_task_block(&args.cid, task).await;
     // IPFS err
-    if let Err(RevokeFailReason::RevokeTaskError(e)) = revoke_res {
+    if let Ok(Err(e)) = revoke_res {
         debug!("Failed to remove pin for IPFS error. cid: {}, ", args.cid);
         return Err(e.into());
     }
 
-    // Return ok even the removing pin didn't actually occurred/ finished. TODO 急需单飞
+    // Return ok even the removing pin didn't actually occurred / finished. TODO 急需单飞
     Ok(().into())
 }
 
