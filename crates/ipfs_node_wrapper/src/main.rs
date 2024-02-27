@@ -3,7 +3,7 @@ use tracing_subscriber::layer::SubscriberExt;
 
 mod utils;
 mod app;
-mod error;
+mod errors;
 mod ipfs_client;
 mod common;
 

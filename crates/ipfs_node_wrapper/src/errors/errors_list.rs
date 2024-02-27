@@ -1,4 +1,4 @@
-use crate::error::ResponseErrorStatic;
+use crate::errors::ResponseErrorStatic;
 
 macro_rules! define_static_error {
     ($name:ident, $code:expr, $message:expr) => {

@@ -2,10 +2,10 @@
 
 use axum::{http, Json};
 use axum::response::{IntoResponse, Response};
-use crate::error;
+use crate::errors;
 use serde::Serialize;
 
-pub type ApiResult<T> = Result<T, error::ResponseError>;
+pub type ApiResult<T> = Result<T, errors::ResponseError>;
 pub type ApiResponseResult = ApiResult<Response>;
 pub type StandardApiResult<T> = ApiResult<StandardApiJsonBody<T>>;
 pub type StandardApiResultStatus<T> = ApiResult<(http::StatusCode, StandardApiJsonBody<T>)>;
