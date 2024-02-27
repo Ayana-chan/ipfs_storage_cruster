@@ -4,7 +4,6 @@ use tracing_subscriber::layer::SubscriberExt;
 mod utils;
 mod app;
 mod errors;
-mod ipfs_client;
 mod common;
 
 // TODO 鉴权参考oss，可能是：用户请求中央服务器，中央服务器生成token并发送到对应节点服务器中，

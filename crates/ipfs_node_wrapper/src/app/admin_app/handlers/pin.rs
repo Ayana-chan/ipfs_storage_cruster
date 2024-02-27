@@ -81,10 +81,10 @@ pub async fn rm_pin(
     // IPFS err
     if let Err(RevokeFailReason::RevokeTaskError(e)) = revoke_res {
         debug!("Failed to remove pin for IPFS error. cid: {}, ", args.cid);
-        return Err(e);
+        return Err(e.into());
     }
 
-    // Return ok even the unpin didn't actually occurred.
+    // Return ok even the removing pin didn't actually occurred/ finished. TODO 急需单飞
     Ok(().into())
 }
 

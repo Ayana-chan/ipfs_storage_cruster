@@ -4,11 +4,13 @@ use std::fmt::Debug;
 use axum::http::StatusCode;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
-pub use errors_list::*;
 use serde::Serialize;
 use tracing::error;
 
 mod errors_list;
+mod convert;
+
+pub use errors_list::*;
 
 /// Can be handler's return type.
 /// The http status code always be StatusCode::INTERNAL_SERVER_ERROR.
@@ -81,7 +83,7 @@ impl ResponseErrorStatic {
 
     /// Convert `ResponseErrorStatic` to `Err(ResponseError)`,
     /// and output an error log of `message` and `Error`.
-    pub fn clone_to_error_with_log_error(&self, err: impl Debug) -> ResponseError {
+    pub fn clone_to_error_with_log_with_content(&self, err: impl Debug) -> ResponseError {
         let err_log = format!("{}: {:?}", self.message, err);
         error!(err_log);
         self.clone().into()
