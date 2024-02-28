@@ -123,7 +123,7 @@ pub async fn serve(app_config: AppConfig) {
     );
     let admin_server = generate_server(
         (app_config.admin_server_ip, app_config.admin_server_port),
-        admin_app::generate_admin_app(&app_config, &app_state),
+        admin_app::generate_admin_app(&app_config, &app_state).await,
     );
 
     tokio::join!(public_server, admin_server);

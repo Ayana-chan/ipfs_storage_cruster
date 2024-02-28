@@ -18,7 +18,7 @@ pub struct AdminAppState {
 }
 
 #[allow(unused_variables)]
-pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
+pub async fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
     let app = Router::new()
         .route("/info", get(get_ipfs_node_info))
         .route("/pin", get(list_succeeded_pins))
@@ -32,7 +32,7 @@ pub fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> 
         add_pin_task_recorder: AsyncTasksRecorder::new(),
     };
 
-    ipfs_helper::init_ipfs_contact(&admin_app_state);
+    ipfs_helper::init_ipfs_contact(&admin_app_state).await;
 
     let tracing_layer = tower_http::trace::TraceLayer::new_for_http()
         // Create our own span for the request and include the matched path. The matched

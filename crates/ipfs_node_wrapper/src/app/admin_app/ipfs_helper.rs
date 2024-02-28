@@ -5,14 +5,13 @@ use crate::app::admin_app::AdminAppState;
 use crate::app::models;
 use crate::common::ApiResult;
 
-static CACHE_PINS_INTERVAL_TIME_MS: u64 = 1000;
+static CACHE_PINS_INTERVAL_TIME_MS: u64 = 500;
 
 /// Initial works when start contact IPFS node.
-pub fn init_ipfs_contact(state: &AdminAppState) {
+pub async fn init_ipfs_contact(state: &AdminAppState) {
     let state = state.clone();
-    tokio::spawn(async move {
-        cache_recursive_pins(&state).await;
-    });
+    // Won't serve until first IPFS request succeed.
+    cache_recursive_pins(&state).await;
 }
 
 /// Regularly try until get pins list successfully once.
@@ -26,7 +25,7 @@ pub async fn cache_recursive_pins(state: &AdminAppState) {
             Ok(res) => {
                 pins = res.keys;
                 break;
-            },
+            }
             Err(_e) => {
                 error!("Failed to cache recursive pins. Try again in {} ms ...", CACHE_PINS_INTERVAL_TIME_MS);
                 tokio::time::sleep(tokio::time::Duration::from_millis(CACHE_PINS_INTERVAL_TIME_MS)).await;
@@ -44,7 +43,7 @@ pub async fn cache_recursive_pins(state: &AdminAppState) {
 }
 
 /// Check pin status in IPFS. If pinned, cache to `add_pin_task_recorder`, otherwise return `None`.
-pub async fn check_pinned_and_cache(cid: String, state: &AdminAppState) -> ApiResult<Option<models::PinStatus>>{
+pub async fn check_pinned_and_cache(cid: String, state: &AdminAppState) -> ApiResult<Option<models::PinStatus>> {
     // query in IPFS
     let pin = state.app_state.ipfs_client.get_one_pin(&cid, false).await?;
     if pin.is_some() {
