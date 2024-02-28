@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 async_tasks_state_map = { path = "../../../async_tasks_state_map" }
 tiny_ipfs_client = {path = "../tiny_ipfs_client"}
-ipfs_node_wrapper_app_structs = {path = "../ipfs_node_wrapper_app_structs" }
+ipfs_node_wrapper_app_structs = {path = "../ipfs_node_wrapper_app_structs", features = ["server"] }
 
 tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
