@@ -1,12 +1,12 @@
 #![allow(dead_code)]
 
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 
 mod errors_list;
 
 pub use errors_list::*;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ResponseErrorStatic {
     pub code: &'static str,
     pub message: &'static str,

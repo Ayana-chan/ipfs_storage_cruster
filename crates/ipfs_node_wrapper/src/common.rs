@@ -10,7 +10,6 @@ pub type ApiResponseResult = ApiResult<Response>;
 pub type StandardApiResult<T> = ApiResult<StandardApiJsonBody<T>>;
 pub type StandardApiResultStatus<T> = ApiResult<(http::StatusCode, StandardApiJsonBody<T>)>;
 
-// TODO untested
 #[derive(Clone, Debug, Serialize)]
 pub struct StandardApiJsonBody<T: Serialize> {
     code: String,
