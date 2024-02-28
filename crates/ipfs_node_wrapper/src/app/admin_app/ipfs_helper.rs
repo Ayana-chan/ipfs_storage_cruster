@@ -4,6 +4,7 @@ use tracing::{error, debug, warn, info, trace};
 use ipfs_node_wrapper_app_structs::admin::models;
 use crate::app::admin_app::AdminAppState;
 use crate::common::ApiResult;
+use crate::error_convert;
 
 static CACHE_PINS_INTERVAL_TIME_MS: u64 = 500;
 
@@ -45,7 +46,8 @@ pub async fn cache_recursive_pins(state: &AdminAppState) {
 /// Check pin status in IPFS. If pinned, cache to `add_pin_task_recorder`, otherwise return `None`.
 pub async fn check_pinned_and_cache(cid: String, state: &AdminAppState) -> ApiResult<Option<models::PinStatus>> {
     // query in IPFS
-    let pin = state.app_state.ipfs_client.get_one_pin(&cid, false).await?;
+    let pin = state.app_state.ipfs_client.get_one_pin(&cid, false).await
+        .map_err(error_convert::from_ipfs_client_error)?;
     if pin.is_some() {
         // record to local (cache)
         let _ = state.add_pin_task_recorder.modify_to_success_before_work(cid).await;

@@ -9,6 +9,7 @@ use ipfs_node_wrapper_app_structs::admin::{dtos, models};
 use crate::app::admin_app::AdminAppState;
 use crate::common::{StandardApiResult, StandardApiResultStatus};
 use crate::app::admin_app::ipfs_helper;
+use crate::error_convert;
 
 /// Check status of adding pin.
 /// Just query local recorder, so maybe return `Failed` when not found.
@@ -39,7 +40,8 @@ pub async fn check_pin(
 pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> StandardApiResult<dtos::ListSucceededPinsResponse> {
     info!("List Pins.");
     let list_res = state.app_state.ipfs_client
-        .list_recursive_pins_pinned(false).await?;
+        .list_recursive_pins_pinned(false).await
+        .map_err(error_convert::from_ipfs_client_error)?;
     let cids = list_res.keys.into_keys().collect();
     let res = dtos::ListSucceededPinsResponse {
         cids,
@@ -80,7 +82,7 @@ pub async fn rm_pin(
     // IPFS err
     if let Ok(Err(e)) = revoke_res {
         debug!("Failed to remove pin for IPFS error. cid: {}, ", args.cid);
-        return Err(e.into());
+        return Err(error_convert::from_ipfs_client_error(e));
     }
 
     // Return ok even the removing pin didn't actually occurred / finished. TODO 急需单飞
@@ -98,7 +100,8 @@ async fn add_pin_sync(state: AdminAppState, args: dtos::AddPinArgs) -> StandardA
         .add_pin_recursive(
             &args.cid,
             args.name.as_deref(),
-        ).await?;
+        ).await
+        .map_err(error_convert::from_ipfs_client_error)?;
 
     // cache might break the consistency
     // let _ = state.add_pin_task_recorder

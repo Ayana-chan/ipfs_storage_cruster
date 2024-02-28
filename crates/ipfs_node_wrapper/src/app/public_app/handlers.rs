@@ -7,6 +7,7 @@ use ipfs_node_wrapper_app_structs::public::dtos;
 use crate::app::public_app::PublicAppState;
 use crate::utils::HttpHeaderPorterFromReqwest;
 use crate::common::ApiResponseResult;
+use crate::error_convert;
 
 /// Get file from IPFS node's gateway.
 #[axum_macros::debug_handler]
@@ -20,7 +21,8 @@ pub async fn get_file(
         .get_file_by_gateway(
             &cid,
             query.filename.as_deref(),
-        ).await?;
+        ).await
+        .map_err(error_convert::from_ipfs_client_error)?;
 
     // count traffic
     state.app_state.file_traffic_counter

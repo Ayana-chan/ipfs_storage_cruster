@@ -2,8 +2,8 @@
 
 use axum::{http, Json};
 use axum::response::{IntoResponse, Response};
-use crate::errors;
 use serde::Serialize;
+use ipfs_node_wrapper_app_structs::errors;
 
 pub type ApiResult<T> = Result<T, errors::ResponseError>;
 pub type ApiResponseResult = ApiResult<Response>;
