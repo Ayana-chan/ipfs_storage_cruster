@@ -5,10 +5,9 @@ use axum::Json;
 use axum::response::{IntoResponse, Response};
 #[allow(unused_imports)]
 use tracing::{info, trace, error, warn, debug};
+use ipfs_node_wrapper_app_structs::admin::{dtos, models};
 use crate::app::admin_app::AdminAppState;
-use crate::app::dto;
 use crate::common::{StandardApiResult, StandardApiResultStatus};
-use crate::app::models;
 use crate::app::admin_app::ipfs_helper;
 
 /// Check status of adding pin.
@@ -17,7 +16,7 @@ use crate::app::admin_app::ipfs_helper;
 pub async fn check_pin(
     State(state): State<AdminAppState>,
     Path(cid): Path<String>)
-    -> StandardApiResult<dto::CheckPinResponse> {
+    -> StandardApiResult<dtos::CheckPinResponse> {
     info!("Check Pin. cid: {}", cid);
     let task_state = state.add_pin_task_recorder.query_task_state(&cid).await;
     let status = match task_state {
@@ -29,7 +28,7 @@ pub async fn check_pin(
             .unwrap_or(models::PinStatus::NotFound),
     };
 
-    let res = dto::CheckPinResponse {
+    let res = dtos::CheckPinResponse {
         status
     };
     Ok(res.into())
@@ -37,12 +36,12 @@ pub async fn check_pin(
 
 /// List all recursive pins that is pinned in IPFS node.
 #[axum_macros::debug_handler]
-pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> StandardApiResult<dto::ListSucceededPinsResponse> {
+pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> StandardApiResult<dtos::ListSucceededPinsResponse> {
     info!("List Pins.");
     let list_res = state.app_state.ipfs_client
         .list_recursive_pins_pinned(false).await?;
     let cids = list_res.keys.into_keys().collect();
-    let res = dto::ListSucceededPinsResponse {
+    let res = dtos::ListSucceededPinsResponse {
         cids,
     };
     Ok(res.into())
@@ -52,7 +51,7 @@ pub async fn list_succeeded_pins(State(state): State<AdminAppState>) -> Standard
 #[axum_macros::debug_handler]
 pub async fn add_pin(
     State(state): State<AdminAppState>,
-    Json(args): Json<dto::AddPinArgs>)
+    Json(args): Json<dtos::AddPinArgs>)
     -> Response {
     if args.r#async == Some(false) {
         add_pin_sync(state, args).await.into_response()
@@ -65,7 +64,7 @@ pub async fn add_pin(
 #[axum_macros::debug_handler]
 pub async fn rm_pin(
     State(state): State<AdminAppState>,
-    Json(args): Json<dto::RemovePinArgs>)
+    Json(args): Json<dtos::RemovePinArgs>)
     -> StandardApiResult<()> {
     info!("Remove Pin. cid: {}", args.cid);
     let app_state = state.app_state.clone();
@@ -93,7 +92,7 @@ pub async fn rm_pin(
 /// Add a pin to IPFS node.
 /// Return until pin finishes.
 /// Wouldn't be recorded into memory.
-async fn add_pin_sync(state: AdminAppState, args: dto::AddPinArgs) -> StandardApiResult<()> {
+async fn add_pin_sync(state: AdminAppState, args: dtos::AddPinArgs) -> StandardApiResult<()> {
     info!("Add Pin. cid: {}", args.cid);
     state.app_state.ipfs_client
         .add_pin_recursive(
@@ -111,7 +110,7 @@ async fn add_pin_sync(state: AdminAppState, args: dto::AddPinArgs) -> StandardAp
 
 /// Add a pin to IPFS node.
 /// Return immediately.
-async fn add_pin_async(state: AdminAppState, args: dto::AddPinArgs) -> StandardApiResultStatus<()> {
+async fn add_pin_async(state: AdminAppState, args: dtos::AddPinArgs) -> StandardApiResultStatus<()> {
     info!("Add Pin Async. cid: {}", args.cid);
     let app_state = state.app_state.clone();
     let cid_backup = args.cid.clone();

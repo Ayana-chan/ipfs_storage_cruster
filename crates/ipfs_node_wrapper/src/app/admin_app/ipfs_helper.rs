@@ -1,8 +1,8 @@
 //! Provide some helper functions about IPFS.
 #[allow(unused_imports)]
 use tracing::{error, debug, warn, info, trace};
+use ipfs_node_wrapper_app_structs::admin::models;
 use crate::app::admin_app::AdminAppState;
-use crate::app::models;
 use crate::common::ApiResult;
 
 static CACHE_PINS_INTERVAL_TIME_MS: u64 = 500;

@@ -8,8 +8,6 @@ use tiny_ipfs_client::{IpfsNodeMetadata, ReqwestIpfsClient};
 
 mod public_app;
 mod admin_app;
-mod dto;
-mod models;
 
 pub struct AppConfig {
     // server config
