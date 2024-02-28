@@ -2,8 +2,7 @@
 
 use axum::http;
 use axum::response::Response;
-use ipfs_node_wrapper_app_structs::errors;
-use ipfs_node_wrapper_app_structs::StandardApiJsonBody;
+use ipfs_node_wrapper_structs::{errors, StandardApiJsonBody};
 
 pub type ApiResult<T> = Result<T, errors::ResponseError>;
 pub type ApiResponseResult = ApiResult<Response>;

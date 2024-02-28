@@ -1,4 +1,4 @@
-use ipfs_node_wrapper_app_structs::errors::*;
+use ipfs_node_wrapper_structs::errors::*;
 use tiny_ipfs_client::IpfsClientError;
 
 pub fn from_ipfs_client_error(value: IpfsClientError) -> ResponseError {

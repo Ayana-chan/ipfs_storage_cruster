@@ -3,7 +3,7 @@ use tracing::{info, trace, error};
 use axum::extract::{Path, Query, State};
 use axum::body::Body;
 use axum::response::IntoResponse;
-use ipfs_node_wrapper_app_structs::public::dtos;
+use ipfs_node_wrapper_structs::public::dtos;
 use crate::public_app::PublicAppState;
 use crate::utils::HttpHeaderPorterFromReqwest;
 use crate::common::ApiResponseResult;

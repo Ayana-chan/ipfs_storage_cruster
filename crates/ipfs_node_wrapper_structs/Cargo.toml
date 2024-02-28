@@ -1,5 +1,5 @@
 [package]
-name = "ipfs_node_wrapper_app_structs"
+name = "ipfs_node_wrapper_structs"
 version = "0.1.0"
 edition = "2021"
 
