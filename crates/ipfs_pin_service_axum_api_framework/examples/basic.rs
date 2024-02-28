@@ -6,7 +6,7 @@ use axum::Json;
 use axum::async_trait;
 use ipfs_pin_service_axum_api_framework::api::*;
 use ipfs_pin_service_axum_api_framework::models::*;
-use ipfs_pin_service_axum_api_framework::vo::*;
+use ipfs_pin_service_axum_api_framework::dto::*;
 use ipfs_pin_service_axum_api_framework::EnhancedQuery;
 
 #[tokio::main]

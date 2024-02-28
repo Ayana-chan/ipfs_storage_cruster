@@ -6,7 +6,7 @@ use axum::http::request::Parts;
 use axum::response::IntoResponse;
 use axum::async_trait;
 use crate::errors::{ResponseError, ResponseErrorType};
-use crate::{EnhancedQuery, models, vo};
+use crate::{EnhancedQuery, models, dto};
 
 /// The **key** of access-token in request header
 pub const AUTH_KEY: &str = "Authorization";
@@ -22,20 +22,20 @@ pub trait IpfsPinServiceApi {
     /// List pin objects.
     async fn get_pins(
         token: AuthContext,
-        EnhancedQuery(get_pins_args): EnhancedQuery<vo::GetPinsArgs>,
-    ) -> ApiResponse<vo::GetPinsResponse>;
+        EnhancedQuery(get_pins_args): EnhancedQuery<dto::GetPinsArgs>,
+    ) -> ApiResponse<dto::GetPinsResponse>;
 
     /// Add pin object.
     async fn add_pin(
         token: AuthContext,
         Json(pin): Json<models::Pin>,
-    ) -> ApiResponse<vo::AddPinResponse>;
+    ) -> ApiResponse<dto::AddPinResponse>;
 
     /// Get pin object.
     async fn get_pin_by_request_id(
         token: AuthContext,
         Path(requestid): Path<String>,
-    ) -> ApiResponse<vo::GetPinByRequestIdResponse>;
+    ) -> ApiResponse<dto::GetPinByRequestIdResponse>;
 
     /// Replace pin object. \
     /// This is a shortcut for removing a pin object identified by requestid
@@ -50,13 +50,13 @@ pub trait IpfsPinServiceApi {
         token: AuthContext,
         Path(requestid): Path<String>,
         Json(pin): Json<models::Pin>,
-    ) -> ApiResponse<vo::AddPinResponse>;
+    ) -> ApiResponse<dto::AddPinResponse>;
 
     /// Remove pin object.
     async fn delete_pin_by_request_id(
         token: AuthContext,
         Path(requestid): Path<String>,
-    ) -> ApiResponse<vo::DeletePinByRequestIdResponse>;
+    ) -> ApiResponse<dto::DeletePinByRequestIdResponse>;
 }
 
 /// Generate axum router by type impl `IpfsPinServiceApi`.

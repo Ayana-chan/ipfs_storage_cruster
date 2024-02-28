@@ -30,7 +30,7 @@
 mod common;
 pub mod errors;
 pub mod models;
-pub mod vo;
+pub mod dto;
 pub mod api;
 
 pub use common::EnhancedQuery;
