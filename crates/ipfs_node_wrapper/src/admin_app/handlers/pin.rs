@@ -6,9 +6,9 @@ use axum::response::{IntoResponse, Response};
 #[allow(unused_imports)]
 use tracing::{info, trace, error, warn, debug};
 use ipfs_node_wrapper_app_structs::admin::{dtos, models};
-use crate::app::admin_app::AdminAppState;
+use crate::admin_app::AdminAppState;
 use crate::common::{StandardApiResult, StandardApiResultStatus};
-use crate::app::admin_app::ipfs_helper;
+use crate::admin_app::ipfs_helper;
 use crate::error_convert;
 
 /// Check status of adding pin.

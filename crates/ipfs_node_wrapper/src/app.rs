@@ -4,10 +4,11 @@ use std::sync::Arc;
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
+
 use tiny_ipfs_client::{IpfsNodeMetadata, ReqwestIpfsClient};
 
-mod public_app;
-mod admin_app;
+use crate::{admin_app, public_app};
+
 
 pub struct AppConfig {
     // server config

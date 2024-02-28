@@ -2,7 +2,7 @@ use axum::extract::State;
 #[allow(unused_imports)]
 use tracing::{info, trace, error, warn, debug};
 use ipfs_node_wrapper_app_structs::admin::dtos;
-use crate::app::admin_app::AdminAppState;
+use crate::admin_app::AdminAppState;
 use crate::common::StandardApiResult;
 use crate::error_convert;
 

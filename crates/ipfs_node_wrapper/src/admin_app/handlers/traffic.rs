@@ -1,6 +1,6 @@
 use axum::extract::State;
 use ipfs_node_wrapper_app_structs::admin::dtos;
-use crate::app::admin_app::AdminAppState;
+use crate::admin_app::AdminAppState;
 use crate::common::StandardApiResult;
 
 /// Get a list of the number of times files has been downloaded.

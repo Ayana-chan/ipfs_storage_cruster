@@ -1,3 +1,5 @@
+
+/// Transfer header map from reqwest to axum.
 pub struct HttpHeaderPorterFromReqwest<'a> {
     header: Option<axum::http::HeaderMap>,
     reqwest_header_map: &'a reqwest::header::HeaderMap,

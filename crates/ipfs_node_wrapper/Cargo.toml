@@ -11,9 +11,7 @@ tiny_ipfs_client = {path = "../tiny_ipfs_client"}
 ipfs_node_wrapper_app_structs = {path = "../ipfs_node_wrapper_app_structs", features = ["server"] }
 
 tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tracing-appender = "0.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["full"] } #TODO 缩减
 axum = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
