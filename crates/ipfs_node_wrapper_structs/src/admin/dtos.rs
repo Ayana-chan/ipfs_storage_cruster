@@ -11,19 +11,19 @@ pub struct AddPinArgs {
     pub r#async: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CheckPinResponse {
     /// cid of the target IPFS object
     pub status: models::PinStatus,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetIpfsNodeInfoResponse {
     /// peer ID
     pub id: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListSucceededPinsResponse {
     /// Result pin cids
     pub cids: Vec<String>,
@@ -35,7 +35,7 @@ pub struct RemovePinArgs {
 }
 
 // TODO 换掉
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetDownloadTimeListResponse {
     pub list: scc::HashMap<String, usize>,
 }

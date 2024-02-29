@@ -181,7 +181,20 @@ impl ReqwestIpfsClient {
             err => Err(Self::handle_rpc_status_code_error(err))
         }
     }
+}
 
+impl Default for ReqwestIpfsClient {
+    fn default() -> Self {
+        let default_metadata = IpfsNodeMetadata {
+            gateway_address: "127.0.0.1:8080".to_string(),
+            rpc_address: "127.0.0.1:5001".to_string(),
+        };
+        ReqwestIpfsClient::new(default_metadata)
+    }
+}
+
+/// Private tools
+impl ReqwestIpfsClient {
     /// Request's url is `"http://{addr}/api/v0{url_content}"`.
     async fn ipfs_rpc_request(&self, url_content: &str) -> IpfsClientResult<reqwest::Response> {
         let url = format!("http://{addr}/api/v0{url_content}",
@@ -198,20 +211,7 @@ impl ReqwestIpfsClient {
             IpfsClientError::SendRequestFailed
         })
     }
-}
 
-impl Default for ReqwestIpfsClient {
-    fn default() -> Self {
-        let default_metadata = IpfsNodeMetadata {
-            gateway_address: "127.0.0.1:8080".to_string(),
-            rpc_address: "127.0.0.1:5001".to_string(),
-        };
-        ReqwestIpfsClient::new(default_metadata)
-    }
-}
-
-/// Private tools
-impl ReqwestIpfsClient {
     /// Convert RPC status error into `ResponseError`,
     /// and output log.
     fn handle_rpc_status_code_error(status: reqwest::StatusCode) -> IpfsClientError {

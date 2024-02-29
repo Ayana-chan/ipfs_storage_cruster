@@ -7,7 +7,7 @@ use axum::{http::StatusCode,
 };
 use tracing::error;
 use std::fmt::Debug;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 mod errors_list;
 
@@ -15,7 +15,7 @@ pub use errors_list::*;
 
 /// Can be handler's return type.
 /// The http status code always be StatusCode::INTERNAL_SERVER_ERROR.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ResponseError {
     pub code: String,
     pub message: String,

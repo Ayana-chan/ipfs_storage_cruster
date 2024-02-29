@@ -1,5 +1,6 @@
 pub mod admin;
-mod common;
+pub mod common;
+mod client_tools;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
