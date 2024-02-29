@@ -63,11 +63,15 @@ pub async fn add_pin(
 }
 
 /// Remove a pin.
+///
+/// Return immediately. Possible failure.
+///
+/// No `rm_pin_sync` because the cache couldn't know that pin is removed.
 #[axum_macros::debug_handler]
 pub async fn rm_pin(
     State(state): State<AdminAppState>,
     Json(args): Json<dtos::RemovePinArgs>)
-    -> StandardApiResult<()> {
+    -> StandardApiResultStatus<()> {
     info!("Remove Pin. cid: {}", args.cid);
     let app_state = state.app_state.clone();
     let cid_backup = args.cid.clone();
@@ -77,23 +81,18 @@ pub async fn rm_pin(
             .await
     };
 
-    let revoke_res = state.add_pin_task_recorder
-        .revoke_task_block(&args.cid, task).await;
-    // IPFS err
-    if let Ok(Err(e)) = revoke_res {
-        debug!("Failed to remove pin for IPFS error. cid: {}, ", args.cid);
-        return Err(error_convert::from_ipfs_client_error(e));
-    }
+    let _ = state.add_pin_task_recorder
+        .revoke_task(&args.cid, task).await;
 
-    // Return ok even the removing pin didn't actually occurred / finished. TODO 急需单飞
-    Ok(().into())
+    Ok((StatusCode::ACCEPTED, ().into()))
 }
 
 // --------------------------------------------------------------------------------
 
 /// Add a pin to IPFS node.
+///
 /// Wouldn't return until pin finishes.
-/// Wouldn't be recorded into memory.
+/// `cid` wouldn't be cached.
 async fn add_pin_sync(state: AdminAppState, args: dtos::AddPinArgs) -> StandardApiResult<()> {
     info!("Add Pin. cid: {}", args.cid);
     state.app_state.ipfs_client
@@ -112,6 +111,7 @@ async fn add_pin_sync(state: AdminAppState, args: dtos::AddPinArgs) -> StandardA
 }
 
 /// Add a pin to IPFS node.
+///
 /// Return immediately.
 async fn add_pin_background(state: AdminAppState, args: dtos::AddPinArgs) -> StandardApiResultStatus<()> {
     info!("Add Pin Async. cid: {}", args.cid);

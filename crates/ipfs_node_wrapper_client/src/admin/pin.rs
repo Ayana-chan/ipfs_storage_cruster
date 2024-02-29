@@ -55,6 +55,8 @@ impl IpfsNodeWrapperAdminClient {
     }
 
     /// Remove a pin.
+    ///
+    /// Return immediately. Possible failure.
     pub async fn rm_pin(&self, cid: String) -> StandardClientResult<()> {
         let args = dtos::RemovePinArgs {
             cid,
