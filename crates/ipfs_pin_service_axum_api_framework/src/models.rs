@@ -1,5 +1,3 @@
-use axum::response::{IntoResponse, Response};
-
 /// Pin object
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 pub struct Pin {
@@ -155,12 +153,6 @@ impl PinResults {
             count,
             results,
         }
-    }
-}
-
-impl IntoResponse for PinResults {
-    fn into_response(self) -> Response {
-        todo!()
     }
 }
 
