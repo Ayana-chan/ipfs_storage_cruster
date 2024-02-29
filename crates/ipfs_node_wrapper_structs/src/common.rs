@@ -25,9 +25,3 @@ impl<T: Serialize> From<T> for StandardApiJsonBody<T> {
         }
     }
 }
-
-/// convert u16 to http::StatusCode
-pub fn convert_status_code(code: u16) -> http::StatusCode {
-    http::StatusCode::from_u16(code).expect("Fatal: Invalid Http Status Code.")
-}
-
