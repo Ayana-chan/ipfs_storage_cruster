@@ -4,9 +4,9 @@ use axum::extract::{Path, Query, State};
 use axum::body::Body;
 use axum::response::IntoResponse;
 use ipfs_node_wrapper_structs::public::dtos;
+use ipfs_node_wrapper_structs::ApiResponseResult;
 use crate::public_app::PublicAppState;
 use crate::utils::HttpHeaderPorterFromReqwest;
-use crate::common::ApiResponseResult;
 use crate::error_convert;
 
 /// Get file from IPFS node's gateway.

@@ -1,12 +1,11 @@
 #![allow(dead_code)]
 
 #[cfg(feature = "server")]
-use tracing::error;
-#[cfg(feature = "server")]
 use axum::{http::StatusCode,
            Json,
            response::{IntoResponse, Response}
 };
+use tracing::error;
 use std::fmt::Debug;
 use serde::Serialize;
 
@@ -16,14 +15,12 @@ pub use errors_list::*;
 
 /// Can be handler's return type.
 /// The http status code always be StatusCode::INTERNAL_SERVER_ERROR.
-#[cfg(feature = "server")]
 #[derive(Clone, Debug, Serialize)]
 pub struct ResponseError {
     pub code: String,
     pub message: String,
 }
 
-#[cfg(feature = "server")]
 impl ResponseError {
     pub fn new(code: &str, msg: &str) -> Self {
         ResponseError {
@@ -45,7 +42,6 @@ impl IntoResponse for ResponseError {
     }
 }
 
-#[cfg(feature = "server")]
 impl From<ResponseErrorStatic> for ResponseError {
     fn from(value: ResponseErrorStatic) -> Self {
         ResponseError {
@@ -76,14 +72,12 @@ impl ResponseErrorStatic {
     }
 
     /// Convert `ResponseErrorStatic` to `Err(ResponseError)`.
-    #[cfg(feature = "server")]
     pub fn clone_to_error(&self) -> ResponseError {
         self.clone().into()
     }
 
     /// Convert `ResponseErrorStatic` to `Err(ResponseError)`,
     /// and output an error log of `message`.
-    #[cfg(feature = "server")]
     pub fn clone_to_error_with_log(&self) -> ResponseError {
         error!(self.message);
         self.clone().into()
@@ -91,7 +85,6 @@ impl ResponseErrorStatic {
 
     /// Convert `ResponseErrorStatic` to `Err(ResponseError)`,
     /// and output an error log of `message` and `Error`.
-    #[cfg(feature = "server")]
     pub fn clone_to_error_with_log_with_content(&self, err: impl Debug) -> ResponseError {
         let err_log = format!("{}: {:?}", self.message, err);
         error!(err_log);

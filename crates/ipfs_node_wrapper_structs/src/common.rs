@@ -1,6 +1,14 @@
 #[cfg(feature = "server")]
-use axum::{Json, response::{IntoResponse, Response}};
+use axum::{http, Json, response::{IntoResponse, Response}};
 use serde::{Serialize, Deserialize};
+use crate::errors;
+
+pub type ApiResult<T> = Result<T, errors::ResponseError>;
+#[cfg(feature = "server")]
+pub type ApiResponseResult = ApiResult<Response>;
+pub type StandardApiResult<T> = ApiResult<StandardApiJsonBody<T>>;
+#[cfg(feature = "server")]
+pub type StandardApiResultStatus<T> = ApiResult<(http::StatusCode, StandardApiJsonBody<T>)>;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct StandardApiJsonBody<T: Serialize> {

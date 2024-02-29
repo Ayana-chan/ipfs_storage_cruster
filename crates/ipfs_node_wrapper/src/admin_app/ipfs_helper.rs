@@ -2,8 +2,8 @@
 #[allow(unused_imports)]
 use tracing::{error, debug, warn, info, trace};
 use ipfs_node_wrapper_structs::admin::models;
+use ipfs_node_wrapper_structs::ApiResult;
 use crate::admin_app::AdminAppState;
-use crate::common::ApiResult;
 use crate::error_convert;
 
 static CACHE_PINS_INTERVAL_TIME_MS: u64 = 500;
