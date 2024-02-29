@@ -11,3 +11,7 @@ ipfs_node_wrapper_structs = {path = "../ipfs_node_wrapper_structs" }
 tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

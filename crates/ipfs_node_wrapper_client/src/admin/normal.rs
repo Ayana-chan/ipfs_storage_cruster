@@ -5,7 +5,8 @@ use crate::client_tools::handle_client_response;
 
 impl IpfsNodeWrapperAdminClient {
     pub async fn get_ipfs_node_info(&self) -> StandardClientResult<dtos::GetIpfsNodeInfoResponse> {
-        let res = self.client.get(self.url.clone())
+        let url = format!("http://{base_url}/api/info", base_url = self.base_url);
+        let res = self.client.get(url)
             .send().await;
         handle_client_response(res).await
     }
