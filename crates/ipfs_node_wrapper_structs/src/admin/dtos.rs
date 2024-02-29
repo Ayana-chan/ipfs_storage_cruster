@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 use crate::admin::models;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddPinArgs {
     /// cid of the target IPFS object
     pub cid: String,
     /// pin's name
     pub name: Option<String>,
     /// Default true. If be false, it wouldn't response until pin finishes.
-    pub r#async: Option<bool>,
+    pub background: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,7 +29,7 @@ pub struct ListSucceededPinsResponse {
     pub cids: Vec<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RemovePinArgs {
     pub cid: String,
 }

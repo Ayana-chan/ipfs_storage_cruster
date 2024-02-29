@@ -55,14 +55,14 @@ pub async fn add_pin(
     State(state): State<AdminAppState>,
     Json(args): Json<dtos::AddPinArgs>)
     -> Response {
-    if args.r#async == Some(false) {
+    if args.background == Some(false) {
         add_pin_sync(state, args).await.into_response()
     } else {
-        add_pin_async(state, args).await.into_response()
+        add_pin_background(state, args).await.into_response()
     }
 }
 
-/// Pin file to IPFS node.
+/// Remove a pin.
 #[axum_macros::debug_handler]
 pub async fn rm_pin(
     State(state): State<AdminAppState>,
@@ -92,7 +92,7 @@ pub async fn rm_pin(
 // --------------------------------------------------------------------------------
 
 /// Add a pin to IPFS node.
-/// Return until pin finishes.
+/// Wouldn't return until pin finishes.
 /// Wouldn't be recorded into memory.
 async fn add_pin_sync(state: AdminAppState, args: dtos::AddPinArgs) -> StandardApiResult<()> {
     info!("Add Pin. cid: {}", args.cid);
@@ -113,7 +113,7 @@ async fn add_pin_sync(state: AdminAppState, args: dtos::AddPinArgs) -> StandardA
 
 /// Add a pin to IPFS node.
 /// Return immediately.
-async fn add_pin_async(state: AdminAppState, args: dtos::AddPinArgs) -> StandardApiResultStatus<()> {
+async fn add_pin_background(state: AdminAppState, args: dtos::AddPinArgs) -> StandardApiResultStatus<()> {
     info!("Add Pin Async. cid: {}", args.cid);
     let app_state = state.app_state.clone();
     let cid_backup = args.cid.clone();
