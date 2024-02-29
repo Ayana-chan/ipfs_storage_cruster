@@ -1,4 +1,5 @@
 pub mod admin;
+mod common;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

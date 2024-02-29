@@ -6,18 +6,17 @@ use axum::{
 };
 use axum::http::{StatusCode, Uri};
 use tower_http::cors;
-use crate::app::{AppConfig, AppState};
+use crate::app::AppState;
 use handlers::*;
 
-mod handlers;
+pub mod handlers;
 
 #[derive(Default, Clone, Debug)]
 pub struct PublicAppState {
     pub app_state: Arc<AppState>,
 }
 
-#[allow(unused_variables)]
-pub fn generate_public_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
+pub fn generate_public_app(app_state: &Arc<AppState>) -> Router {
     let app = Router::new()
         .route("/:cid", get(get_file));
 

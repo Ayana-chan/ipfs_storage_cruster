@@ -1,5 +1,5 @@
 #[cfg(feature = "server")]
-use axum::{http, Json, response::{IntoResponse, Response}};
+use axum::{Json, response::{IntoResponse, Response}};
 use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

@@ -5,10 +5,10 @@ use axum::Router;
 use axum::routing::{get, post, delete};
 use axum::http::{StatusCode, Uri};
 use tower_http::cors;
-use crate::app::{AppConfig, AppState};
+use crate::app::AppState;
 use handlers::*;
 
-mod handlers;
+pub mod handlers;
 mod ipfs_helper;
 
 #[derive(Default, Clone, Debug)]
@@ -17,8 +17,7 @@ pub struct AdminAppState {
     pub add_pin_task_recorder: AsyncTasksRecorder<String>,
 }
 
-#[allow(unused_variables)]
-pub async fn generate_admin_app(app_config: &AppConfig, app_state: &Arc<AppState>) -> Router {
+pub async fn generate_admin_app(app_state: &Arc<AppState>) -> Router {
     let app = Router::new()
         .route("/info", get(get_ipfs_node_info))
         .route("/pin", get(list_succeeded_pins))

@@ -1,14 +1,20 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
-
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
-
 use tiny_ipfs_client::{IpfsNodeMetadata, ReqwestIpfsClient};
-
 use crate::{admin_app, public_app};
 
+/// Public state among all apps.
+/// Should never be Cloned.
+#[derive(Default, Debug)]
+pub struct AppState {
+    /// Contact IPFS node.
+    pub ipfs_client: ReqwestIpfsClient,
+    /// Count the number of downloads of files. `cid -> count`.
+    pub file_traffic_counter: scc::HashMap<String, usize>,
+}
 
 pub struct AppConfig {
     // server config
@@ -87,16 +93,6 @@ impl AppConfigBuilder {
     }
 }
 
-/// Public state among all apps.
-/// Should never be Cloned.
-#[derive(Default, Debug)]
-pub struct AppState {
-    /// Contact IPFS node.
-    pub ipfs_client: ReqwestIpfsClient,
-    /// Count the number of downloads of files. `cid -> count`.
-    pub file_traffic_counter: scc::HashMap<String, usize>,
-}
-
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
     info!("--- Server Start ---");
@@ -118,11 +114,11 @@ pub async fn serve(app_config: AppConfig) {
 
     let public_server = generate_server(
         (app_config.public_server_ip, app_config.public_server_port),
-        public_app::generate_public_app(&app_config, &app_state),
+        public_app::generate_public_app(&app_state),
     );
     let admin_server = generate_server(
         (app_config.admin_server_ip, app_config.admin_server_port),
-        admin_app::generate_admin_app(&app_config, &app_state).await,
+        admin_app::generate_admin_app(&app_state).await,
     );
 
     tokio::join!(public_server, admin_server);
