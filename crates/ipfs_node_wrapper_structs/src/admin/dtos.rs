@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use crate::admin::models;
 
@@ -34,9 +35,8 @@ pub struct RemovePinArgs {
     pub cid: String,
 }
 
-// TODO 换掉
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetDownloadTimeListResponse {
-    pub list: scc::HashMap<String, usize>,
+    pub list: HashMap<String, usize>,
 }
 
