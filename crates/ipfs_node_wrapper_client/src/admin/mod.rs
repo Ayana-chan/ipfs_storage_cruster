@@ -20,3 +20,13 @@ impl IpfsNodeWrapperAdminClient {
         }
     }
 }
+
+/// private tools
+impl IpfsNodeWrapperAdminClient {
+    /// Generate `http://{base_url}{url_content}`
+    fn generate_url(&self, url_content: &str) -> String {
+        format!("http://{base_url}{url_content}",
+                base_url = self.base_url,
+                url_content = url_content)
+    }
+}
