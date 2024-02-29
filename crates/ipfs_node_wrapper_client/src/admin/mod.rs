@@ -7,7 +7,7 @@ pub use traffic::*;
 
 pub struct IpfsNodeWrapperAdminClient {
     client: reqwest::Client,
-    url: String,
+    pub url: String,
 }
 
 impl IpfsNodeWrapperAdminClient {
@@ -16,9 +16,5 @@ impl IpfsNodeWrapperAdminClient {
             client: reqwest::Client::new(),
             url,
         }
-    }
-
-    pub fn url(&self) -> &str{
-        &self.url
     }
 }
