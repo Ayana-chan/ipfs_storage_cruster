@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 use tracing::{error, debug, warn};
 use std::sync::Arc;
-use crate::{IpfsClientError, models};
+use crate::{IpfsClientError, dtos};
 
 pub type IpfsClientResult<T> = Result<T, IpfsClientError>;
 
@@ -62,7 +62,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get IPFS node's basic information.
-    pub async fn get_id_info(&self) -> IpfsClientResult<models::IdResponse> {
+    pub async fn get_id_info(&self) -> IpfsClientResult<dtos::IdResponse> {
         // TODO format arg无效
         let url_content = "/id";
         let res = self.ipfs_rpc_request(url_content).await?;
@@ -82,7 +82,7 @@ impl ReqwestIpfsClient {
     }
 
     /// List all recursive pins that is pinned
-    pub async fn list_recursive_pins_pinned(&self, with_pin_name: bool) -> IpfsClientResult<models::ListPinsResponse> {
+    pub async fn list_recursive_pins_pinned(&self, with_pin_name: bool) -> IpfsClientResult<dtos::ListPinsResponse> {
         let url_content = if with_pin_name {
             "/pin/ls?type=recursive&names=true"
         } else {
@@ -105,7 +105,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get a pin.
-    pub async fn get_one_pin(&self, cid: &str, with_pin_name: bool) -> IpfsClientResult<Option<models::PinsInfoInList>> {
+    pub async fn get_one_pin(&self, cid: &str, with_pin_name: bool) -> IpfsClientResult<Option<dtos::PinsInfoInList>> {
         let url_content = format!("/pin/ls?arg={cid}&names={with_pin_name}",
                                   cid = cid, with_pin_name = with_pin_name);
         let res = self.ipfs_rpc_request(&url_content).await?;
@@ -114,7 +114,7 @@ impl ReqwestIpfsClient {
         match status {
             _ if status.is_success() => {
                 // pinned
-                let pins: models::ListPinsResponse = res.json().await.map_err(|_e| {
+                let pins: dtos::ListPinsResponse = res.json().await.map_err(|_e| {
                     error!("Unexpected response body. msg: {:?}", _e);
                     IpfsClientError::UnexpectedResponseBody
                 })?;
@@ -130,7 +130,7 @@ impl ReqwestIpfsClient {
             }
             reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
                 // might not pinned
-                let error_response: models::ErrorResponse = res.json().await.map_err(|_e| {
+                let error_response: dtos::ErrorResponse = res.json().await.map_err(|_e| {
                     Self::handle_rpc_status_code_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR)
                 })?;
 
