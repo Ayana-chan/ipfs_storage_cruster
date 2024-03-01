@@ -40,32 +40,32 @@ impl AppConfigBuilder {
         AppConfigBuilder::default()
     }
 
-    // DEFAULT 0.0.0.0
+    /// DEFAULT 0.0.0.0
     pub fn public_server_ip(mut self, value: IpAddr) -> Self {
         self.public_server_ip = Some(value);
         self
     }
-    // DEFAULT 3000
+    /// DEFAULT 3000
     pub fn public_server_port(mut self, value: u16) -> Self {
         self.public_server_port = Some(value);
         self
     }
-    // DEFAULT 0.0.0.0
+    /// DEFAULT 0.0.0.0
     pub fn admin_server_ip(mut self, value: IpAddr) -> Self {
         self.admin_server_ip = Some(value);
         self
     }
-    // DEFAULT 4000
+    /// DEFAULT 4000
     pub fn admin_server_port(mut self, value: u16) -> Self {
         self.admin_server_port = Some(value);
         self
     }
-    // DEFAULT 127.0.0.1:8080
+    /// DEFAULT 127.0.0.1:8080
     pub fn ipfs_gateway_address(mut self, value: SocketAddr) -> Self {
         self.ipfs_gateway_address = Some(value);
         self
     }
-    // DEFAULT 127.0.0.1:5001
+    /// DEFAULT 127.0.0.1:5001
     pub fn ipfs_rpc_address(mut self, value: SocketAddr) -> Self {
         self.ipfs_rpc_address = Some(value);
         self

@@ -1,5 +1,5 @@
 pub mod app;
-mod app_builder;
+pub mod app_builder;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

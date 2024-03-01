@@ -1,5 +1,4 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::sync::Arc;
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
@@ -31,12 +30,12 @@ impl AppConfigBuilder {
         AppConfigBuilder::default()
     }
 
-    // DEFAULT 0.0.0.0
+    /// DEFAULT 0.0.0.0
     pub fn server_ip(mut self, value: IpAddr) -> Self {
         self.server_ip = Some(value);
         self
     }
-    // DEFAULT 5000
+    /// DEFAULT 5000
     pub fn server_port(mut self, value: u16) -> Self {
         self.server_port = Some(value);
         self
