@@ -12,3 +12,5 @@ tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_i
 axum = "0.7"
 axum-macros = "0.4"
 serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1", features = ["net", "parking_lot"] }
+tower-http = { version = "0.5", features = ["cors", "trace"] }

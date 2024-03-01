@@ -4,8 +4,7 @@ use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
 use tiny_ipfs_client::{IpfsNodeMetadata, ReqwestIpfsClient};
-use crate::app;
-use crate::app::{admin_app, public_app};
+use crate::app::{admin_app, AppState, public_app};
 
 pub struct AppConfig {
     // server config
@@ -74,12 +73,24 @@ impl AppConfigBuilder {
 
     pub fn finish(self) -> AppConfig {
         AppConfig {
-            public_server_ip: self.public_server_ip.unwrap_or(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))),
-            public_server_port: 3000,
-            admin_server_ip: self.public_server_ip.unwrap_or(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))),
-            admin_server_port: 4000,
-            ipfs_gateway_address: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080),
-            ipfs_rpc_address: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 5001),
+            public_server_ip: self.public_server_ip.unwrap_or(
+                IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))
+            ),
+            public_server_port: self.public_server_port.unwrap_or(
+                3000
+            ),
+            admin_server_ip: self.admin_server_ip.unwrap_or(
+                IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))
+            ),
+            admin_server_port: self.admin_server_port.unwrap_or(
+                4000
+            ),
+            ipfs_gateway_address: self.ipfs_gateway_address.unwrap_or(
+                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080)
+            ),
+            ipfs_rpc_address: self.ipfs_rpc_address.unwrap_or(
+                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 5001)
+            ),
         }
     }
 }
@@ -98,7 +109,7 @@ pub async fn serve(app_config: AppConfig) {
         gateway_address: app_config.ipfs_gateway_address.to_string(),
         rpc_address: app_config.ipfs_rpc_address.to_string(),
     };
-    let app_state = Arc::new(app::AppState {
+    let app_state = Arc::new(AppState {
         ipfs_client: ReqwestIpfsClient::new(ipfs_metadata),
         file_traffic_counter: scc::HashMap::new(),
     });
