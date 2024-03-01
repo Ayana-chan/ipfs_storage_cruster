@@ -27,10 +27,19 @@ impl AppState {
 }
 
 pub fn generate_app_from_config(app_config: &AppConfig) -> Router {
-    let app = Router::new();
-
     let app_state = AppState::from_app_config(app_config);
 
+    // TODO pin没有api前缀。要分开生成路由
+    let app = Router::new();
+
+    let app = Router::new()
+        .nest("/api", app)
+        .with_state(app_state);
+
+    decorate_router(app)
+}
+
+fn decorate_router(router: Router) -> Router {
     let tracing_layer = tower_http::trace::TraceLayer::new_for_http()
         // Create our own span for the request and include the matched path. The matched
         // path is useful for figuring out which handler the request was routed to.
@@ -52,16 +61,14 @@ pub fn generate_app_from_config(app_config: &AppConfig) -> Router {
         .allow_methods(cors::Any)
         .allow_headers(cors::Any);
 
-    Router::new()
-        .nest("/api", app) // TODO pin没有api前缀。要分开生成路由
-        .with_state(app_state)
+    router
         .layer(tracing_layer)
         .layer(cors_layer)
         .fallback(fallback)
 }
 
+
 async fn fallback(uri: Uri) -> (StatusCode, String) {
     error!("Receive a request but no route match. uri: {}", uri);
     (StatusCode::NOT_FOUND, format!("No route for {}", uri))
 }
-

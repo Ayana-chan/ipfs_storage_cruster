@@ -18,6 +18,13 @@ pub struct AdminAppState {
 }
 
 pub async fn generate_admin_app(app_state: &Arc<AppState>) -> Router {
+    let admin_app_state = AdminAppState {
+        app_state: app_state.clone(),
+        add_pin_task_recorder: AsyncTasksRecorder::new(),
+    };
+
+    ipfs_helper::init_ipfs_contact(&admin_app_state).await;
+
     let app = Router::new()
         .route("/info", get(get_ipfs_node_info))
         .route("/pin", get(list_succeeded_pins))
@@ -26,13 +33,14 @@ pub async fn generate_admin_app(app_state: &Arc<AppState>) -> Router {
         .route("/pin", delete(rm_pin))
         .route("/traffic",get(get_download_time_list));
 
-    let admin_app_state = AdminAppState {
-        app_state: app_state.clone(),
-        add_pin_task_recorder: AsyncTasksRecorder::new(),
-    };
+    let app = Router::new()
+        .nest("/api", app)
+        .with_state(admin_app_state);
 
-    ipfs_helper::init_ipfs_contact(&admin_app_state).await;
+    decorate_router(app)
+}
 
+fn decorate_router(router: Router) -> Router {
     let tracing_layer = tower_http::trace::TraceLayer::new_for_http()
         // Create our own span for the request and include the matched path. The matched
         // path is useful for figuring out which handler the request was routed to.
@@ -54,9 +62,7 @@ pub async fn generate_admin_app(app_state: &Arc<AppState>) -> Router {
         .allow_methods(cors::Any)
         .allow_headers(cors::Any);
 
-    Router::new()
-        .nest("/api", app)
-        .with_state(admin_app_state)
+    router
         .layer(tracing_layer)
         .layer(cors_layer)
         .fallback(fallback)

@@ -17,13 +17,21 @@ pub struct PublicAppState {
 }
 
 pub fn generate_public_app(app_state: &Arc<AppState>) -> Router {
-    let app = Router::new()
-        .route("/:cid", get(get_file));
-
     let public_app_state = PublicAppState {
         app_state: app_state.clone(),
     };
 
+    let app = Router::new()
+        .route("/:cid", get(get_file));
+
+    let app = Router::new()
+        .nest("/api", app)
+        .with_state(public_app_state);
+
+    decorate_router(app)
+}
+
+fn decorate_router(router: Router) -> Router {
     let tracing_layer = tower_http::trace::TraceLayer::new_for_http()
         // Create our own span for the request and include the matched path. The matched
         // path is useful for figuring out which handler the request was routed to.
@@ -45,9 +53,7 @@ pub fn generate_public_app(app_state: &Arc<AppState>) -> Router {
         .allow_methods(cors::Any)
         .allow_headers(cors::Any);
 
-    Router::new()
-        .nest("/api", app)
-        .with_state(public_app_state)
+    router
         .layer(tracing_layer)
         .layer(cors_layer)
         .fallback(fallback)
