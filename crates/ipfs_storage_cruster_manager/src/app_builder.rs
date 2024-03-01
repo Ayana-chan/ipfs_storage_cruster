@@ -2,6 +2,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
+use crate::app;
 
 pub struct AppConfig {
     // server config
@@ -63,7 +64,10 @@ pub async fn serve(app_config: AppConfig) {
 
     info!("IPFS Node rpc at: {}", app_config.ipfs_rpc_address);
 
-
+    generate_server(
+        (app_config.server_ip, app_config.server_port),
+        app::generate_app_from_config(&app_config)
+    ).await
 }
 
 /// Tool to bind server to port
