@@ -1,6 +1,5 @@
 #[allow(unused_imports)]
 use tracing::{error, debug, warn};
-use std::sync::Arc;
 use crate::{IpfsClientError, dtos};
 
 pub type IpfsClientResult<T> = Result<T, IpfsClientError>;
@@ -12,26 +11,24 @@ pub struct IpfsNodeMetadata {
 }
 
 /// An IPFS client depend on Reqwest.
-/// Safe to clone.
 #[derive(Debug, Clone)]
 pub struct ReqwestIpfsClient {
     pub client: reqwest::Client,
-    /// Mutable.
-    pub ipfs_node_metadata: Arc<parking_lot::RwLock<IpfsNodeMetadata>>,
+    pub ipfs_node_metadata: IpfsNodeMetadata,
 }
 
 impl ReqwestIpfsClient {
-    pub fn new(metadata: IpfsNodeMetadata) -> Self {
+    pub fn new(ipfs_node_metadata: IpfsNodeMetadata) -> Self {
         ReqwestIpfsClient {
             client: reqwest::Client::new(),
-            ipfs_node_metadata: parking_lot::RwLock::new(metadata).into(),
+            ipfs_node_metadata,
         }
     }
 
     /// Get file from IPFS gateway.
     pub async fn get_file_by_gateway(&self, cid: &str, file_name: Option<&str>) -> IpfsClientResult<reqwest::Response> {
         let url = format!("http://{addr}/ipfs/{cid}?filename={file_name}&download=true",
-                          addr = &self.ipfs_node_metadata.read().gateway_address,
+                          addr = &self.ipfs_node_metadata.gateway_address,
                           cid = cid,
                           file_name = file_name.unwrap_or(cid)
         );
@@ -198,7 +195,7 @@ impl ReqwestIpfsClient {
     /// Request's url is `"http://{addr}/api/v0{url_content}"`.
     async fn ipfs_rpc_request(&self, url_content: &str) -> IpfsClientResult<reqwest::Response> {
         let url = format!("http://{addr}/api/v0{url_content}",
-                          addr = &self.ipfs_node_metadata.read().rpc_address,
+                          addr = &self.ipfs_node_metadata.rpc_address,
                           url_content = url_content,
         );
         debug!("IPFS RPC url: {}", url);
