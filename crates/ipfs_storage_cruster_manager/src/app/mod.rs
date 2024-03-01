@@ -67,7 +67,6 @@ fn decorate_router(router: Router) -> Router {
         .fallback(fallback)
 }
 
-
 async fn fallback(uri: Uri) -> (StatusCode, String) {
     error!("Receive a request but no route match. uri: {}", uri);
     (StatusCode::NOT_FOUND, format!("No route for {}", uri))

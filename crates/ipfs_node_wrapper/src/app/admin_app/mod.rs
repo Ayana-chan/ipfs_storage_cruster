@@ -31,7 +31,7 @@ pub async fn generate_admin_app(app_state: &Arc<AppState>) -> Router {
         .route("/pin/:cid", get(check_pin))
         .route("/pin", post(add_pin))
         .route("/pin", delete(rm_pin))
-        .route("/traffic",get(get_download_time_list));
+        .route("/traffic", get(get_download_time_list));
 
     let app = Router::new()
         .nest("/api", app)
