@@ -1,6 +1,6 @@
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::layer::SubscriberExt;
-use ipfs_node_wrapper::app;
+use ipfs_node_wrapper::app_builder;
 
 fn config_tracing(){
     let console_subscriber = tracing_subscriber::fmt::layer()
@@ -26,8 +26,8 @@ fn config_tracing(){
 }
 
 // TODO 可配置化
-fn read_config() -> app::AppConfig {
-    app::AppConfigBuilder::new()
+fn read_config() -> app_builder::AppConfig {
+    app_builder::AppConfigBuilder::new()
         .public_server_ip("127.0.0.1".parse().unwrap())
         .public_server_port(3000)
         .admin_server_ip("127.0.0.1".parse().unwrap())
@@ -38,5 +38,5 @@ fn read_config() -> app::AppConfig {
 #[tokio::main]
 async fn main() {
     config_tracing();
-    app::serve(read_config()).await;
+    app_builder::serve(read_config()).await;
 }

@@ -4,17 +4,8 @@ use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
 use tiny_ipfs_client::{IpfsNodeMetadata, ReqwestIpfsClient};
-use crate::{admin_app, public_app};
-
-/// Public state among all apps.
-/// Should never be Cloned.
-#[derive(Default, Debug)]
-pub struct AppState {
-    /// Contact IPFS node.
-    pub ipfs_client: ReqwestIpfsClient,
-    /// Count the number of downloads of files. `cid -> count`.
-    pub file_traffic_counter: scc::HashMap<String, usize>,
-}
+use crate::app;
+use crate::app::{admin_app, public_app};
 
 pub struct AppConfig {
     // server config
@@ -107,7 +98,7 @@ pub async fn serve(app_config: AppConfig) {
         gateway_address: app_config.ipfs_gateway_address.to_string(),
         rpc_address: app_config.ipfs_rpc_address.to_string(),
     };
-    let app_state = Arc::new(AppState {
+    let app_state = Arc::new(app::AppState {
         ipfs_client: ReqwestIpfsClient::new(ipfs_metadata),
         file_traffic_counter: scc::HashMap::new(),
     });
@@ -129,4 +120,3 @@ async fn generate_server(address: impl ToSocketAddrs, app: Router) {
     let listener = tokio::net::TcpListener::bind(address).await.unwrap();
     axum::serve(listener, app).await.unwrap()
 }
-

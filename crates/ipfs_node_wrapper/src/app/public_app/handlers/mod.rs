@@ -5,7 +5,7 @@ use axum::body::Body;
 use axum::response::IntoResponse;
 use ipfs_node_wrapper_structs::public::dtos;
 use ipfs_node_wrapper_structs::ApiResponseResult;
-use crate::public_app::PublicAppState;
+use crate::app::public_app::PublicAppState;
 use crate::utils::HttpHeaderPorterFromReqwest;
 use crate::error_convert;
 

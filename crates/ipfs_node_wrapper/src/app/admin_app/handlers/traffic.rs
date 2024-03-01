@@ -2,7 +2,7 @@ use tracing::{info, debug, trace};
 use std::collections::HashMap;
 use axum::extract::State;
 use ipfs_node_wrapper_structs::admin::dtos;
-use crate::admin_app::AdminAppState;
+use crate::app::admin_app::AdminAppState;
 use ipfs_node_wrapper_structs::StandardApiResult;
 
 // TODO 也许一般需要的是过去的一个时间段内的下载量（或者，为了防止节点太新，使用平均下载量增加速度）

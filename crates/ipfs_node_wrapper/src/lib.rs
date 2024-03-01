@@ -1,6 +1,5 @@
 pub mod app;
-pub mod admin_app;
-pub mod public_app;
+pub mod app_builder;
 mod utils;
 mod error_convert;
 

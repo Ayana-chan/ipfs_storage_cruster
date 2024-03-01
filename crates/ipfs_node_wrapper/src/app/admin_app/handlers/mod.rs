@@ -3,7 +3,7 @@ use axum::extract::State;
 use tracing::{info, trace, error, warn, debug};
 use ipfs_node_wrapper_structs::admin::dtos;
 use ipfs_node_wrapper_structs::StandardApiResult;
-use crate::admin_app::AdminAppState;
+use crate::app::admin_app::AdminAppState;
 use crate::error_convert;
 
 mod pin;
