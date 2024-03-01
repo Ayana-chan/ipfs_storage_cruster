@@ -98,7 +98,6 @@ impl AppConfigBuilder {
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
     info!("--- Server Start ---");
-
     info!("public service listen at: {}:{}", app_config.public_server_ip, app_config.public_server_port);
     info!("admin  service listen at: {}:{}", app_config.admin_server_ip, app_config.admin_server_port);
 

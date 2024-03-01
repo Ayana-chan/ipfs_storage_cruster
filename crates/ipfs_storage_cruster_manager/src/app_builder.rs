@@ -59,8 +59,11 @@ impl AppConfigBuilder {
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
     info!("--- Server Start ---");
-
     info!("Server listen at: {}:{}", app_config.server_ip, app_config.server_port);
+
+    info!("IPFS Node rpc at: {}", app_config.ipfs_rpc_address);
+
+
 }
 
 /// Tool to bind server to port

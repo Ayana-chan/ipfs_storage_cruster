@@ -10,7 +10,7 @@ pub struct IpfsNodeMetadata {
     pub rpc_address: String,
 }
 
-/// An IPFS client depend on Reqwest.
+/// An IPFS client depend on `reqwest`.
 #[derive(Debug, Clone)]
 pub struct ReqwestIpfsClient {
     pub client: reqwest::Client,
