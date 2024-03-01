@@ -1,0 +1,14 @@
+[package]
+name = "ipfs_storage_cruster_manager"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ipfs_node_wrapper_client = {path = "../ipfs_node_wrapper_client"}
+
+tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
+axum = "0.7"
+axum-macros = "0.4"
+serde = { version = "1.0", features = ["derive"] }
