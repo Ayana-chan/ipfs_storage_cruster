@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 ipfs_node_wrapper_client = {path = "../ipfs_node_wrapper_client"}
-tiny_ipfs_client = {path = "../tiny_ipfs_client"}
+tiny_ipfs_client = {path = "../tiny_ipfs_client", features = ["no_gateway"]}
 
 tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
 axum = "0.7"

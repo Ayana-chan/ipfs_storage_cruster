@@ -6,6 +6,7 @@ pub type IpfsClientResult<T> = Result<T, IpfsClientError>;
 
 #[derive(Default, Clone, Debug)]
 pub struct IpfsNodeMetadata {
+    #[cfg(not(feature = "no_gateway"))]
     pub gateway_address: String,
     pub rpc_address: String,
 }
@@ -26,6 +27,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get file from IPFS gateway.
+    #[cfg(not(feature = "no_gateway"))]
     pub async fn get_file_by_gateway(&self, cid: &str, file_name: Option<&str>) -> IpfsClientResult<reqwest::Response> {
         let url = format!("http://{addr}/ipfs/{cid}?filename={file_name}&download=true",
                           addr = &self.ipfs_node_metadata.gateway_address,
@@ -183,6 +185,7 @@ impl ReqwestIpfsClient {
 impl Default for ReqwestIpfsClient {
     fn default() -> Self {
         let default_metadata = IpfsNodeMetadata {
+            #[cfg(not(feature = "no_gateway"))]
             gateway_address: "127.0.0.1:8080".to_string(),
             rpc_address: "127.0.0.1:5001".to_string(),
         };

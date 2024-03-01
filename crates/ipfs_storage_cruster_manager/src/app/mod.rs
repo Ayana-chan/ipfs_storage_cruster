@@ -14,7 +14,6 @@ pub struct AppState {
 impl AppState {
     pub fn from_app_config(app_config: AppConfig) -> AppState {
         let ipfs_metadata = IpfsNodeMetadata {
-            gateway_address: "".to_string(),
             rpc_address: app_config.ipfs_rpc_address.to_string(),
         };
         AppState {
