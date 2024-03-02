@@ -14,15 +14,22 @@ pub struct IpfsNodeMetadata {
 /// An IPFS client depend on `reqwest`.
 #[derive(Debug, Clone)]
 pub struct ReqwestIpfsClient {
-    client: reqwest::Client,
     pub ipfs_node_metadata: IpfsNodeMetadata,
+    client: reqwest::Client,
 }
 
 impl ReqwestIpfsClient {
     pub fn new(ipfs_node_metadata: IpfsNodeMetadata) -> Self {
         ReqwestIpfsClient {
-            client: reqwest::Client::new(),
             ipfs_node_metadata,
+            client: reqwest::Client::new(),
+        }
+    }
+
+    pub fn new_with_reqwest_client(ipfs_node_metadata: IpfsNodeMetadata, client: reqwest::Client) -> Self {
+        ReqwestIpfsClient {
+            ipfs_node_metadata,
+            client,
         }
     }
 
