@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tiny_ipfs_client = {path = "../tiny_ipfs_client", features = ["no_gateway"]}
+tiny_ipfs_client = { path = "../tiny_ipfs_client", features = ["no_gateway"] }
+ipfs_node_wrapper_client = { path = "../ipfs_node_wrapper_client" }
 
 tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
 axum = "0.7"

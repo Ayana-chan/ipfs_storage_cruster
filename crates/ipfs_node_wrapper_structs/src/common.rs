@@ -12,9 +12,9 @@ pub type StandardApiResultStatus<T> = ApiResult<(http::StatusCode, StandardApiJs
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct StandardApiJsonBody<T: Serialize> {
-    code: String,
-    message: String,
-    data: T,
+    pub code: String,
+    pub message: String,
+    pub data: T,
 }
 
 #[cfg(feature = "server")]
