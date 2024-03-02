@@ -49,8 +49,11 @@ pub async fn check_pinned_and_cache(cid: String, state: &AdminAppState) -> ApiRe
     let pin = state.app_state.ipfs_client.get_one_pin(&cid, false).await
         .map_err(error_convert::from_ipfs_client_error)?;
     if pin.is_some() {
+        // TODO 无法进行cache，因为会导致不一致性：NotFound，然后直接查询，发现确实pin了，然而这时revoke迅速开始并完成，数据被删，但此处有可能又缓存为success。
+        // 不会影响background pin的正确性，但依旧让其多进行了一次get_one_pin。
+        // 如果每次success都会去进一步查询get_one_pin并确认的话，也许有效，也能称之为防止缓存击穿。看看redis的缓存一致性解决方案。
         // record to local (cache)
-        let _ = state.add_pin_task_recorder.modify_to_success_before_work(cid).await;
+        // let _ = state.add_pin_task_recorder.modify_to_success_before_work(cid).await;
         Ok(Some(models::PinStatus::Pinned))
     } else {
         Ok(None)
