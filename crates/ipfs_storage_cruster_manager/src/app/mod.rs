@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::http::{StatusCode, Uri};
 use axum::Router;
 use tower_http::cors;
-use tiny_ipfs_client::{IpfsNodeMetadata, ReqwestIpfsClient};
+use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app_builder::AppConfig;
 
 pub mod handlers;
@@ -17,11 +17,10 @@ pub struct AppState {
 
 impl AppState {
     pub fn from_app_config(app_config: &AppConfig) -> AppState {
-        let ipfs_metadata = IpfsNodeMetadata {
-            rpc_address: app_config.ipfs_rpc_address.to_string(),
-        };
         AppState {
-            ipfs_client: ReqwestIpfsClient::new(ipfs_metadata).into(),
+            ipfs_client: ReqwestIpfsClient::new(
+                app_config.ipfs_rpc_address.to_string()
+            ).into(),
         }
     }
 }
