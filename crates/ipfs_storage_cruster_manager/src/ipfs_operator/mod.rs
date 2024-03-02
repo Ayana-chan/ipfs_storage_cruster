@@ -21,11 +21,20 @@ impl IpfsOperator {
         Ok(peer_id_res.id)
     }
 
+    // TODO 本地统计流量就行了，分点统计还可能导致计算麻烦。不过依然可以留着当做示例
     /// Get a list of the number of times files has been downloaded.
     ///
     /// Ignore error type.
     pub async fn get_download_time_list(&self) -> Result<HashMap<String, usize>, ()> {
         let res = self.ipfs_node_wrapper_client.get_download_time_list().await;
         res.map_or(Err(()), |v| Ok(v.list))
+    }
+
+    /// List all recursive pins that is pinned in IPFS node.
+    pub async fn list_succeeded_pins(&self) -> IpfsClientResult<Vec<String>> {
+        let list_res = self.ipfs_client
+            .list_recursive_pins_pinned(false).await?;
+        let cids = list_res.keys.into_keys().collect();
+        Ok(cids)
     }
 }
