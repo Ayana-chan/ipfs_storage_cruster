@@ -6,6 +6,12 @@ use tracing::{info, debug, trace, warn, error};
 use crate::app::AppState;
 use crate::utils::move_entry_between_header_map;
 
+// TODO 应该写在wrapper里面
+/// Add file.
+/// Use [reverse-proxy](https://github.com/tokio-rs/axum/tree/main/examples/reverse-proxy)
+/// to send stream data.
+///
+/// Seems no size limitation.
 #[axum_macros::debug_handler]
 pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Request) -> Result<axum::response::Response, http::StatusCode> {
     // log
