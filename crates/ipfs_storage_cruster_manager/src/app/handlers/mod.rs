@@ -23,11 +23,11 @@ pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Req
     let old_hm_ref = req.headers();
     let mut hm = http::header::HeaderMap::new();
     hm.reserve(5);
-    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::HOST);
-    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::CONNECTION);
-    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::CONTENT_LENGTH);
-    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::ACCEPT);
-    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::CONTENT_TYPE);
+    move_entry_between_header_map(http::header::HOST, old_hm_ref, &mut hm);
+    move_entry_between_header_map(http::header::CONNECTION, old_hm_ref, &mut hm);
+    move_entry_between_header_map(http::header::CONTENT_LENGTH, old_hm_ref, &mut hm);
+    move_entry_between_header_map(http::header::ACCEPT, old_hm_ref, &mut hm);
+    move_entry_between_header_map(http::header::CONTENT_TYPE, old_hm_ref, &mut hm);
     *req.headers_mut() = hm;
     trace!("add req: {:?}", req);
 
