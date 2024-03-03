@@ -1,5 +1,43 @@
-use axum::extract::Multipart;
-use tracing::{info, debug, trace};
-use axum::Json;
-use futures_util::TryStreamExt;
+use axum::extract::State;
+use axum::http;
+use axum::response::IntoResponse;
+#[allow(unused_imports)]
+use tracing::{info, debug, trace, warn, error};
+use crate::app::AppState;
+use crate::utils::move_entry_between_header_map;
+
+#[axum_macros::debug_handler]
+pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Request) -> Result<axum::response::Response, http::StatusCode> {
+    // log
+    let file_size = req.headers().get(http::header::CONTENT_LENGTH);
+    if file_size.is_none() {
+        warn!("Add file without content length in headers");
+    }
+    info!("Add file. File size: {:?}", file_size.unwrap());
+
+    // handle url
+    let url = format!("http://{}/api/v0/add", state.ipfs_client.rpc_address);
+    *req.uri_mut() = http::uri::Uri::try_from(url).unwrap();
+
+    // handle headers
+    let old_hm_ref = req.headers();
+    let mut hm = http::header::HeaderMap::new();
+    hm.reserve(5);
+    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::HOST);
+    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::CONNECTION);
+    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::CONTENT_LENGTH);
+    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::ACCEPT);
+    move_entry_between_header_map(old_hm_ref, &mut hm, http::header::CONTENT_TYPE);
+    *req.headers_mut() = hm;
+    trace!("add req: {:?}", req);
+
+    let res = state.raw_hyper_client
+        .request(req)
+        .await.map_err(|_| http::StatusCode::BAD_REQUEST)?;
+    let res = res.into_response();
+    debug!("res into_response: {:?}", res);
+
+    Ok(res
+        .into_response())
+}
 

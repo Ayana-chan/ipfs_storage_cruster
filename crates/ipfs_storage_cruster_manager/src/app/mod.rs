@@ -1,9 +1,10 @@
 use std::sync::Arc;
-
+use axum::body::Body;
+use tracing::error;
 use axum::http::{StatusCode, Uri};
 use axum::Router;
 use tower_http::cors;
-use tracing::error;
+use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 
 use tiny_ipfs_client::ReqwestIpfsClient;
 
@@ -12,11 +13,14 @@ use crate::app_builder::AppConfig;
 pub mod handlers;
 pub mod errors;
 
+pub type RawHyperClient = hyper_util::client::legacy::Client<HttpConnector, Body>;
+
 /// State of app. Should be cheap and safe to clone.
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct AppState {
     /// Contact IPFS node.
     pub ipfs_client: Arc<ReqwestIpfsClient>,
+    pub raw_hyper_client: RawHyperClient,
 }
 
 impl AppState {
@@ -25,6 +29,8 @@ impl AppState {
             ipfs_client: ReqwestIpfsClient::new(
                 app_config.ipfs_rpc_address.to_string()
             ).into(),
+            raw_hyper_client: hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
+                .build(HttpConnector::new()),
         }
     }
 }
