@@ -6,7 +6,7 @@ use tracing::{info, debug, trace, warn, error};
 use crate::app::AppState;
 use crate::utils::move_entry_between_header_map;
 
-// TODO 应该写在wrapper里面
+// TODO 返回值
 /// Add file.
 /// Use [reverse-proxy](https://github.com/tokio-rs/axum/tree/main/examples/reverse-proxy)
 /// to send stream data.
@@ -19,7 +19,7 @@ pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Req
     if file_size.is_none() {
         warn!("Add file without content length in headers");
     } else if let Some(file_size) = file_size {
-        info!("Add file. Content size: {:?}", file_size.unwrap());
+        info!("Add file. Content size: {:?}", file_size);
     }
 
     // handle url

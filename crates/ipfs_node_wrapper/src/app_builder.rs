@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
-use tiny_ipfs_client::{IpfsNodeMetadata, ReqwestIpfsClient};
+use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app::{admin_app, AppState, public_app};
 
 pub struct AppConfig {
@@ -104,12 +104,11 @@ pub async fn serve(app_config: AppConfig) {
     info!("IPFS Node gateway at: {}", app_config.ipfs_gateway_address);
     info!("IPFS Node rpc     at: {}", app_config.ipfs_rpc_address);
 
-    let ipfs_metadata = IpfsNodeMetadata {
-        gateway_address: app_config.ipfs_gateway_address.to_string(),
-        rpc_address: app_config.ipfs_rpc_address.to_string(),
-    };
     let app_state = Arc::new(AppState {
-        ipfs_client: ReqwestIpfsClient::new(ipfs_metadata),
+        ipfs_client: ReqwestIpfsClient::new(
+            app_config.ipfs_gateway_address.to_string(),
+            app_config.ipfs_rpc_address.to_string()
+        ),
         file_traffic_counter: scc::HashMap::new(),
     });
 
