@@ -12,8 +12,9 @@ pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Req
     let file_size = req.headers().get(http::header::CONTENT_LENGTH);
     if file_size.is_none() {
         warn!("Add file without content length in headers");
+    } else if let Some(file_size) = file_size {
+        info!("Add file. Content size: {:?}", file_size.unwrap());
     }
-    info!("Add file. File size: {:?}", file_size.unwrap());
 
     // handle url
     let url = format!("http://{}/api/v0/add", state.ipfs_client.rpc_address);
