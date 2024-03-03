@@ -5,15 +5,17 @@ use axum::response::IntoResponse;
 use tracing::{info, debug, trace, warn, error};
 use crate::app::AppState;
 use crate::utils::move_entry_between_header_map;
+use http_body_util::BodyExt;
+use crate::app::dtos;
 
-// TODO 返回值
+// TODO 返回值，错误处理
 /// Add file.
 /// Use [reverse-proxy](https://github.com/tokio-rs/axum/tree/main/examples/reverse-proxy)
 /// to send stream data.
 ///
 /// Seems no size limitation.
 #[axum_macros::debug_handler]
-pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Request) -> Result<axum::response::Response, http::StatusCode> {
+pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Request) -> Result<(), http::StatusCode> {
     // log
     let file_size = req.headers().get(http::header::CONTENT_LENGTH);
     if file_size.is_none() {
@@ -38,13 +40,16 @@ pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Req
     *req.headers_mut() = hm;
     trace!("add req: {:?}", req);
 
+    // read body
     let res = state.raw_hyper_client
         .request(req)
         .await.map_err(|_| http::StatusCode::BAD_REQUEST)?;
-    let res = res.into_response();
-    debug!("res into_response: {:?}", res);
+    let body = res.into_body().collect();
+    let body = body.await.unwrap();
+    let body = body.to_bytes();
+    let body: dtos::IpfsAddFileResponse = serde_json::from_slice(body.as_ref()).unwrap();
+    info!("Add file succeed. {:?}", body);
 
-    Ok(res
-        .into_response())
+    Ok(())
 }
 

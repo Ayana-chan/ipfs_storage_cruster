@@ -13,6 +13,7 @@ use crate::app_builder::AppConfig;
 
 pub mod handlers;
 pub mod errors;
+pub mod dtos;
 
 pub type RawHyperClient = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
