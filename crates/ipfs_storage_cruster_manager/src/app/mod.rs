@@ -1,12 +1,16 @@
-use tracing::error;
 use std::sync::Arc;
+
 use axum::http::{StatusCode, Uri};
 use axum::Router;
 use tower_http::cors;
+use tracing::error;
+
 use tiny_ipfs_client::ReqwestIpfsClient;
+
 use crate::app_builder::AppConfig;
 
 pub mod handlers;
+pub mod errors;
 
 /// State of app. Should be cheap and safe to clone.
 #[derive(Default, Debug, Clone)]

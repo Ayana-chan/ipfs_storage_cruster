@@ -10,8 +10,11 @@ tiny_ipfs_client = { path = "../tiny_ipfs_client", features = ["no_gateway"] }
 ipfs_node_wrapper_client = { path = "../ipfs_node_wrapper_client" }
 
 tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
-axum = "0.7"
+axum = { version = "0.7", features = ["multipart"] }
 axum-macros = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["net", "parking_lot"] }
 tower-http = { version = "0.5", features = ["cors", "trace"] }
+
+reqwest = { version = "0.11", features = ["json", "stream", "multipart"] }
+futures-util = "0.3.30"
