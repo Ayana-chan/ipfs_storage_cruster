@@ -2,7 +2,7 @@
 
 use axum::{http::StatusCode,
            Json,
-           response::{IntoResponse, Response}
+           response::{IntoResponse, Response},
 };
 use tracing::error;
 use std::fmt::Debug;
@@ -16,6 +16,9 @@ pub use errors_list::*;
 /// The http status code always be StatusCode::INTERNAL_SERVER_ERROR.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ResponseError {
+    /// Set status code. Default 500.
+    #[serde(skip)]
+    pub status_code: Option<StatusCode>,
     pub code: String,
     pub message: String,
 }
@@ -23,6 +26,7 @@ pub struct ResponseError {
 impl ResponseError {
     pub fn new(code: &str, msg: &str) -> Self {
         ResponseError {
+            status_code: None,
             code: code.to_string(),
             message: msg.to_string(),
         }
@@ -32,17 +36,26 @@ impl ResponseError {
         self.message = new_msg.to_string();
         self
     }
+
+    pub fn modify_status_code(mut self, new_status_code: StatusCode) -> Self {
+        self.status_code = Some(new_status_code);
+        self
+    }
 }
 
 impl IntoResponse for ResponseError {
     fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(self)).into_response()
+        let status_code = self.status_code.unwrap_or(
+            StatusCode::INTERNAL_SERVER_ERROR);
+        (status_code, Json(self)).into_response()
     }
 }
 
 impl From<ResponseErrorStatic> for ResponseError {
+    // TODO status code in ResponseErrorStatic
     fn from(value: ResponseErrorStatic) -> Self {
         ResponseError {
+            status_code: None,
             code: value.code.to_string(),
             message: value.message.to_string(),
         }

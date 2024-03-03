@@ -5,7 +5,8 @@ use tracing::{info, debug, trace, warn, error};
 use crate::app::AppState;
 use crate::utils::move_entry_between_header_map;
 use http_body_util::BodyExt;
-use crate::app::dtos;
+use crate::app::common::{ApiResult, StandardApiResult};
+use crate::app::{dtos, errors};
 
 // TODO 返回值，错误处理
 /// Add file.
@@ -14,15 +15,15 @@ use crate::app::dtos;
 ///
 /// Seems no size limitation.
 #[axum_macros::debug_handler]
-pub async fn upload_file(State(state): State<AppState>, mut req: axum::extract::Request) -> Result<(), http::StatusCode> {
-    let res = add_file_to_ipfs(&state, req).await;
+pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Request) -> StandardApiResult<()> {
+    let res = add_file_to_ipfs(&state, req).await?;
 
-    Ok(())
+    Ok(().into())
 }
 
 // ----------------------------------------------------------------
 
-async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::Request) -> dtos::IpfsAddFileResponse {
+async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::Request) -> ApiResult<dtos::IpfsAddFileResponse> {
     // log
     let file_size = req.headers().get(http::header::CONTENT_LENGTH);
     if file_size.is_none() {
@@ -33,7 +34,7 @@ async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::Request) -> 
 
     // handle url
     let url = format!("http://{}/api/v0/add", state.ipfs_client.rpc_address);
-    *req.uri_mut() = http::uri::Uri::try_from(url).unwrap();
+    *req.uri_mut() = http::uri::Uri::try_from(url).expect("Impossible fail to parse url");
 
     // handle headers
     let old_hm_ref = req.headers();
@@ -47,15 +48,30 @@ async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::Request) -> 
     *req.headers_mut() = hm;
     trace!("add req: {:?}", req);
 
-    // read body //TODO 可能有优化
+    // read body //TODO 可能有优化。做笔记
     let res = state.raw_hyper_client
         .request(req)
-        .await.map_err(|_| http::StatusCode::BAD_REQUEST).unwrap();
+        .await
+        .map_err(|_e|
+        errors::IPFS_REQUEST_ERROR.clone_to_error_with_log_with_content(_e)
+    )?;
+    if !res.status().is_success() {
+        error!("Failed to add file to IPFS. Status code: {}", res.status());
+        return Err(errors::IPFS_RESPOND_ERROR.clone_to_error());
+    }
     let body = res.into_body().collect();
-    let body = body.await.unwrap();
+    let body = body.await
+        .map_err(|_e| {
+        error!("Failed to receive IPFS response when add file");
+        errors::IPFS_FAIL.clone_to_error()
+    })?;
     let body = body.to_bytes();
-    let body: dtos::IpfsAddFileResponse = serde_json::from_slice(body.as_ref()).unwrap();
+    let body: dtos::IpfsAddFileResponse = serde_json::from_slice(body.as_ref())
+        .map_err(|_e| {
+        error!("Unexpected IPFS response when add file");
+        errors::IPFS_FAIL.clone_to_error()
+    })?;
     info!("Add file succeed. {:?}", body);
 
-    body
+    Ok(body)
 }
