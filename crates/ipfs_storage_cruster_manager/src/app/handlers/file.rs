@@ -15,10 +15,13 @@ use crate::app::{dtos, errors};
 ///
 /// Seems no size limitation.
 #[axum_macros::debug_handler]
-pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Request) -> StandardApiResult<()> {
+pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Request) -> StandardApiResult<dtos::UploadFileResponse> {
     let res = add_file_to_ipfs(&state, req).await?;
-
-    Ok(().into())
+    let res = dtos::UploadFileResponse {
+        request_id: "todo request_id".to_string(),
+        file_metadata: res,
+    };
+    Ok(res.into())
 }
 
 // ----------------------------------------------------------------
