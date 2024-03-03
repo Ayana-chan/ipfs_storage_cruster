@@ -8,7 +8,6 @@ use http_body_util::BodyExt;
 use crate::app::common::{ApiResult, StandardApiResult};
 use crate::app::{dtos, errors};
 
-// TODO 返回值，错误处理
 /// Add file.
 /// Use [reverse-proxy](https://github.com/tokio-rs/axum/tree/main/examples/reverse-proxy)
 /// to send stream data.
@@ -16,10 +15,11 @@ use crate::app::{dtos, errors};
 /// Seems no size limitation.
 #[axum_macros::debug_handler]
 pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Request) -> StandardApiResult<dtos::UploadFileResponse> {
-    let res = add_file_to_ipfs(&state, req).await?;
+    let upload_res = add_file_to_ipfs(&state, req).await?;
+    // TODO pin
     let res = dtos::UploadFileResponse {
         request_id: "todo request_id".to_string(),
-        file_metadata: res,
+        file_metadata: upload_res,
     };
     Ok(res.into())
 }
