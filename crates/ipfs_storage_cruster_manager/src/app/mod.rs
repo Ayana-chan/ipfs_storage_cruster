@@ -42,7 +42,7 @@ pub fn generate_app_from_config(app_config: &AppConfig) -> Router {
 
     // TODO pin没有api前缀。要分开生成路由
     let app = Router::new()
-        .route("/file", post(add_file));
+        .route("/file", post(upload_file));
 
     let app = Router::new()
         .nest("/api", app)

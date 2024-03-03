@@ -14,7 +14,15 @@ use crate::app::dtos;
 ///
 /// Seems no size limitation.
 #[axum_macros::debug_handler]
-pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Request) -> Result<(), http::StatusCode> {
+pub async fn upload_file(State(state): State<AppState>, mut req: axum::extract::Request) -> Result<(), http::StatusCode> {
+    let res = add_file_to_ipfs(&state, req).await;
+
+    Ok(())
+}
+
+// ----------------------------------------------------------------
+
+async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::Request) -> dtos::IpfsAddFileResponse {
     // log
     let file_size = req.headers().get(http::header::CONTENT_LENGTH);
     if file_size.is_none() {
@@ -42,13 +50,12 @@ pub async fn add_file(State(state): State<AppState>, mut req: axum::extract::Req
     // read body //TODO 可能有优化
     let res = state.raw_hyper_client
         .request(req)
-        .await.map_err(|_| http::StatusCode::BAD_REQUEST)?;
+        .await.map_err(|_| http::StatusCode::BAD_REQUEST).unwrap();
     let body = res.into_body().collect();
     let body = body.await.unwrap();
     let body = body.to_bytes();
     let body: dtos::IpfsAddFileResponse = serde_json::from_slice(body.as_ref()).unwrap();
     info!("Add file succeed. {:?}", body);
 
-    Ok(())
+    body
 }
-
