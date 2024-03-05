@@ -1,0 +1,10 @@
+version: '3'
+services:
+  wrapper0:
+    build: .
+    environment:
+      IPFS_GATEWAY_ADDRESS: "127.0.0.1:8080"
+      IPFS_RPC_ADDRESS: "127.0.0.1:5001"
+    ports:
+      - "3000:3000"
+      - "4000:4000"
