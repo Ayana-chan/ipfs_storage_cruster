@@ -3,11 +3,9 @@ use tracing::error;
 use axum::body::Body;
 use axum::http::{StatusCode, Uri};
 use axum::Router;
-use axum::routing::post;
 use tower_http::cors;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use tiny_ipfs_client::ReqwestIpfsClient;
-use handlers::*;
 
 use crate::app_builder::AppConfig;
 
@@ -42,8 +40,7 @@ pub fn generate_app_from_config(app_config: &AppConfig) -> Router {
     let app_state = AppState::from_app_config(app_config);
 
     // TODO pin没有api前缀。要分开生成路由
-    let app = Router::new()
-        .route("/file", post(upload_file));
+    let app = handlers::generate_router();
 
     let app = Router::new()
         .nest("/api", app)
