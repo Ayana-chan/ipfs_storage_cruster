@@ -2,7 +2,8 @@ FROM rust:latest as builder
 ARG APP_NAME
 WORKDIR /usr/src/${APP_NAME}
 COPY . .
-RUN cargo build --release --bin ${APP_NAME}
+RUN cd ./crates/${APP_NAME} && \
+    cargo build --release
 
 FROM debian:buster-slim
 ARG APP_NAME
