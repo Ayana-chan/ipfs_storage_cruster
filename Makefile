@@ -1,7 +1,7 @@
 # image name & version
-WRAPPER_NAME=ipfs_storage_cruster/ipfs_node_wrapper
-MANAGER_NAME=ipfs_storage_cruster/ipfs_storage_cruster_manager
-VERSION=latest
+WRAPPER_NAME = ipfs_storage_cruster/ipfs_node_wrapper
+MANAGER_NAME = ipfs_storage_cruster/ipfs_storage_cruster_manager
+VERSION = latest
 
 .PHONY: build-app1 build-app2 build-all up down
 

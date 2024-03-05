@@ -1,6 +1,6 @@
 # cargo with source replacement
 # Comment the `RUN` if you are not in China.
-FROM rust:1.75.0 as source-replaced-cargo
+FROM rust:1.75.0-bookworm as source-replaced-cargo
 
 RUN mkdir -p /usr/local/cargo/registry \
     && echo '[source.crates-io]' > /usr/local/cargo/config.toml \
@@ -32,16 +32,19 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
 ARG APP_NAME
+
+# TODO .dockerignore
 COPY . .
+
 # Build
 RUN cd ./crates/${APP_NAME} \
     && cargo build --release
 
 # Run app
-FROM debian:buster-slim
+FROM debian:bookworm-slim
+
+EXPOSE 3000 4000
 
 ARG APP_NAME
 COPY --from=builder /app/target/release/${APP_NAME} /usr/local/bin/${APP_NAME}
-CMD ["sh", "-c", "/usr/local/bin/$APP_NAME"]
-
-EXPOSE 3000 4000
+CMD ["/usr/local/bin/${APP_NAME}"]

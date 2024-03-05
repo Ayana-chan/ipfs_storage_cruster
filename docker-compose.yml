@@ -1,7 +1,7 @@
 version: '3'
 services:
   wrapper0:
-    build: ipfs_storage_cruster/ipfs_node_wrapper:latest
+    image: ipfs_storage_cruster/ipfs_node_wrapper:latest
     environment:
       IPFS_GATEWAY_ADDRESS: "127.0.0.1:8080"
       IPFS_RPC_ADDRESS: "127.0.0.1:5001"
