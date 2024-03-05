@@ -5,20 +5,22 @@ VERSION=latest
 
 .PHONY: build-app1 build-app2 build-all up down
 
-# build ipfs_node_wrapper_app
+# build docker image of ipfs_node_wrapper_app
 build-wrapper:
 	docker build --build-arg APP_NAME=ipfs_node_wrapper_app -t $(WRAPPER_NAME):$(VERSION) .
 
-# build ipfs_storage_cruster_app
+# build docker image of ipfs_storage_cruster_app
 build-manager:
 	docker build --build-arg APP_NAME=ipfs_storage_cruster_app -t $(MANAGER_NAME):$(VERSION) .
 
 build-all: build-app1 build-app2
 
-# 使用Docker Compose启动服务
+# run by docker compose
 up:
-	docker-compose up -d
+	docker compose up -d
+#docker-compose up -d
 
-# 使用Docker Compose停止服务
+# stop docker compose
 down:
-	docker-compose down
+	docker compose down
+#docker-compose down
