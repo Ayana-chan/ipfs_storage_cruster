@@ -1,8 +1,17 @@
+use std::str::FromStr;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::layer::SubscriberExt;
+#[allow(unused_imports)]
+use tracing::{error, debug};
 use ipfs_node_wrapper::app_builder;
 
-fn config_tracing(){
+#[tokio::main]
+async fn main() {
+    config_tracing();
+    app_builder::serve(read_config()).await;
+}
+
+fn config_tracing() {
     let console_subscriber = tracing_subscriber::fmt::layer()
         .with_writer(std::io::stdout);
 
@@ -25,18 +34,37 @@ fn config_tracing(){
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 }
 
-// TODO 可配置化
+#[tracing::instrument(skip_all)]
 fn read_config() -> app_builder::AppConfig {
-    app_builder::AppConfigBuilder::new()
-        .public_server_ip("127.0.0.1".parse().unwrap())
-        .public_server_port(3000)
-        .admin_server_ip("127.0.0.1".parse().unwrap())
-        .admin_server_port(4000)
-        .finish()
-}
+    let mut builder = app_builder::AppConfigBuilder::new();
 
-#[tokio::main]
-async fn main() {
-    config_tracing();
-    app_builder::serve(read_config()).await;
+    let ev = option_env!("IPFS_GATEWAY_ADDRESS");
+    if let Some(ev) = ev {
+        let address = std::net::SocketAddr::from_str(ev);
+        match address {
+            Ok(addr) => {
+                debug!("Succeed to read env IPFS_GATEWAY_ADDRESS: {:?}", address);
+                builder = builder.ipfs_gateway_address(addr);
+            }
+            Err(e) => {
+                error!("Env IPFS_GATEWAY_ADDRESS is not an invalid SocketAddr. Default value used. Value: {}, error msg: {}", ev, e);
+            }
+        }
+    }
+
+    let ev = option_env!("IPFS_RPC_ADDRESS");
+    if let Some(ev) = ev {
+        let address = std::net::SocketAddr::from_str(ev);
+        match address {
+            Ok(addr) => {
+                debug!("Succeed to read env IPFS_RPC_ADDRESS: {:?}", address);
+                builder = builder.ipfs_gateway_address(addr);
+            }
+            Err(e) => {
+                error!("Env IPFS_RPC_ADDRESS is not an invalid SocketAddr. Default value used. Value: {}, error msg: {}", ev, e);
+            }
+        }
+    }
+
+    builder.finish()
 }
