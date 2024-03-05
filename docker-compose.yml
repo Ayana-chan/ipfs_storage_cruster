@@ -8,6 +8,8 @@ services:
     ports:
       - "3000:3000"
       - "4000:4000"
+      - "8080:8080"
+      - "5001:5001"
 
   ipfs0:
     container_name: ipfs0

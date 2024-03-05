@@ -33,7 +33,6 @@ RUN cargo chef cook --release --recipe-path recipe.json
 
 ARG APP_NAME
 
-# TODO .dockerignore
 COPY . .
 
 # Build

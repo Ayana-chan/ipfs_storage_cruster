@@ -13,7 +13,7 @@ build-wrapper:
 build-manager:
 	docker build --build-arg APP_NAME=ipfs_storage_cruster_app -t $(MANAGER_NAME):$(VERSION) .
 
-build-all: build-app1 build-app2
+build-all: build-wrapper build-manager
 
 # run by docker compose
 up:
