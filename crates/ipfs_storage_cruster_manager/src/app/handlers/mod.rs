@@ -9,6 +9,6 @@ use crate::app::AppState;
 
 pub fn generate_router() -> Router<AppState> {
     Router::new()
-        .route("/file", post(upload_file))
         .nest("/admin", admin::generate_admin_router())
+        .route("/file", post(upload_file))
 }
