@@ -1,0 +1,12 @@
+/.idea
+
+/target
+/Cargo.lock
+
+**/logs
+
+docker-compose.yml
+Dockerfile
+Makefile
+README.md
+.gitignore

@@ -47,4 +47,6 @@ EXPOSE 3000 4000
 
 ARG APP_NAME
 COPY --from=builder /app/target/release/${APP_NAME} /usr/local/bin/${APP_NAME}
-CMD ["/usr/local/bin/${APP_NAME}"]
+
+ENV APP_NAME_ENV=${APP_NAME}
+CMD ["sh", "-c", "/usr/local/bin/$APP_NAME_ENV"]
