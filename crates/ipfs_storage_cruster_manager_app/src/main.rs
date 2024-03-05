@@ -8,8 +8,8 @@ fn config_tracing(){
 
     let file_appender = RollingFileAppender::new(
         Rotation::HOURLY,
-        "log",
-        "ipfs_node_wrapper.log");
+        "logs",
+        "ipfs_storage_cruster_manager.log");
     let file_subscriber = tracing_subscriber::fmt::layer()
         .with_writer(file_appender)
         .with_ansi(false);

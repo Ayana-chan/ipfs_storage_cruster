@@ -17,7 +17,7 @@ fn config_tracing() {
 
     let file_appender = RollingFileAppender::new(
         Rotation::HOURLY,
-        "log",
+        "logs",
         "ipfs_node_wrapper.log");
     let file_subscriber = tracing_subscriber::fmt::layer()
         .with_writer(file_appender)
