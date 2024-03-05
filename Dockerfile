@@ -42,8 +42,6 @@ RUN cd ./crates/${APP_NAME} \
 # Run app
 FROM debian:bookworm-slim
 
-EXPOSE 3000 4000
-
 ARG APP_NAME
 COPY --from=builder /app/target/release/${APP_NAME} /usr/local/bin/${APP_NAME}
 
