@@ -3,13 +3,11 @@ services:
   wrapper0:
     image: ipfs_storage_cruster/ipfs_node_wrapper:latest
     environment:
-      IPFS_GATEWAY_ADDRESS: "127.0.0.1:8080"
-      IPFS_RPC_ADDRESS: "127.0.0.1:5001"
+      IPFS_GATEWAY_ADDRESS: "ipfs0:8080"
+      IPFS_RPC_ADDRESS: "ipfs0:5001"
     ports:
       - "3000:3000"
       - "4000:4000"
-      - "8080:8080"
-      - "5001:5001"
 
   ipfs0:
     container_name: ipfs0

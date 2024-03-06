@@ -13,8 +13,8 @@ pub struct AppConfig {
     pub admin_server_ip: IpAddr,
     pub admin_server_port: u16,
     // Ipfs node config
-    pub ipfs_gateway_address: SocketAddr,
-    pub ipfs_rpc_address: SocketAddr,
+    pub ipfs_gateway_address: String,
+    pub ipfs_rpc_address: String,
 }
 
 impl Default for AppConfig {
@@ -30,8 +30,8 @@ pub struct AppConfigBuilder {
     public_server_port: Option<u16>,
     admin_server_ip: Option<IpAddr>,
     admin_server_port: Option<u16>,
-    ipfs_gateway_address: Option<SocketAddr>,
-    ipfs_rpc_address: Option<SocketAddr>,
+    ipfs_gateway_address: Option<String>,
+    ipfs_rpc_address: Option<String>,
 }
 
 #[allow(dead_code)]
@@ -61,12 +61,12 @@ impl AppConfigBuilder {
         self
     }
     /// DEFAULT 127.0.0.1:8080
-    pub fn ipfs_gateway_address(mut self, value: SocketAddr) -> Self {
+    pub fn ipfs_gateway_address(mut self, value: String) -> Self {
         self.ipfs_gateway_address = Some(value);
         self
     }
     /// DEFAULT 127.0.0.1:5001
-    pub fn ipfs_rpc_address(mut self, value: SocketAddr) -> Self {
+    pub fn ipfs_rpc_address(mut self, value: String) -> Self {
         self.ipfs_rpc_address = Some(value);
         self
     }
@@ -86,10 +86,12 @@ impl AppConfigBuilder {
                 4000
             ),
             ipfs_gateway_address: self.ipfs_gateway_address.unwrap_or(
-                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080)
+                // SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080)
+                "127.0.0.1:8080".to_string()
             ),
             ipfs_rpc_address: self.ipfs_rpc_address.unwrap_or(
-                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 5001)
+                // SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 5001)
+                "127.0.0.1:5001".to_string()
             ),
         }
     }

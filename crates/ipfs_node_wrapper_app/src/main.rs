@@ -2,7 +2,7 @@ use std::str::FromStr;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::layer::SubscriberExt;
 #[allow(unused_imports)]
-use tracing::{error, debug};
+use tracing::{error, debug, info};
 use ipfs_node_wrapper::app_builder;
 
 #[tokio::main]
@@ -38,33 +38,45 @@ fn config_tracing() {
 fn read_config() -> app_builder::AppConfig {
     let mut builder = app_builder::AppConfigBuilder::new();
 
-    let ev = option_env!("IPFS_GATEWAY_ADDRESS");
-    if let Some(ev) = ev {
-        let address = std::net::SocketAddr::from_str(ev);
-        match address {
-            Ok(addr) => {
-                debug!("Succeed to read env IPFS_GATEWAY_ADDRESS: {:?}", address);
-                builder = builder.ipfs_gateway_address(addr);
-            }
-            Err(e) => {
-                error!("Env IPFS_GATEWAY_ADDRESS is not an invalid SocketAddr. Default value used. Value: {}, error msg: {}", ev, e);
-            }
-        }
+    let ev = std::env::var("IPFS_GATEWAY_ADDRESS");
+    if let Ok(address) = ev {
+        info!("Succeed to read env IPFS_GATEWAY_ADDRESS: {:?}", address);
+        builder = builder.ipfs_gateway_address(address.to_string());
     }
 
-    let ev = option_env!("IPFS_RPC_ADDRESS");
-    if let Some(ev) = ev {
-        let address = std::net::SocketAddr::from_str(ev);
-        match address {
-            Ok(addr) => {
-                debug!("Succeed to read env IPFS_RPC_ADDRESS: {:?}", address);
-                builder = builder.ipfs_gateway_address(addr);
-            }
-            Err(e) => {
-                error!("Env IPFS_RPC_ADDRESS is not an invalid SocketAddr. Default value used. Value: {}, error msg: {}", ev, e);
-            }
-        }
+    let ev = std::env::var("IPFS_RPC_ADDRESS");
+    if let Ok(address) = ev {
+        info!("Succeed to read env IPFS_RPC_ADDRESS: {:?}", address);
+        builder = builder.ipfs_rpc_address(address.to_string());
     }
+
+    // let ev = option_env!("IPFS_GATEWAY_ADDRESS");
+    // if let Some(ev) = ev {
+    //     let address = std::net::SocketAddr::from_str(ev);
+    //     match address {
+    //         Ok(addr) => {
+    //             debug!("Succeed to read env IPFS_GATEWAY_ADDRESS: {:?}", address);
+    //             builder = builder.ipfs_gateway_address(addr);
+    //         }
+    //         Err(e) => {
+    //             error!("Env IPFS_GATEWAY_ADDRESS is not an invalid SocketAddr. Default value used. Value: {}, error msg: {}", ev, e);
+    //         }
+    //     }
+    // }
+    //
+    // let ev = option_env!("IPFS_RPC_ADDRESS");
+    // if let Some(ev) = ev {
+    //     let address = std::net::SocketAddr::from_str(ev);
+    //     match address {
+    //         Ok(addr) => {
+    //             debug!("Succeed to read env IPFS_RPC_ADDRESS: {:?}", address);
+    //             builder = builder.ipfs_rpc_address(addr);
+    //         }
+    //         Err(e) => {
+    //             error!("Env IPFS_RPC_ADDRESS is not an invalid SocketAddr. Default value used. Value: {}, error msg: {}", ev, e);
+    //         }
+    //     }
+    // }
 
     builder.finish()
 }
