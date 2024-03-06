@@ -9,9 +9,9 @@ VERSION = latest
 build-wrapper:
 	docker build --build-arg APP_NAME=ipfs_node_wrapper_app -t $(WRAPPER_NAME):$(VERSION) .
 
-# build docker image of ipfs_storage_cruster_app
+# build docker image of ipfs_storage_cruster_manager_app
 build-manager:
-	docker build --build-arg APP_NAME=ipfs_storage_cruster_app -t $(MANAGER_NAME):$(VERSION) .
+	docker build --build-arg APP_NAME=ipfs_storage_cruster_manager_app -t $(MANAGER_NAME):$(VERSION) .
 
 build-all: build-wrapper build-manager
 
