@@ -54,6 +54,7 @@ impl ReqwestIpfsClient {
         })?;
 
         let status = res.status();
+        // TODO cid错了会报400
         match status {
             _ if status.is_success() => {
                 debug!("Success get file");

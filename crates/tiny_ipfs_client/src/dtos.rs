@@ -30,7 +30,7 @@ pub struct ListPinsResponse {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PinsInfoInList {
-    pub name: String,
+    pub name: Option<String>,
     pub r#type: models::PinType,
 }
 

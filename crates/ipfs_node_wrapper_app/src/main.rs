@@ -1,4 +1,3 @@
-use std::str::FromStr;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::layer::SubscriberExt;
 #[allow(unused_imports)]
@@ -40,13 +39,13 @@ fn read_config() -> app_builder::AppConfig {
 
     let ev = std::env::var("IPFS_GATEWAY_ADDRESS");
     if let Ok(address) = ev {
-        info!("Succeed to read env IPFS_GATEWAY_ADDRESS: {:?}", address);
+        debug!("Succeed to read env IPFS_GATEWAY_ADDRESS: {:?}", address);
         builder = builder.ipfs_gateway_address(address.to_string());
     }
 
     let ev = std::env::var("IPFS_RPC_ADDRESS");
     if let Ok(address) = ev {
-        info!("Succeed to read env IPFS_RPC_ADDRESS: {:?}", address);
+        debug!("Succeed to read env IPFS_RPC_ADDRESS: {:?}", address);
         builder = builder.ipfs_rpc_address(address.to_string());
     }
 

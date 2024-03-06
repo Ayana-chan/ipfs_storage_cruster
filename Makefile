@@ -18,9 +18,13 @@ build-all: build-wrapper build-manager
 # run by docker compose
 up:
 	docker compose up -d
-#docker-compose up -d
+#	docker-compose up -d
 
 # stop docker compose
 down:
 	docker compose down
-#docker-compose down
+#	docker-compose down
+
+logs:
+	docker compose logs -f
+#	docker-compose logs -f

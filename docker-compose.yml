@@ -2,6 +2,8 @@ version: '3'
 services:
   wrapper0:
     image: ipfs_storage_cruster/ipfs_node_wrapper:latest
+    depends_on:
+      - ipfs0
     environment:
       IPFS_GATEWAY_ADDRESS: "ipfs0:8080"
       IPFS_RPC_ADDRESS: "ipfs0:5001"
