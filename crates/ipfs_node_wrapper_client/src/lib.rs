@@ -19,6 +19,7 @@ impl IpfsNodeWrapperClient {
         }
     }
 
+    /// Relatively cheap to create (only address changed).
     pub fn new_with_reqwest_client(address: String, client: reqwest::Client) -> Self {
         IpfsNodeWrapperClient {
             base_url: address,

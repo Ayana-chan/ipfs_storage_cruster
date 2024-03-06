@@ -14,6 +14,7 @@ pub struct ReqwestIpfsClient {
 }
 
 impl ReqwestIpfsClient {
+    /// New with a new reqwest client.
     pub fn new(
         #[cfg(not(feature = "no_gateway"))] gateway_address: String,
         rpc_address: String) -> Self {
@@ -25,6 +26,7 @@ impl ReqwestIpfsClient {
         }
     }
 
+    /// Relatively cheap to create (only address changed).
     pub fn new_with_reqwest_client(
         #[cfg(not(feature = "no_gateway"))] gateway_address: String,
         rpc_address: String, client: reqwest::Client) -> Self {

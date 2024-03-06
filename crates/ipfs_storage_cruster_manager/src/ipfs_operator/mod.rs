@@ -8,12 +8,20 @@ mod dtos;
 mod models;
 mod common;
 
+/// TODO 没啥用
 pub struct IpfsOperator {
     pub ipfs_client: ReqwestIpfsClient,
     pub ipfs_node_wrapper_client: IpfsNodeWrapperClient,
 }
 
 impl IpfsOperator {
+    pub fn new(rpc_address: String, wrapper_address: String, client: reqwest::Client) -> Self {
+        IpfsOperator {
+            ipfs_client: ReqwestIpfsClient::new_with_reqwest_client(rpc_address, client.clone()),
+            ipfs_node_wrapper_client: IpfsNodeWrapperClient::new_with_reqwest_client(wrapper_address, client),
+        }
+    }
+
     /// Get IPFS node's id.
     pub async fn get_ipfs_node_id(&self) -> IpfsClientResult<String> {
         let peer_id_res = self.ipfs_client.get_id_info().await?;

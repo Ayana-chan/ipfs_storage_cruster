@@ -6,7 +6,6 @@ use axum::Router;
 use tower_http::cors;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use tiny_ipfs_client::ReqwestIpfsClient;
-
 use crate::app_builder::AppConfig;
 
 pub mod handlers;
@@ -19,16 +18,22 @@ pub type RawHyperClient = hyper_util::client::legacy::Client<HttpConnector, Body
 /// State of app. Should be cheap and safe to clone.
 #[derive(Debug, Clone)]
 pub struct AppState {
-    /// Contact IPFS node.
+    /// Unified reqwest client for use.
+    pub reqwest_client: reqwest::Client,
+    /// Contact self's IPFS node.
     pub ipfs_client: Arc<ReqwestIpfsClient>,
+    /// Used to send raw hyper request.
     pub raw_hyper_client: RawHyperClient,
 }
 
 impl AppState {
     pub fn from_app_config(app_config: &AppConfig) -> AppState {
+        let reqwest_client = reqwest::Client::new();
         AppState {
-            ipfs_client: ReqwestIpfsClient::new(
-                app_config.ipfs_rpc_address.to_string()
+            reqwest_client: reqwest_client.clone(),
+            ipfs_client: ReqwestIpfsClient::new_with_reqwest_client(
+                app_config.ipfs_rpc_address.to_string(),
+                reqwest_client
             ).into(),
             raw_hyper_client: hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
                 .build(HttpConnector::new()),
