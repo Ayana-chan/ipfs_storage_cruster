@@ -13,7 +13,7 @@ pub async fn get_download_time_list(State(state): State<AdminAppState>) -> Stand
     let target_hashmap_ref = &state.app_state.file_traffic_counter;
     let mut list = HashMap::with_capacity(target_hashmap_ref.capacity());
     target_hashmap_ref.scan_async(|k, v| {
-        let _ = list.insert(k.clone(), v.clone());
+        let _ = list.insert(k.clone(), *v);
     }).await;
     debug!("Finish get download time list. {} items in total.", list.len());
     trace!("Download time list: {:?}", list);
