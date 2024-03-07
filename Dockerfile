@@ -1,6 +1,6 @@
 # cargo with source replacement
 # Comment the `RUN` if you are not in China.
-FROM rust:1.75.0-bookworm as source-replaced-cargo
+FROM rust:1.76.0-bookworm as source-replaced-cargo
 
 RUN mkdir -p /usr/local/cargo/registry \
     && echo '[source.crates-io]' > /usr/local/cargo/config.toml \
