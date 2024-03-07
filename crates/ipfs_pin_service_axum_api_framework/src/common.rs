@@ -128,7 +128,10 @@ mod tests {
     #[test]
     #[ignore]
     fn test_map_from_str() {
-        tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .with_test_writer()
+            .init();
         let text = r#"{"admin_name":"123","app_id":"4420da6158cc"}"#;
         let correct_map: HashMap<String, String>= vec![
             ("admin_name".to_string(), "123".to_string()),

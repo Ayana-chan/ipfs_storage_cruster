@@ -5,6 +5,7 @@ use tiny_ipfs_client::ReqwestIpfsClient;
 async fn test_pin() {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
+        .with_test_writer()
         .init();
     let span = tracing::info_span!("test_ipfs_client");
     let _guard = span.enter();
@@ -41,6 +42,7 @@ async fn test_pin() {
 async fn test_get_one_pin() {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
+        .with_test_writer()
         .init();
     let span = tracing::info_span!("test_ipfs_client");
     let _guard = span.enter();
