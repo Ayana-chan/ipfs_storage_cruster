@@ -43,20 +43,4 @@ fn read_config() -> app_builder::AppConfig {
         .unwrap();
 
     settings.try_deserialize().unwrap()
-
-    // let mut builder = app_builder::AppConfigBuilder::new();
-
-    // let ev = std::env::var("IPFS_GATEWAY_ADDRESS");
-    // if let Ok(address) = ev {
-    //     debug!("Succeed to read env IPFS_GATEWAY_ADDRESS: {:?}", address);
-    //     builder = builder.ipfs_gateway_address(address.to_string());
-    // }
-    //
-    // let ev = std::env::var("IPFS_RPC_ADDRESS");
-    // if let Ok(address) = ev {
-    //     debug!("Succeed to read env IPFS_RPC_ADDRESS: {:?}", address);
-    //     builder = builder.ipfs_rpc_address(address.to_string());
-    // }
-
-    // builder.finish()
 }

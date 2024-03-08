@@ -1,3 +1,4 @@
+use config::Config;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::layer::SubscriberExt;
 use ipfs_storage_cruster_manager::app_builder;
@@ -25,12 +26,14 @@ fn config_tracing(){
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 }
 
-// TODO 可配置化
 fn read_config() -> app_builder::AppConfig {
-    app_builder::AppConfigBuilder::new()
-        .server_ip("127.0.0.1".parse().unwrap())
-        .server_port(5000)
-        .finish()
+    let settings = Config::builder()
+        .add_source(config::File::with_name("./crates/ipfs_storage_cruster_manager_app/Settings").required(false))
+        .add_source(config::Environment::with_prefix("APP"))
+        .build()
+        .unwrap();
+
+    settings.try_deserialize().unwrap()
 }
 
 #[tokio::main]
