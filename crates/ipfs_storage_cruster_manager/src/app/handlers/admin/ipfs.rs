@@ -1,14 +1,24 @@
+#[allow(unused_imports)]
+use tracing::{trace, info};
 use axum::extract::State;
 use ipfs_storage_cruster_manager_entity::prelude::*;
 use ipfs_storage_cruster_manager_entity::node;
-use sea_orm::Database;
+use sea_orm::prelude::*;
 use crate::app::AppState;
 use crate::app::common::StandardApiResult;
+use crate::app::dtos;
 
 /// List all added IPFS nodes.
 #[axum_macros::debug_handler]
-pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult<()>{
-    todo!()
+pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult<dtos::ListIpfsNodesResponse>{
+    info!("List IPFS nodes");
+    let node_vec = Node::find().all(&state.db_conn).await.unwrap();
+    trace!("All ipfs nodes: {:?}", node_vec);
+    let res = dtos::ListIpfsNodesResponse {
+        list: node_vec
+    };
+
+    Ok(res.into())
 }
 
 /// Let target IPFS node bootstrap self.

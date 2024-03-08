@@ -5,6 +5,7 @@ use sea_orm::prelude::DatabaseConnection;
 
 static DATABASE_CONN_RETRY_INTERVAL_TIME_MS: u64 = 3000;
 
+#[tracing::instrument(skip_all)]
 pub async fn connect_db_until_success(db_url: &str) -> DatabaseConnection {
     loop {
         match Database::connect(db_url.to_string()).await {

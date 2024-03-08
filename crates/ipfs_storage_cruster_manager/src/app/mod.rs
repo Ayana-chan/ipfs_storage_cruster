@@ -30,6 +30,7 @@ pub struct AppState {
 }
 
 impl AppState {
+    // TODO 启动时读取所有数据库内的node进行bootstrap
     pub async fn from_app_config(app_config: &AppConfig) -> AppState {
         let reqwest_client = reqwest::Client::new();
         let db_conn = connect_db_until_success(
