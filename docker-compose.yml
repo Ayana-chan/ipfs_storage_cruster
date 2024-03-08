@@ -6,8 +6,8 @@ services:
     depends_on:
       - ipfs0
     environment:
-      IPFS_GATEWAY_ADDRESS: "ipfs0:8080"
-      IPFS_RPC_ADDRESS: "ipfs0:5001"
+      APP_IPFS_GATEWAY_ADDRESS: "ipfs0:8080"
+      APP_IPFS_RPC_ADDRESS: "ipfs0:5001"
     ports:
       - "3000:3000"
       - "4000:4000"
