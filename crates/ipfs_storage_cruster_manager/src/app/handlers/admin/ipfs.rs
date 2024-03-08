@@ -7,12 +7,14 @@ use sea_orm::prelude::*;
 use crate::app::AppState;
 use crate::app::common::StandardApiResult;
 use crate::app::dtos;
+use crate::db_helper::handle_db_error;
 
 /// List all added IPFS nodes.
 #[axum_macros::debug_handler]
 pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult<dtos::ListIpfsNodesResponse>{
     info!("List IPFS nodes");
-    let node_vec = Node::find().all(&state.db_conn).await.unwrap();
+    let node_vec = Node::find().all(&state.db_conn)
+        .await.map_err(handle_db_error)?;
     trace!("All ipfs nodes: {:?}", node_vec);
     let res = dtos::ListIpfsNodesResponse {
         list: node_vec
@@ -24,7 +26,6 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 /// Let target IPFS node bootstrap self.
 #[axum_macros::debug_handler]
 pub async fn add_ipfs_node() {}
-
 
 #[cfg(test)]
 mod tests {

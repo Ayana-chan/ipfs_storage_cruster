@@ -1,7 +1,8 @@
 #[allow(unused_imports)]
 use tracing::{error, info};
-use sea_orm::Database;
+use sea_orm::{Database, DbErr};
 use sea_orm::prelude::DatabaseConnection;
+use crate::app::errors;
 
 static DATABASE_CONN_RETRY_INTERVAL_TIME_MS: u64 = 3000;
 
@@ -19,5 +20,10 @@ pub async fn connect_db_until_success(db_url: &str) -> DatabaseConnection {
             }
         }
     }
+}
 
+/// Convert and log database error.
+pub fn handle_db_error(e: DbErr) -> errors::ResponseError {
+    error!("Database error: {:?}", e);
+    errors::DB_FAIL.clone_to_error()
 }

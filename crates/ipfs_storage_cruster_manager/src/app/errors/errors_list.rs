@@ -9,6 +9,8 @@ macro_rules! define_static_error {
     };
 }
 
+define_static_error!(DB_FAIL, "C0300", "Error about database");
+
 define_static_error!(IPFS_FAIL, "C0600", "Error about IPFS");
 define_static_error!(IPFS_CLIENT_ERROR, "C0601", "Error when send request to IPFS node");
 define_static_error!(IPFS_RPC_NOT_FOUND, "C0602", "IPFS RPC endpoint doesn't exist");
