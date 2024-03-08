@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 tiny_ipfs_client = { path = "../tiny_ipfs_client", features = ["no_gateway"] }
 ipfs_node_wrapper_client = { path = "../ipfs_node_wrapper_client" }
+ipfs_storage_cruster_manager_entity = { path = "../ipfs_storage_cruster_manager_entity" }
 
 tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
 axum = "0.7"
@@ -19,4 +20,5 @@ hyper-util = { version = "0.1.1", features = ["client-legacy"] }
 serde_json = "1.0"
 http-body-util = "0.1"
 reqwest = { version = "0.11", default-features = false }
-sqlx = { version = "0.7", features = ["runtime-tokio", "mysql"] }
+sea-orm = { version = "0.12", features = ["sqlx-mysql", "runtime-tokio-rustls"] }
+uuid = { version = "1.7.0", features = ["v4", "fast-rng"] }

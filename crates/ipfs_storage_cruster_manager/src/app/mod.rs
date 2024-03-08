@@ -12,7 +12,6 @@ pub mod handlers;
 pub mod errors;
 pub mod dtos;
 pub mod common;
-mod dao;
 
 pub type RawHyperClient = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
