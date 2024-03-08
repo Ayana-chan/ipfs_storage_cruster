@@ -1,14 +1,17 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr};
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
 use crate::app;
 
+// TODO 使用.env来配置所有项，也就不需要builder。也能顺带配置日志级别
+
 pub struct AppConfig {
     // server config
     pub server_ip: IpAddr,
     pub server_port: u16,
-    pub ipfs_rpc_address: SocketAddr,
+    pub database_url: String,
+    pub ipfs_rpc_address: String,
 }
 
 impl Default for AppConfig {
@@ -22,7 +25,8 @@ impl Default for AppConfig {
 pub struct AppConfigBuilder {
     server_ip: Option<IpAddr>,
     server_port: Option<u16>,
-    ipfs_rpc_address: Option<SocketAddr>,
+    ipfs_rpc_address: Option<String>,
+    database_url: Option<String>,
 }
 
 #[allow(dead_code)]
@@ -51,8 +55,10 @@ impl AppConfigBuilder {
                 5000
             ),
             ipfs_rpc_address: self.ipfs_rpc_address.unwrap_or(
-                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 5001)
+                // SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 5001)
+                "127.0.0.1:5001".to_string()
             ),
+            database_url: "mysql://root:1234@localhost/ipfs_storage_cruster_manager".to_string(),
         }
     }
 }
@@ -66,7 +72,7 @@ pub async fn serve(app_config: AppConfig) {
 
     generate_server(
         (app_config.server_ip, app_config.server_port),
-        app::generate_app_from_config(&app_config)
+        app::generate_app_from_config(&app_config).await
     ).await
 }
 

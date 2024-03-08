@@ -1,10 +1,15 @@
+use axum::extract::State;
 use ipfs_storage_cruster_manager_entity::prelude::*;
 use ipfs_storage_cruster_manager_entity::node;
 use sea_orm::Database;
+use crate::app::AppState;
+use crate::app::common::StandardApiResult;
 
 /// List all added IPFS nodes.
 #[axum_macros::debug_handler]
-pub async fn list_ipfs_nodes() {}
+pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult<()>{
+    todo!()
+}
 
 /// Let target IPFS node bootstrap self.
 #[axum_macros::debug_handler]

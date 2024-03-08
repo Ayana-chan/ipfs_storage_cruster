@@ -5,8 +5,10 @@ use axum::http::{StatusCode, Uri};
 use axum::Router;
 use tower_http::cors;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
+use sea_orm::prelude::DatabaseConnection;
 use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app_builder::AppConfig;
+use crate::db_helper::connect_db_until_success;
 
 pub mod handlers;
 pub mod errors;
@@ -24,11 +26,16 @@ pub struct AppState {
     pub ipfs_client: Arc<ReqwestIpfsClient>,
     /// Used to send raw hyper request.
     pub raw_hyper_client: RawHyperClient,
+    pub db_conn: DatabaseConnection,
 }
 
 impl AppState {
-    pub fn from_app_config(app_config: &AppConfig) -> AppState {
+    pub async fn from_app_config(app_config: &AppConfig) -> AppState {
         let reqwest_client = reqwest::Client::new();
+        let db_conn = connect_db_until_success(
+            &app_config.database_url
+        ).await;
+
         AppState {
             reqwest_client: reqwest_client.clone(),
             ipfs_client: ReqwestIpfsClient::new_with_reqwest_client(
@@ -37,12 +44,13 @@ impl AppState {
             ).into(),
             raw_hyper_client: hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
                 .build(HttpConnector::new()),
+            db_conn,
         }
     }
 }
 
-pub fn generate_app_from_config(app_config: &AppConfig) -> Router {
-    let app_state = AppState::from_app_config(app_config);
+pub async fn generate_app_from_config(app_config: &AppConfig) -> Router {
+    let app_state = AppState::from_app_config(app_config).await;
 
     // TODO pin没有api前缀。要分开生成路由
     let app = handlers::generate_router();
