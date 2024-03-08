@@ -25,17 +25,27 @@ mod tests {
             .await
             .expect("Database connection failed");
 
+        let new_uuid = uuid::Uuid::new_v4().to_string();
+
         node::ActiveModel {
-            id: Set(uuid::Uuid::new_v4().to_string()),
+            id: Set(new_uuid.clone()),
             peer_id: Set("abcd peer id".to_string()),
             rpc_address: Set("9.9.9.9:1234".to_string()),
             wrapper_address: Set("19.19.19.19:5678".to_string()),
         }
             .insert(&conn)
             .await.unwrap();
+        println!("insert: {}", new_uuid);
 
         let res = Node::find().all(&conn).await.unwrap();
+        println!("find all: {:#?}", res);
 
+        let aim_opt = Node::find_by_id(new_uuid.clone()).one(&conn).await.unwrap();
+        let aim = aim_opt.unwrap();
+        aim.delete(&conn).await.unwrap();
+        println!("delete: {}", new_uuid);
+
+        let res = Node::find().all(&conn).await.unwrap();
         println!("find all: {:#?}", res);
     }
 }
