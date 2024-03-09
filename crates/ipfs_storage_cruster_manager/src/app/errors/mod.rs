@@ -9,6 +9,7 @@ use std::fmt::Debug;
 use serde::{Serialize, Deserialize};
 
 mod errors_list;
+pub mod error_convert;
 
 pub use errors_list::*;
 
@@ -39,6 +40,11 @@ impl ResponseError {
 
     pub fn modify_status_code(mut self, new_status_code: StatusCode) -> Self {
         self.status_code = Some(new_status_code);
+        self
+    }
+
+    pub fn log(self) -> Self {
+        error!(self.message);
         self
     }
 }

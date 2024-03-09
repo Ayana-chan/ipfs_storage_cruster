@@ -22,9 +22,11 @@ pub struct ListIpfsNodesResponse {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AddIpfsNodeArgs {
     /// RPC ip.
     pub ip: String,
     /// RPC port. Default 5001
     pub port: Option<u16>,
+    pub wrapper_address: String,
 }
