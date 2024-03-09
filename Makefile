@@ -15,10 +15,20 @@ build-manager:
 
 build-all: build-wrapper build-manager
 
+# might have to use `sudo`
+compose-clean:
+	rm -rf ./compose
+
 # run by docker compose
+# might have to use `sudo`
 up:
+# Permission denied if not create first.
+	mkdir -p ./compose/mysql-manager/init
+	cp ./sql/ipfs_storage_cruster_manager.sql ./compose/mysql-manager/init/
 	docker compose up -d
 #	docker-compose up -d
+
+pure-up: compose-clean up
 
 # stop docker compose
 down:

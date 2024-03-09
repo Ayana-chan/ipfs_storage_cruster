@@ -1,21 +1,21 @@
 version: '3'
 services:
   # ===== Database =====
-  mysql-manager:
-    container_name: ipfs_storage_cruster-mysql-manager
+  manager-mysql:
+    container_name: ipfs_storage_cruster-manager-mysql
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: ipfs_storage_cruster_manager
       TZ: Asia/Shanghai
     ports:
       - 3306:3306
     volumes:
-      #- ./compose/mysql/data/:/var/lib/mysql/
-      #- ./compose/mysql/conf/:/etc/mysql/conf.d/
-      - ./compose/mysql/init/:/docker-entrypoint-initdb.d/
+      - ./compose/manager-mysql/init/:/docker-entrypoint-initdb.d/
+      - ./compose/manager-mysql/conf/:/etc/mysql/conf.d/
+      - ./compose/manager-mysql/data/:/var/lib/mysql/
     command:
-      # 将mysql8.0默认密码策略 修改为 原先 策略 (mysql8.0对其默认策略做了更改 会导致密码无法匹配)
-      --default-authentication-plugin=mysql_native_password
+#      --default-authentication-plugin=mysql_native_password
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_general_ci
       --explicit_defaults_for_timestamp=true
@@ -26,40 +26,41 @@ services:
     container_name: ipfs_storage_cruster-manager
     image: ipfs_storage_cruster/ipfs_storage_cruster_manager:latest
     depends_on:
-      - ipfs-master
+      - master-ipfs
+      - manager-mysql
     environment:
-      APP_DATABASE_URL: "mysql://root:1234@mysql-manager/ipfs_storage_cruster_manager"
-      APP_IPFS_RPC_ADDRESS: "ipfs-master:5001"
+      APP_DATABASE_URL: "mysql://root:1234@manager-mysql/ipfs_storage_cruster_manager"
+      APP_IPFS_RPC_ADDRESS: "master-ipfs:5001"
     ports:
       - "5000:5000" # server
 
-  ipfs-master:
-    container_name: ipfs_storage_cruster-ipfs-master
+  master-ipfs:
+    container_name: ipfs_storage_cruster-master-ipfs
     image: ipfs/kubo:release
     ports:
       - "8080:8080" # ipfs gateway
       - "5001:5001" # ipfs rpc api
     volumes:
-      - ./compose/ipfs-master:/data/ipfs
+      - ./compose/master-ipfs:/data/ipfs
 
   # ===== Node 0 =====
   wrapper-0:
     container_name: ipfs_storage_cruster-wrapper-0
     image: ipfs_storage_cruster/ipfs_node_wrapper:latest
     depends_on:
-      - ipfs-slave-0
+      - slave-ipfs-0
     environment:
-      APP_IPFS_GATEWAY_ADDRESS: "ipfs-slave-0:8080"
-      APP_IPFS_RPC_ADDRESS: "ipfs-slave-0:5001"
+      APP_IPFS_GATEWAY_ADDRESS: "slave-ipfs-0:8080"
+      APP_IPFS_RPC_ADDRESS: "slave-ipfs-0:5001"
     ports:
       - "3000:3000" # public
       - "4000:4000" # admin
 
-  ipfs-slave-0:
-    container_name: ipfs_storage_cruster-ipfs-0
+  slave-ipfs-0:
+    container_name: ipfs_storage_cruster-slave-ipfs-0
     image: ipfs/kubo:release
     ports:
      - "8081:8080" # ipfs gateway
      - "5002:5001" # ipfs rpc api
     volumes:
-      - ./compose/ipfs-secondary-0:/data/ipfs
+      - ./compose/slave-ipfs-0:/data/ipfs
