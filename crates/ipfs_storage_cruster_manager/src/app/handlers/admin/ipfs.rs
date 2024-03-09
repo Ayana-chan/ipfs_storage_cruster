@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use tracing::{trace, info};
-use axum::extract::State;
+use axum::extract::{State, Json};
 use ipfs_storage_cruster_manager_entity::prelude::*;
 use sea_orm::prelude::*;
 use crate::app::AppState;
@@ -24,7 +24,9 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 
 /// Let target IPFS node bootstrap self.
 #[axum_macros::debug_handler]
-pub async fn add_ipfs_node() {}
+pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos::AddIpfsNodeArgs>) -> StandardApiResult<()> {
+    todo!()
+}
 
 #[cfg(test)]
 mod tests {

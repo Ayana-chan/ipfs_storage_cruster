@@ -20,3 +20,8 @@ pub struct UploadFileResponse {
 pub struct ListIpfsNodesResponse {
     pub list: Vec<node::Model>,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AddIpfsNodeArgs {
+    pub node: String,
+}

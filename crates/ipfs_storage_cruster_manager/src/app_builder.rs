@@ -1,11 +1,10 @@
-use std::net::{IpAddr, Ipv4Addr};
 use axum::Router;
 use tokio::net::ToSocketAddrs;
 use tracing::info;
 use serde::Deserialize;
 use crate::app;
 
-// TODO 日志级别
+// TODO 日志级别可配置化
 
 #[derive(Deserialize)]
 pub struct AppConfig {
