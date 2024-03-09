@@ -23,5 +23,8 @@ pub struct ListIpfsNodesResponse {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AddIpfsNodeArgs {
-    pub node: String,
+    /// RPC ip.
+    pub ip: String,
+    /// RPC port. Default 5001
+    pub port: Option<u16>,
 }

@@ -82,7 +82,7 @@ impl ReqwestIpfsClient {
                 IpfsClientError::RpcInternalServerError
             }
             reqwest::StatusCode::BAD_REQUEST => {
-                error!("IPFS bad request: illegal cid, malformed RPC, argument type error, etc");
+                error!("IPFS bad request: invalid cid, malformed RPC, argument type error, etc");
                 IpfsClientError::BadRequest
             }
             reqwest::StatusCode::FORBIDDEN => {

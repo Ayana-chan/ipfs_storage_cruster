@@ -163,7 +163,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Add an IPFS node to bootstrap list by ip address, port and peer id.
-    pub async fn bootstrap_add(&self, ip: String, port: String, peer_id: String) -> IpfsClientResult<()> {
+    pub async fn bootstrap_add(&self, ip: &str, port: &str, peer_id: &str) -> IpfsClientResult<()> {
         let multi_addr = format!("/ip4/{}/tcp/{}/p2p/{}", ip, port, peer_id);
         let url_content = format!("/bootstrap/add?arg={multi_addr}",
         multi_addr = multi_addr);

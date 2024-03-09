@@ -8,7 +8,8 @@ use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use sea_orm::prelude::DatabaseConnection;
 use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app_builder::AppConfig;
-use crate::db_helper::connect_db_until_success;
+use crate::db_helper;
+use crate::ipfs_helper;
 
 pub mod handlers;
 pub mod errors;
@@ -17,6 +18,14 @@ pub mod common;
 
 pub type RawHyperClient = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
+#[derive(Debug, Clone)]
+pub struct IpfsMetadata {
+    /// Peer id of self's IPFS node.
+    pub ipfs_peer_id: String,
+    pub ipfs_swarm_ip: String,
+    pub ipfs_swarm_port: String,
+}
+
 /// State of app. Should be cheap and safe to clone.
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -24,6 +33,8 @@ pub struct AppState {
     pub reqwest_client: reqwest::Client,
     /// Contact self's IPFS node.
     pub ipfs_client: Arc<ReqwestIpfsClient>,
+    /// Some metadata of self's IPFS node.
+    pub ipfs_metadata: Arc<IpfsMetadata>,
     /// Used to send raw hyper request.
     pub raw_hyper_client: RawHyperClient,
     pub db_conn: DatabaseConnection,
@@ -33,16 +44,32 @@ impl AppState {
     // TODO 启动时读取所有数据库内的node进行bootstrap
     pub async fn from_app_config(app_config: &AppConfig) -> AppState {
         let reqwest_client = reqwest::Client::new();
-        let db_conn = connect_db_until_success(
+
+        let _split_index = app_config.ipfs_swarm_address.find(':')
+            .expect(&format!("Invalid swarm address: {}", app_config.ipfs_swarm_address));
+        let (ipfs_swarm_ip, ipfs_swarm_port) = app_config.ipfs_swarm_address.split_at(_split_index);
+
+        let db_conn = db_helper::connect_db_until_success(
             &app_config.database_url
         ).await;
 
+        let ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
+            app_config.ipfs_rpc_address.to_string(),
+            reqwest_client.clone(),
+        );
+
+        // Get peer id while check IPFS health.
+        let ipfs_peer_id = ipfs_helper::get_peer_id_until_success(&ipfs_client).await;
+        let ipfs_metadata = IpfsMetadata {
+            ipfs_peer_id,
+            ipfs_swarm_ip: ipfs_swarm_ip.to_string(),
+            ipfs_swarm_port: ipfs_swarm_port.to_string(),
+        };
+
         AppState {
             reqwest_client: reqwest_client.clone(),
-            ipfs_client: ReqwestIpfsClient::new_with_reqwest_client(
-                app_config.ipfs_rpc_address.to_string(),
-                reqwest_client
-            ).into(),
+            ipfs_client: ipfs_client.into(),
+            ipfs_metadata: ipfs_metadata.into(),
             raw_hyper_client: hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
                 .build(HttpConnector::new()),
             db_conn,

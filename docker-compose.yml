@@ -1,26 +1,5 @@
 version: '3'
 services:
-  # ===== Database =====
-  manager-mysql:
-    container_name: ipfs_storage_cruster-manager-mysql
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: ipfs_storage_cruster_manager
-      TZ: Asia/Shanghai
-    ports:
-      - 3306:3306
-    volumes:
-      - ./compose/manager-mysql/init/:/docker-entrypoint-initdb.d/
-      - ./compose/manager-mysql/conf/:/etc/mysql/conf.d/
-      - ./compose/manager-mysql/data/:/var/lib/mysql/
-    command:
-#      --default-authentication-plugin=mysql_native_password
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_general_ci
-      --explicit_defaults_for_timestamp=true
-      --lower_case_table_names=1
-
   # ===== Manager =====
   manager:
     container_name: ipfs_storage_cruster-manager
@@ -31,6 +10,7 @@ services:
     environment:
       APP_DATABASE_URL: "mysql://root:1234@manager-mysql/ipfs_storage_cruster_manager"
       APP_IPFS_RPC_ADDRESS: "master-ipfs:5001"
+      APP_IPFS_SWARM_ADDRESS: "master-ipfs:4001"
     ports:
       - "5000:5000" # server
 
@@ -61,7 +41,28 @@ services:
     container_name: ipfs_storage_cruster-slave-ipfs-0
     image: ipfs/kubo:release
     ports:
-     - "8081:8080" # ipfs gateway
-     - "5002:5001" # ipfs rpc api
+      - "8081:8080" # ipfs gateway
+      - "5002:5001" # ipfs rpc api
     volumes:
       - ./compose/slave-ipfs-0:/data/ipfs
+
+  # ===== Database =====
+  manager-mysql:
+    container_name: ipfs_storage_cruster-manager-mysql
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: ipfs_storage_cruster_manager
+      TZ: Asia/Shanghai
+    ports:
+      - 3306:3306
+    volumes:
+      - ./compose/manager-mysql/init/:/docker-entrypoint-initdb.d/
+      - ./compose/manager-mysql/conf/:/etc/mysql/conf.d/
+      - ./compose/manager-mysql/data/:/var/lib/mysql/
+    command:
+#      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --explicit_defaults_for_timestamp=true
+      --lower_case_table_names=1

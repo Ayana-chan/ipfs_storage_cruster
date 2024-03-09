@@ -3,6 +3,7 @@ use tracing::{trace, info};
 use axum::extract::{State, Json};
 use ipfs_storage_cruster_manager_entity::prelude::*;
 use sea_orm::prelude::*;
+use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app::AppState;
 use crate::app::common::StandardApiResult;
 use crate::app::dtos;
@@ -25,7 +26,20 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 /// Let target IPFS node bootstrap self.
 #[axum_macros::debug_handler]
 pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos::AddIpfsNodeArgs>) -> StandardApiResult<()> {
-    todo!()
+    let rpc_address = format!("{}:{}", args.ip, args.port.unwrap_or(5001));
+    let aim_ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
+        rpc_address, state.reqwest_client.clone()
+    );
+
+    let res = aim_ipfs_client.bootstrap_add(
+        &state.ipfs_metadata.ipfs_swarm_ip,
+        &state.ipfs_metadata.ipfs_swarm_port,
+        &state.ipfs_metadata.ipfs_peer_id
+    ).await;
+
+    todo!();
+
+    Ok(().into())
 }
 
 #[cfg(test)]
