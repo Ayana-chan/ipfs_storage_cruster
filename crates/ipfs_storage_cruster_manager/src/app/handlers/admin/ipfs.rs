@@ -44,14 +44,21 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
         .await.map_err(errors::error_convert::from_ipfs_client_error)?
         .id;
 
-    // TODO 根据peer_id检测重复bootstrap_add
-    node::ActiveModel {
+    let result = node::ActiveModel {
         id: Set(uuid::Uuid::new_v4().to_string()),
         peer_id: Set(aim_peer_id),
         rpc_address: Set(rpc_address),
         wrapper_address: Set(args.wrapper_address),
-    }.insert(&state.db_conn)
-        .await.unwrap();
+    }.insert(&state.db_conn).await;
+
+    // match result {
+    //     Ok(_) => Ok(()),
+    //     Err(DbErr::UniqueConstraint { .. }) => {
+    //         println!("peer_id already exists, skipping insert.");
+    //         Ok(())
+    //     },
+    //     Err(e) => Err(e),
+    // }
 
     Ok(().into())
 }
@@ -65,6 +72,10 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_db() {
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::TRACE)
+            .init();
+
         let conn = Database::connect(DB_URL)
             .await
             .expect("Database connection failed");
@@ -82,6 +93,25 @@ mod tests {
         }.insert(&conn)
             .await.unwrap();
         println!("insert: {}", new_uuid);
+
+        let res = Node::find().all(&conn).await.unwrap();
+        println!("find all: {:#?}", res);
+
+        // dup insert
+        let dup_conflict = sea_query::OnConflict::column(node::Column::PeerId)
+            .update_columns([node::Column::RpcAddress, node::Column::WrapperAddress])
+            .to_owned();
+        let new_node = node::ActiveModel {
+            id: Set(new_uuid.clone()),
+            peer_id: Set("abcd peer id".to_string()),
+            rpc_address: Set("88.88.88.88:1234".to_string()),
+            wrapper_address: Set("89.89.89.89:5678".to_string()),
+        };
+        let result = Node::insert(new_node)
+            .on_conflict(dup_conflict)
+            .exec(&conn)
+            .await.unwrap();
+        assert_eq!(result.last_insert_id, new_uuid);
 
         let res = Node::find().all(&conn).await.unwrap();
         println!("find all: {:#?}", res);
