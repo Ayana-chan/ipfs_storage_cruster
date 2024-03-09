@@ -21,7 +21,6 @@ impl ReqwestIpfsClient {
         })?;
 
         let status = res.status();
-        // TODO cid错了会报400
         match status {
             _ if status.is_success() => {
                 debug!("Success get file");
@@ -30,6 +29,10 @@ impl ReqwestIpfsClient {
             reqwest::StatusCode::NOT_FOUND => {
                 error!("IPFS gateway not found");
                 Err(IpfsClientError::NotFound)
+            }
+            reqwest::StatusCode::BAD_REQUEST => {
+                error!("IPFS gateway responds bad request");
+                Err(IpfsClientError::BadRequest)
             }
             _ => {
                 warn!("IPFS gateway responds unhandled status code: {}", status);

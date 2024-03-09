@@ -5,6 +5,8 @@ pub enum IpfsClientError {
     SendRequestFailed,
     /// Respond an unknown status code.
     UnknownStatusCode,
+    /// 400 bad request.
+    BadRequest,
     /// 404 not found.
     NotFound,
     /// RPC request error.

@@ -33,6 +33,11 @@ impl ResponseError {
         self.message = new_msg.to_string();
         self
     }
+
+    pub fn log(self) -> Self {
+        error!(self.message);
+        self
+    }
 }
 
 #[cfg(feature = "server")]

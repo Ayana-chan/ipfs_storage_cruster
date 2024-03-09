@@ -11,7 +11,7 @@ macro_rules! define_static_error {
 
 define_static_error!(IPFS_FAIL, "C0600", "Error about IPFS");
 define_static_error!(IPFS_CLIENT_ERROR, "C0601", "Error when send request to IPFS node");
-define_static_error!(IPFS_RPC_NOT_FOUND, "C0602", "IPFS RPC endpoint doesn't exist");
+define_static_error!(IPFS_NOT_FOUND, "C0602", "IPFS not found");
 define_static_error!(IPFS_REQUEST_ERROR, "C0603", "IPFS node rejects the request");
 define_static_error!(IPFS_RESPOND_ERROR, "C0604", "IPFS node responds an error");
 
