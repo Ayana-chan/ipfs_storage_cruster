@@ -40,6 +40,7 @@ services:
     ports:
       - "8080:8080" # ipfs gateway
       - "5001:5001" # ipfs rpc api
+      - "4001:4001" # ipfs swarm
     volumes:
       - ./compose/master-ipfs:/data/ipfs
 

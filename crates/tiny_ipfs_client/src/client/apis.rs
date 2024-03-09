@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-use tracing::{error, debug, warn};
+use tracing::{error, debug, warn, info};
 use crate::{IpfsClientError, dtos, ReqwestIpfsClient, IpfsClientResult};
 
 impl ReqwestIpfsClient {
@@ -23,7 +23,7 @@ impl ReqwestIpfsClient {
         let status = res.status();
         match status {
             _ if status.is_success() => {
-                debug!("Success get file");
+                info!("Success get file. cid: {}", cid);
                 Ok(res)
             }
             reqwest::StatusCode::NOT_FOUND => {
@@ -50,12 +50,12 @@ impl ReqwestIpfsClient {
         let status = res.status();
         match status {
             _ if status.is_success() => {
-                let peer_id = res.json().await.map_err(|_e| {
+                let id_res: dtos::IdResponse = res.json().await.map_err(|_e| {
                     error!("Unexpected response body. msg: {:?}", _e);
                     IpfsClientError::UnexpectedResponseBody
                 })?;
-                debug!("Success get id info");
-                Ok(peer_id)
+                info!("Success get id info. peer id: {}", id_res.id);
+                Ok(id_res)
             }
             err => Err(Self::handle_rpc_status_code_error(err))
         }
@@ -77,7 +77,7 @@ impl ReqwestIpfsClient {
                     error!("Unexpected response body. msg: {:?}", _e);
                     IpfsClientError::UnexpectedResponseBody
                 })?;
-                debug!("Success list recursive pins that is pinned");
+                info!("Success list recursive pins that is pinned");
                 Ok(pins)
             }
             err => Err(Self::handle_rpc_status_code_error(err))
@@ -104,7 +104,7 @@ impl ReqwestIpfsClient {
                     return Err(IpfsClientError::UnexpectedResponseBody);
                 }
 
-                debug!("Success get one pin");
+                info!("Success get one pin. cid: {}", cid);
                 let pin_info = pins.keys.into_values().next().unwrap();
                 Ok(Some(pin_info))
             }
@@ -138,7 +138,7 @@ impl ReqwestIpfsClient {
         let status = res.status();
         match status {
             _ if status.is_success() => {
-                debug!("Success add pin. cid: {}, pin_name: {}", cid, pin_name);
+                info!("Success add pin. cid: {}, pin_name: {}", cid, pin_name);
                 Ok(())
             }
             err => Err(Self::handle_rpc_status_code_error(err))
@@ -155,7 +155,24 @@ impl ReqwestIpfsClient {
         let status = res.status();
         match status {
             _ if status.is_success() => {
-                debug!("Success remove pin. cid: {}", cid);
+                info!("Success remove pin. cid: {}", cid);
+                Ok(())
+            }
+            err => Err(Self::handle_rpc_status_code_error(err))
+        }
+    }
+
+    /// Add an IPFS node to bootstrap list by ip address, port and peer id.
+    pub async fn bootstrap_add(&self, ip: String, port: String, peer_id: String) -> IpfsClientResult<()> {
+        let multi_addr = format!("/ip4/{}/tcp/{}/p2p/{}", ip, port, peer_id);
+        let url_content = format!("/bootstrap/add?arg={multi_addr}",
+        multi_addr = multi_addr);
+        let res = self.ipfs_rpc_request(&url_content).await?;
+
+        let status = res.status();
+        match status {
+            _ if status.is_success() => {
+                info!("Success add bootstrap. multi_addr: {}", multi_addr);
                 Ok(())
             }
             err => Err(Self::handle_rpc_status_code_error(err))
