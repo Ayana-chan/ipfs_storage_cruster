@@ -68,8 +68,9 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
 /// Re-bootstrap all nodes in database that is not `Offline`.
 #[axum_macros::debug_handler]
 pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> StandardApiResult<()> {
-    // TODO not offline
-    let node_vec: Vec<node::Model> = Node::find().all(&state.db_conn)
+    let node_vec: Vec<node::Model> = Node::find()
+        .filter(node::Column::Status.ne(sea_orm_active_enums::Status::Offline)) // No offline
+        .all(&state.db_conn)
         .await.map_err(services::db::handle_db_error)?;
 
     let mut join_set = tokio::task::JoinSet::new();
