@@ -8,7 +8,6 @@ use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use sea_orm::prelude::DatabaseConnection;
 use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app_builder::AppConfig;
-use crate::db_helper;
 
 pub mod handlers;
 pub mod errors;
@@ -18,7 +17,8 @@ mod services;
 
 pub type RawHyperClient = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
-static CACHE_PINS_INTERVAL_TIME_MS: u64 = 500;
+static IPFS_CONN_RETRY_INTERVAL_TIME_MS: u64 = 500;
+static DATABASE_CONN_RETRY_INTERVAL_TIME_MS: u64 = 3000;
 
 #[derive(Debug, Clone)]
 pub struct IpfsMetadata {
@@ -52,8 +52,9 @@ impl AppState {
             .expect(&format!("Invalid swarm address: {}", app_config.ipfs_swarm_address));
         let (ipfs_swarm_ip, ipfs_swarm_port) = app_config.ipfs_swarm_address.split_at(_split_index);
 
-        let db_conn = db_helper::connect_db_until_success(
-            &app_config.database_url
+        let db_conn = services::db::connect_db_until_success(
+            &app_config.database_url,
+            DATABASE_CONN_RETRY_INTERVAL_TIME_MS
         ).await;
 
         let ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
@@ -64,7 +65,7 @@ impl AppState {
         // Get peer id while check IPFS health.
         let ipfs_peer_id = services::ipfs::get_peer_id_until_success(
             &ipfs_client,
-            CACHE_PINS_INTERVAL_TIME_MS
+            IPFS_CONN_RETRY_INTERVAL_TIME_MS
         ).await;
         let ipfs_metadata = IpfsMetadata {
             ipfs_peer_id,

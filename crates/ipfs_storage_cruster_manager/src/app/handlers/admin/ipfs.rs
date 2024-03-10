@@ -5,16 +5,14 @@ use crate::imports::dao_imports::*;
 use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app::AppState;
 use crate::app::common::StandardApiResult;
-use crate::app::errors;
-use crate::app::dtos;
-use crate::db_helper::handle_db_error;
+use crate::app::{errors, dtos, services};
 
 /// List all added IPFS nodes.
 #[axum_macros::debug_handler]
 pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult<dtos::ListIpfsNodesResponse> {
     info!("List IPFS nodes");
     let node_vec = Node::find().all(&state.db_conn)
-        .await.map_err(handle_db_error)?;
+        .await.map_err(services::db::handle_db_error)?;
     trace!("All ipfs nodes: {:?}", node_vec);
     let res = dtos::ListIpfsNodesResponse {
         list: node_vec
@@ -62,7 +60,7 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
     Node::insert(new_node)
         .on_conflict(dup_conflict)
         .exec(&state.db_conn)
-        .await.map_err(handle_db_error)?;
+        .await.map_err(services::db::handle_db_error)?;
 
     Ok(().into())
 }
@@ -70,11 +68,11 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
 #[axum_macros::debug_handler]
 pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> StandardApiResult<()> {
     let node_vec: Vec<node::Model> = Node::find().all(&state.db_conn)
-        .await.map_err(handle_db_error)?;
+        .await.map_err(services::db::handle_db_error)?;
 
     // let join_set = tokio::task::JoinSet::new();
     // for node in node_vec {
-    //
+    //     let fut = services::
     // }
 
     Ok(().into())
