@@ -52,10 +52,15 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
         peer_id: Set(aim_peer_id),
         rpc_address: Set(rpc_address),
         wrapper_address: Set(args.wrapper_address),
+        status: Set(sea_orm_active_enums::Status::Online),
     };
     // upsert
     let dup_conflict = sea_query::OnConflict::column(node::Column::PeerId)
-        .update_columns([node::Column::RpcAddress, node::Column::WrapperAddress])
+        .update_columns([
+            node::Column::RpcAddress,
+            node::Column::WrapperAddress,
+            node::Column::Status,
+        ])
         .to_owned();
     Node::insert(new_node)
         .on_conflict(dup_conflict)
@@ -92,6 +97,7 @@ mod tests {
             peer_id: Set("abcd peer id".to_string()),
             rpc_address: Set("9.9.9.9:1234".to_string()),
             wrapper_address: Set("19.19.19.19:5678".to_string()),
+            status: Set(sea_orm_active_enums::Status::Online),
         }.insert(&conn)
             .await.unwrap();
         println!("insert: {}", new_uuid);
@@ -100,15 +106,20 @@ mod tests {
         println!("find all: {:#?}", res);
 
         // dup insert
-        let dup_conflict = sea_query::OnConflict::column(node::Column::PeerId)
-            .update_columns([node::Column::RpcAddress, node::Column::WrapperAddress])
-            .to_owned();
         let new_node = node::ActiveModel {
             id: Set(new_uuid.clone()),
             peer_id: Set("abcd peer id".to_string()),
             rpc_address: Set("88.88.88.88:1234".to_string()),
             wrapper_address: Set("89.89.89.89:5678".to_string()),
+            status: Set(sea_orm_active_enums::Status::Unhealthy),
         };
+        let dup_conflict = sea_query::OnConflict::column(node::Column::PeerId)
+            .update_columns([
+                node::Column::RpcAddress,
+                node::Column::WrapperAddress,
+                node::Column::Status,
+            ])
+            .to_owned();
         let result = Node::insert(new_node)
             .on_conflict(dup_conflict)
             .exec(&conn)
