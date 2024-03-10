@@ -27,6 +27,7 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 }
 
 /// Let target IPFS node bootstrap self.
+/// Upsert the database entry.
 #[axum_macros::debug_handler]
 pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos::AddIpfsNodeArgs>) -> StandardApiResult<()> {
     let rpc_address = format!("{}:{}", args.ip, args.port.unwrap_or(5001));
@@ -44,21 +45,20 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
         .await.map_err(errors::error_convert::from_ipfs_client_error)?
         .id;
 
-    let result = node::ActiveModel {
+    let new_node = node::ActiveModel {
         id: Set(uuid::Uuid::new_v4().to_string()),
         peer_id: Set(aim_peer_id),
         rpc_address: Set(rpc_address),
         wrapper_address: Set(args.wrapper_address),
-    }.insert(&state.db_conn).await;
-
-    // match result {
-    //     Ok(_) => Ok(()),
-    //     Err(DbErr::UniqueConstraint { .. }) => {
-    //         println!("peer_id already exists, skipping insert.");
-    //         Ok(())
-    //     },
-    //     Err(e) => Err(e),
-    // }
+    };
+    // upsert
+    let dup_conflict = sea_query::OnConflict::column(node::Column::PeerId)
+        .update_columns([node::Column::RpcAddress, node::Column::WrapperAddress])
+        .to_owned();
+    Node::insert(new_node)
+        .on_conflict(dup_conflict)
+        .exec(&state.db_conn)
+        .await.map_err(handle_db_error)?;
 
     Ok(().into())
 }
