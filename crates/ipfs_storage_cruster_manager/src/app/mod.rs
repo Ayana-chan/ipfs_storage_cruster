@@ -15,6 +15,7 @@ pub mod handlers;
 pub mod errors;
 pub mod dtos;
 pub mod common;
+mod services;
 
 pub type RawHyperClient = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
@@ -41,7 +42,8 @@ pub struct AppState {
 }
 
 impl AppState {
-    // TODO 启动时读取所有数据库内的node进行bootstrap
+    /// Create app state with `AppConfig`.
+    /// Would do some initialization.
     pub async fn from_app_config(app_config: &AppConfig) -> AppState {
         let reqwest_client = reqwest::Client::new();
 

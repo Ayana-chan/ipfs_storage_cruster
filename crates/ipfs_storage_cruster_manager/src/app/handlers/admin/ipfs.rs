@@ -1,10 +1,7 @@
 #[allow(unused_imports)]
 use tracing::{trace, debug, info};
 use axum::extract::{State, Json};
-use ipfs_storage_cruster_manager_entity::prelude::*;
-use ipfs_storage_cruster_manager_entity::*;
-use sea_orm::prelude::*;
-use sea_orm::*;
+use crate::imports::dao_imports::*;
 use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app::AppState;
 use crate::app::common::StandardApiResult;
@@ -45,7 +42,7 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
     let aim_peer_id = aim_ipfs_client.get_id_info()
         .await.map_err(errors::error_convert::from_ipfs_client_error)?
         .id;
-    debug!("Add IPFS node succeed to get target peer id: {}", aim_peer_id);
+    debug!("Add IPFS node target peer id: {}", aim_peer_id);
 
     let new_node = node::ActiveModel {
         id: Set(uuid::Uuid::new_v4().to_string()),
@@ -66,6 +63,19 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
         .on_conflict(dup_conflict)
         .exec(&state.db_conn)
         .await.map_err(handle_db_error)?;
+
+    Ok(().into())
+}
+
+#[axum_macros::debug_handler]
+pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> StandardApiResult<()> {
+    let node_vec: Vec<node::Model> = Node::find().all(&state.db_conn)
+        .await.map_err(handle_db_error)?;
+
+    // let join_set = tokio::task::JoinSet::new();
+    // for node in node_vec {
+    //
+    // }
 
     Ok(().into())
 }

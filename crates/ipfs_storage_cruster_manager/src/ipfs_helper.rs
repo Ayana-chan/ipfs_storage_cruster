@@ -2,6 +2,7 @@
 use tracing::{error, debug, warn, info, trace};
 use tiny_ipfs_client::ReqwestIpfsClient;
 
+// TODO 迁移
 static CACHE_PINS_INTERVAL_TIME_MS: u64 = 500;
 
 /// Regularly try until get peer id.
