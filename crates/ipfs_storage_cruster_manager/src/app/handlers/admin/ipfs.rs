@@ -22,6 +22,7 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 }
 
 /// Let target IPFS node bootstrap self.
+/// Would set the status of node to `Online`.
 /// Upsert the database entry.
 #[axum_macros::debug_handler]
 pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos::AddIpfsNodeArgs>) -> StandardApiResult<()> {
