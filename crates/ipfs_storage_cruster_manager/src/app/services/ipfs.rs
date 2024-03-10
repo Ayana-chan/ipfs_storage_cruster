@@ -26,11 +26,11 @@ pub async fn get_peer_id_until_success(ipfs_client: &ReqwestIpfsClient, interval
 ///
 /// Return the result of database update .
 #[tracing::instrument(skip_all)]
-async fn bootstrap_and_check_health(state: AppState, target_rpc_address: String) -> Result<node::Model, DbErr> {
-    let aim_ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
+pub(crate) async fn bootstrap_and_check_health(state: AppState, target_rpc_address: String) -> Result<node::Model, DbErr> {
+    let target_ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
         target_rpc_address, state.reqwest_client.clone(),
     );
-    let res = aim_ipfs_client.bootstrap_add(
+    let res = target_ipfs_client.bootstrap_add(
         &state.ipfs_metadata.ipfs_swarm_ip,
         &state.ipfs_metadata.ipfs_swarm_port,
         &state.ipfs_metadata.ipfs_peer_id,
