@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-use tracing::{trace, info};
+use tracing::{trace, debug, info};
 use axum::extract::{State, Json};
 use ipfs_storage_cruster_manager_entity::prelude::*;
 use ipfs_storage_cruster_manager_entity::*;
@@ -31,6 +31,7 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 #[axum_macros::debug_handler]
 pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos::AddIpfsNodeArgs>) -> StandardApiResult<()> {
     let rpc_address = format!("{}:{}", args.ip, args.port.unwrap_or(5001));
+    info!("Add IPFS node. rpc address: {}", rpc_address);
     let aim_ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
         rpc_address.clone(), state.reqwest_client.clone(),
     );
@@ -44,6 +45,7 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
     let aim_peer_id = aim_ipfs_client.get_id_info()
         .await.map_err(errors::error_convert::from_ipfs_client_error)?
         .id;
+    debug!("Add IPFS node succeed to get target peer id: {}", aim_peer_id);
 
     let new_node = node::ActiveModel {
         id: Set(uuid::Uuid::new_v4().to_string()),
