@@ -1,8 +1,25 @@
 #[allow(unused_imports)]
-use tracing::{trace, debug, info, error};
+use tracing::{error, debug, warn, info, trace};
 use crate::imports::dao_imports::*;
 use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app::AppState;
+
+/// Regularly try until get peer id successfully.
+#[tracing::instrument(skip_all)]
+pub async fn get_peer_id_until_success(ipfs_client: &ReqwestIpfsClient, interval_time_ms: u64) -> String {
+    loop {
+        let res = ipfs_client.get_id_info().await;
+        match res {
+            Ok(res) => {
+                return res.id;
+            }
+            Err(_e) => {
+                error!("Failed to cache recursive pins. Try again in {} ms. msg: {:?}", interval_time_ms, _e);
+                tokio::time::sleep(tokio::time::Duration::from_millis(interval_time_ms)).await;
+            }
+        };
+    }
+}
 
 /// Bootstrap target node.
 /// Set the node status to `Online` when succeed, or `Unhealthy` when fail.

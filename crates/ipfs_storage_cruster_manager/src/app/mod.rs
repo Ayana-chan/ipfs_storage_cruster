@@ -9,7 +9,6 @@ use sea_orm::prelude::DatabaseConnection;
 use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app_builder::AppConfig;
 use crate::db_helper;
-use crate::ipfs_helper;
 
 pub mod handlers;
 pub mod errors;
@@ -18,6 +17,8 @@ pub mod common;
 mod services;
 
 pub type RawHyperClient = hyper_util::client::legacy::Client<HttpConnector, Body>;
+
+static CACHE_PINS_INTERVAL_TIME_MS: u64 = 500;
 
 #[derive(Debug, Clone)]
 pub struct IpfsMetadata {
@@ -61,7 +62,10 @@ impl AppState {
         );
 
         // Get peer id while check IPFS health.
-        let ipfs_peer_id = ipfs_helper::get_peer_id_until_success(&ipfs_client).await;
+        let ipfs_peer_id = services::ipfs::get_peer_id_until_success(
+            &ipfs_client,
+            CACHE_PINS_INTERVAL_TIME_MS
+        ).await;
         let ipfs_metadata = IpfsMetadata {
             ipfs_peer_id,
             ipfs_swarm_ip: ipfs_swarm_ip.to_string(),
