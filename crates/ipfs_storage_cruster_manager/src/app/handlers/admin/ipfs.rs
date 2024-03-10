@@ -65,30 +65,25 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
     Ok(().into())
 }
 
+/// Re-bootstrap all nodes in database that is not `Offline`.
 #[axum_macros::debug_handler]
 pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> StandardApiResult<()> {
+    // TODO not offline
     let node_vec: Vec<node::Model> = Node::find().all(&state.db_conn)
         .await.map_err(services::db::handle_db_error)?;
 
     let mut join_set = tokio::task::JoinSet::new();
     for node_model in node_vec {
         let task = services::ipfs::bootstrap_and_check_health(
-            state.clone(), node_model.rpc_address,
+            state.clone(), node_model,
         );
         join_set.spawn(task);
     }
 
     while let Some(join_res) = join_set.join_next().await {
         match join_res {
-            Ok(res) => {
-                match res {
-                    Ok(_model) => {
-                        todo!()
-                    }
-                    Err(e) => {
-                        todo!()
-                    }
-                }
+            Ok(_) => {
+                // do nothing
             }
             Err(join_err) => {
                 if join_err.is_panic() {
