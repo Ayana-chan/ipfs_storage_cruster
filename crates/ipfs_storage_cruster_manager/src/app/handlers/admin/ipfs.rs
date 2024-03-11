@@ -26,7 +26,7 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 /// Upsert the database entry.
 #[axum_macros::debug_handler]
 pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos::AddIpfsNodeArgs>) -> StandardApiResult<()> {
-    let rpc_address = format!("{}:{}", args.ip, args.port.unwrap_or(5001));
+    let rpc_address = format!("{}:{}", args.rpc_ip, args.rpc_port.unwrap_or(5001));
     info!("Add IPFS node. rpc address: {}", rpc_address);
     let aim_ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
         rpc_address.clone(), state.reqwest_client.clone(),
@@ -47,15 +47,17 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
         id: Set(uuid::Uuid::new_v4().to_string()),
         peer_id: Set(aim_peer_id),
         rpc_address: Set(rpc_address),
-        wrapper_address: Set(args.wrapper_address),
-        status: Set(sea_orm_active_enums::Status::Online),
+        wrapper_public_address: Set(Some(args.wrapper_public_address)),
+        wrapper_admin_address: Set(Some(args.wrapper_admin_address)),
+        node_status: Set(sea_orm_active_enums::NodeStatus::Online),
     };
     // upsert
     let dup_conflict = sea_query::OnConflict::column(node::Column::PeerId)
         .update_columns([
             node::Column::RpcAddress,
-            node::Column::WrapperAddress,
-            node::Column::Status,
+            node::Column::WrapperPublicAddress,
+            node::Column::WrapperAdminAddress,
+            node::Column::NodeStatus,
         ])
         .to_owned();
     Node::insert(new_node)
@@ -70,7 +72,7 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
 #[axum_macros::debug_handler]
 pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> StandardApiResult<()> {
     let node_vec: Vec<node::Model> = Node::find()
-        .filter(node::Column::Status.ne(sea_orm_active_enums::Status::Offline)) // No offline
+        .filter(node::Column::NodeStatus.ne(sea_orm_active_enums::NodeStatus::Offline)) // No offline
         .all(&state.db_conn)
         .await.map_err(services::db::handle_db_error)?;
 
@@ -124,8 +126,9 @@ mod tests {
             id: Set(new_uuid.clone()),
             peer_id: Set("abcd peer id".to_string()),
             rpc_address: Set("9.9.9.9:1234".to_string()),
-            wrapper_address: Set("19.19.19.19:5678".to_string()),
-            status: Set(sea_orm_active_enums::Status::Online),
+            wrapper_public_address: Set(Some("19.19.19.19:5678".to_string())),
+            wrapper_admin_address: Set(Some("19.19.19.19:9999".to_string())),
+            node_status: Set(sea_orm_active_enums::NodeStatus::Online),
         }.insert(&conn)
             .await.unwrap();
         println!("insert: {}", new_uuid);
@@ -138,14 +141,16 @@ mod tests {
             id: Set(new_uuid.clone()),
             peer_id: Set("abcd peer id".to_string()),
             rpc_address: Set("88.88.88.88:1234".to_string()),
-            wrapper_address: Set("89.89.89.89:5678".to_string()),
-            status: Set(sea_orm_active_enums::Status::Unhealthy),
+            wrapper_public_address: Set(Some("89.89.89.89:5678".to_string())),
+            wrapper_admin_address: Set(Some("89.89.89.89:9999".to_string())),
+            node_status: Set(sea_orm_active_enums::NodeStatus::Unhealthy),
         };
         let dup_conflict = sea_query::OnConflict::column(node::Column::PeerId)
             .update_columns([
                 node::Column::RpcAddress,
-                node::Column::WrapperAddress,
-                node::Column::Status,
+                node::Column::WrapperPublicAddress,
+                node::Column::WrapperAdminAddress,
+                node::Column::NodeStatus,
             ])
             .to_owned();
         let result = Node::insert(new_node)

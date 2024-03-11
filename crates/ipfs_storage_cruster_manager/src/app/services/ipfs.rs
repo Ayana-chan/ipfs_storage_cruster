@@ -38,12 +38,12 @@ pub(crate) async fn bootstrap_and_check_health(state: AppState, node_model: node
     ).await;
 
     let status = match res {
-        Ok(_) => sea_orm_active_enums::Status::Online,
-        Err(_) => sea_orm_active_enums::Status::Unhealthy,
+        Ok(_) => sea_orm_active_enums::NodeStatus::Online,
+        Err(_) => sea_orm_active_enums::NodeStatus::Unhealthy,
     };
 
     let mut node_model: node::ActiveModel = node_model.into();
-    node_model.status = Set(status);
+    node_model.node_status = Set(status);
 
     let res: Result<node::Model, DbErr> = node_model
         .update(&state.db_conn)

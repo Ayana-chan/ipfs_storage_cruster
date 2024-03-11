@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.30, for Win64 (x86_64)
 --
--- Host: localhost    Database: ipfs_storage_cruster_manager
+-- Host: 127.0.0.1    Database: ipfs_storage_cruster_manager
 -- ------------------------------------------------------
 -- Server version	8.0.30
 
@@ -23,11 +23,14 @@ DROP TABLE IF EXISTS `node`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `node` (
-  `id` varchar(100) NOT NULL,
-  `peer_id` varchar(100) NOT NULL COMMENT 'ipfs peer id',
-  `rpc_address` varchar(100) NOT NULL COMMENT 'Address of IPFS node''s rpc api',
-  `wrapper_address` varchar(100) NOT NULL COMMENT 'Address of node wrapper server',
-  PRIMARY KEY (`id`)
+                        `id` varchar(100) NOT NULL,
+                        `peer_id` varchar(100) NOT NULL COMMENT 'ipfs peer id',
+                        `rpc_address` varchar(100) NOT NULL COMMENT 'Address of IPFS node''s rpc api',
+                        `wrapper_public_address` varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (public)',
+                        `wrapper_admin_address` varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (admin)',
+                        `node_status` enum('online','unhealthy','offline') NOT NULL,
+                        PRIMARY KEY (`id`),
+                        UNIQUE KEY `node_peer_id_uindex` (`peer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Bootstraped IPFS nodes'' metadata';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -37,17 +40,9 @@ CREATE TABLE `node` (
 
 LOCK TABLES `node` WRITE;
 /*!40000 ALTER TABLE `node` DISABLE KEYS */;
-INSERT INTO `node` VALUES ('aaa','aaaa','www','cccc');
+INSERT INTO `node` VALUES ('aaa','aaaa','www','cccc',NULL,'online');
 /*!40000 ALTER TABLE `node` ENABLE KEYS */;
 UNLOCK TABLES;
-
---
--- Dumping events for database 'ipfs_storage_cruster_manager'
---
-
---
--- Dumping routines for database 'ipfs_storage_cruster_manager'
---
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -58,4 +53,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-09 10:20:16
+-- Dump completed on 2024-03-11 13:19:27

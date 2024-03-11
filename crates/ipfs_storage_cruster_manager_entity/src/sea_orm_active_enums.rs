@@ -4,8 +4,8 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
-#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "status")]
-pub enum Status {
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "node_status")]
+pub enum NodeStatus {
     #[sea_orm(string_value = "online")]
     Online,
     #[sea_orm(string_value = "unhealthy")]
