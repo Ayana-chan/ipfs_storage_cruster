@@ -5,7 +5,7 @@ use crate::imports::dao_imports::*;
 use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app::AppState;
 use crate::app::common::StandardApiResult;
-use crate::app::{errors, dtos, services};
+use crate::app::{dtos, services};
 
 /// List all added IPFS nodes.
 #[axum_macros::debug_handler]
@@ -35,10 +35,10 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
         &state.ipfs_metadata.ipfs_swarm_ip,
         &state.ipfs_metadata.ipfs_swarm_port,
         &state.ipfs_metadata.ipfs_peer_id,
-    ).await.map_err(errors::error_convert::from_ipfs_client_error)?;
+    ).await?;
 
     let aim_peer_id = aim_ipfs_client.get_id_info()
-        .await.map_err(errors::error_convert::from_ipfs_client_error)?
+        .await?
         .id;
     debug!("Add IPFS node target peer id: {}", aim_peer_id);
 
