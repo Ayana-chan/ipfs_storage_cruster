@@ -24,10 +24,7 @@ pub struct ListIpfsNodesResponse {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AddIpfsNodeArgs {
-    /// RPC ip.
-    pub rpc_ip: String,
-    /// RPC port. Default 5001
-    pub rpc_port: Option<u16>,
+    pub rpc_address: String,
     pub wrapper_public_address: String,
     pub wrapper_admin_address: String,
 }

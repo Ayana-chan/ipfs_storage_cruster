@@ -26,10 +26,9 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 /// Upsert the database entry.
 #[axum_macros::debug_handler]
 pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos::AddIpfsNodeArgs>) -> StandardApiResult<()> {
-    let rpc_address = format!("{}:{}", args.rpc_ip, args.rpc_port.unwrap_or(5001));
-    info!("Add IPFS node. rpc address: {}", rpc_address);
+    info!("Add IPFS node. {:?}", args);
     let aim_ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
-        rpc_address.clone(), state.reqwest_client.clone(),
+        args.rpc_address.clone(), state.reqwest_client.clone(),
     );
 
     aim_ipfs_client.bootstrap_add(
@@ -46,7 +45,7 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
     let new_node = node::ActiveModel {
         id: Set(uuid::Uuid::new_v4().to_string()),
         peer_id: Set(aim_peer_id),
-        rpc_address: Set(rpc_address),
+        rpc_address: Set(args.rpc_address),
         wrapper_public_address: Set(Some(args.wrapper_public_address)),
         wrapper_admin_address: Set(Some(args.wrapper_admin_address)),
         node_status: Set(sea_orm_active_enums::NodeStatus::Online),
