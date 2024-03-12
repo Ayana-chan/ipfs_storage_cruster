@@ -3,6 +3,7 @@ use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::layer::SubscriberExt;
 #[allow(unused_imports)]
 use tracing::{error, debug, info};
+use tracing_subscriber::{Layer, EnvFilter};
 use ipfs_node_wrapper::app_builder;
 
 #[tokio::main]
@@ -13,7 +14,8 @@ async fn main() {
 
 fn config_tracing() {
     let console_subscriber = tracing_subscriber::fmt::layer()
-        .with_writer(std::io::stdout);
+        .with_writer(std::io::stdout)
+        .with_filter(EnvFilter::from_env("APP_LOG"));
 
     let file_appender = RollingFileAppender::new(
         Rotation::HOURLY,

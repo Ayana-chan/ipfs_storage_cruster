@@ -10,7 +10,7 @@ tiny_ipfs_client = { path = "../tiny_ipfs_client", features = ["no_gateway"] }
 ipfs_node_wrapper_client = { path = "../ipfs_node_wrapper_client" }
 ipfs_storage_cruster_manager_entity = { path = "../ipfs_storage_cruster_manager_entity" }
 
-tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
+tracing = "0.1"
 axum = "0.7"
 axum-macros = "0.4"
 serde = { version = "1.0", features = ["derive"] }

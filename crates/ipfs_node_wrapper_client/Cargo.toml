@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 ipfs_node_wrapper_structs = {path = "../ipfs_node_wrapper_structs" }
 
-tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
+tracing = "0.1"
 reqwest = { version = "0.11", features = ["json", "native-tls-vendored"] }
 serde = { version = "1.0", features = ["derive"] }
 

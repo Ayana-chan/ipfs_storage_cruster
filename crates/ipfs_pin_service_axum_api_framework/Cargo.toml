@@ -18,5 +18,5 @@ json = "0.12"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "parking_lot"] }
-tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
+tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

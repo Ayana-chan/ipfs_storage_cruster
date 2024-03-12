@@ -1,11 +1,13 @@
 use config::Config;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing_subscriber::{EnvFilter, Layer};
 use tracing_subscriber::layer::SubscriberExt;
 use ipfs_storage_cruster_manager::app_builder;
 
 fn config_tracing(){
     let console_subscriber = tracing_subscriber::fmt::layer()
-        .with_writer(std::io::stdout);
+        .with_writer(std::io::stdout)
+        .with_filter(EnvFilter::from_env("APP_LOG"));
 
     let file_appender = RollingFileAppender::new(
         Rotation::HOURLY,

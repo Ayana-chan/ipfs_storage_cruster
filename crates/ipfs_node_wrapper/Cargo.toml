@@ -11,7 +11,7 @@ async_tasks_state_map = "1.0.1"
 tiny_ipfs_client = { path = "../tiny_ipfs_client" }
 ipfs_node_wrapper_structs = { path = "../ipfs_node_wrapper_structs", features = ["server"] }
 
-tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_info"] }
+tracing = "0.1"
 tokio = { version = "1", features = ["time", "net", "parking_lot"] }
 axum = "0.7"
 axum-macros = "0.4"
