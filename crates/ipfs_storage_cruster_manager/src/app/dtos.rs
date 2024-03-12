@@ -28,3 +28,4 @@ pub struct AddIpfsNodeArgs {
     pub wrapper_public_address: String,
     pub wrapper_admin_address: String,
 }
+
