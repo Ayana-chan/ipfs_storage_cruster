@@ -17,6 +17,7 @@ pub struct UploadFileResponse {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListIpfsNodesResponse {
     pub list: Vec<node::Model>,
 }

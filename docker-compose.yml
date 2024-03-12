@@ -25,7 +25,7 @@ services:
       - ./compose/master-ipfs:/data/ipfs
 
   # ===== Node 0 =====
-  wrapper-0:
+  wrapper-0: # TODO 新加节点时，manager主动让wrapper0连接到其对应的IPFS node，从而减少配置复杂度
     container_name: ipfs_storage_cruster-wrapper-0
     image: ipfs_storage_cruster/ipfs_node_wrapper:latest
     depends_on:

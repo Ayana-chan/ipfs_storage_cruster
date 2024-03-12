@@ -10,4 +10,5 @@ generate_entity:
  	--database-url $(DB_URL) \
  	--output-dir $(DIR_ROOT)src \
  	--lib \
- 	 --with-serde both
+ 	--with-serde both \
+ 	--model-extra-attributes "serde(rename_all = \"camelCase\")"
