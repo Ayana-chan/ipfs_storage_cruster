@@ -5,6 +5,7 @@ use crate::{IpfsClientError, dtos, ReqwestIpfsClient, IpfsClientResult};
 impl ReqwestIpfsClient {
     /// Get file from IPFS gateway.
     #[cfg(not(feature = "no_gateway"))]
+    #[tracing::instrument]
     pub async fn get_file_by_gateway(&self, cid: &str, file_name: Option<&str>) -> IpfsClientResult<reqwest::Response> {
         let url = format!("http://{addr}/ipfs/{cid}?filename={file_name}&download=true",
                           addr = &self.gateway_address,
@@ -42,6 +43,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get IPFS node's basic information.
+    #[tracing::instrument]
     pub async fn get_id_info(&self) -> IpfsClientResult<dtos::IdResponse> {
         // TODO format arg无效
         let url_content = "/id";
@@ -62,6 +64,7 @@ impl ReqwestIpfsClient {
     }
 
     /// List all recursive pins that is pinned
+    #[tracing::instrument]
     pub async fn list_recursive_pins_pinned(&self, with_pin_name: bool) -> IpfsClientResult<dtos::ListPinsResponse> {
         let url_content = if with_pin_name {
             "/pin/ls?type=recursive&names=true"
@@ -85,6 +88,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Get a pin.
+    #[tracing::instrument]
     pub async fn get_one_pin(&self, cid: &str, with_pin_name: bool) -> IpfsClientResult<Option<dtos::PinsInfoInList>> {
         let url_content = format!("/pin/ls?arg={cid}&names={with_pin_name}",
                                   cid = cid, with_pin_name = with_pin_name);
@@ -111,6 +115,7 @@ impl ReqwestIpfsClient {
             reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
                 // might not pinned
                 let error_response: dtos::ErrorResponse = res.json().await.map_err(|_e| {
+                    error!("Not an expected Interval Server Error: {:?}", _e);
                     Self::handle_rpc_status_code_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR)
                 })?;
 
@@ -118,6 +123,7 @@ impl ReqwestIpfsClient {
                     // really not pinned
                     Ok(None)
                 } else {
+                    error!("Not an expected Interval Server Error: {:?}", error_response.message);
                     Err(Self::handle_rpc_status_code_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR))
                 }
             }
@@ -126,6 +132,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Add a recursive pin.
+    #[tracing::instrument]
     pub async fn add_pin_recursive(&self, cid: &str, pin_name: Option<&str>) -> IpfsClientResult<()> {
         let pin_name = pin_name.unwrap_or("untitled");
 
@@ -146,6 +153,7 @@ impl ReqwestIpfsClient {
     }
 
     /// Remove a recursive pin.
+    #[tracing::instrument]
     pub async fn remove_pin_recursive(&self, cid: &str) -> IpfsClientResult<()> {
         let url_content = format!("/pin/rm?arg={cid}",
                                   cid = cid,
@@ -163,10 +171,12 @@ impl ReqwestIpfsClient {
     }
 
     /// Add an IPFS node to bootstrap list by ip address, port and peer id.
+    #[tracing::instrument]
     pub async fn bootstrap_add(&self, ip: &str, port: &str, peer_id: &str) -> IpfsClientResult<()> {
         let multi_addr = format!("/ip4/{}/tcp/{}/p2p/{}", ip, port, peer_id);
+        debug!("multi_addr: {}", multi_addr);
         let url_content = format!("/bootstrap/add?arg={multi_addr}",
-        multi_addr = multi_addr);
+                                  multi_addr = multi_addr);
         let res = self.ipfs_rpc_request(&url_content).await?;
 
         let status = res.status();
