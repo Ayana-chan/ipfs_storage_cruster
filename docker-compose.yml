@@ -8,6 +8,7 @@ services:
       - master-ipfs
       - manager-mysql
     environment:
+      APP_LOG: "trace"
       APP_DATABASE_URL: "mysql://root:1234@manager-mysql/ipfs_storage_cruster_manager"
       APP_IPFS_RPC_ADDRESS: "master-ipfs:5001"
       APP_IPFS_SWARM_ADDRESS: "master-ipfs:4001"
@@ -31,6 +32,7 @@ services:
     depends_on:
       - slave-ipfs-0
     environment:
+      APP_LOG: "trace"
       APP_IPFS_GATEWAY_ADDRESS: "slave-ipfs-0:8080"
       APP_IPFS_RPC_ADDRESS: "slave-ipfs-0:5001"
     ports:

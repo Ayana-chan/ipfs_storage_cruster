@@ -48,13 +48,13 @@ impl AppState {
     pub async fn from_app_config(app_config: &AppConfig) -> AppState {
         let reqwest_client = reqwest::Client::new();
 
-        let _split_index = app_config.ipfs_swarm_address.find(':')
+        let (ipfs_swarm_ip, ipfs_swarm_port) = app_config.ipfs_swarm_address
+            .rsplit_once(':')
             .expect(&format!("Invalid swarm address: {}", app_config.ipfs_swarm_address));
-        let (ipfs_swarm_ip, ipfs_swarm_port) = app_config.ipfs_swarm_address.split_at(_split_index);
 
         let db_conn = services::db::connect_db_until_success(
             &app_config.database_url,
-            DATABASE_CONN_RETRY_INTERVAL_TIME_MS
+            DATABASE_CONN_RETRY_INTERVAL_TIME_MS,
         ).await;
 
         let ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
@@ -65,7 +65,7 @@ impl AppState {
         // Get peer id while check IPFS health.
         let ipfs_peer_id = services::ipfs::get_peer_id_until_success(
             &ipfs_client,
-            IPFS_CONN_RETRY_INTERVAL_TIME_MS
+            IPFS_CONN_RETRY_INTERVAL_TIME_MS,
         ).await;
         let ipfs_metadata = IpfsMetadata {
             ipfs_peer_id,
