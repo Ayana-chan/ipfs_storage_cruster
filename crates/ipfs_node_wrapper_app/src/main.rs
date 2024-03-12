@@ -40,6 +40,7 @@ fn config_tracing() {
 fn read_config() -> app_builder::AppConfig {
     let settings = Config::builder()
         .add_source(config::File::with_name("./crates/ipfs_node_wrapper_app/Settings").required(false))
+        .add_source(config::File::with_name("./Settings").required(false))
         .add_source(config::Environment::with_prefix("APP"))
         .build()
         .unwrap();

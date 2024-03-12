@@ -1,7 +1,9 @@
 use config::Config;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{EnvFilter, Layer};
+use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::layer::SubscriberExt;
+use tracing::Level;
 use ipfs_storage_cruster_manager::app_builder;
 
 fn config_tracing(){
@@ -31,6 +33,7 @@ fn config_tracing(){
 fn read_config() -> app_builder::AppConfig {
     let settings = Config::builder()
         .add_source(config::File::with_name("./crates/ipfs_storage_cruster_manager_app/Settings").required(false))
+        .add_source(config::File::with_name("./Settings").required(false))
         .add_source(config::Environment::with_prefix("APP"))
         .build()
         .unwrap();
