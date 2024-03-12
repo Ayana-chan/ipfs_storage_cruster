@@ -59,6 +59,10 @@ impl ReqwestIpfsClient {
                 info!("Success get id info. peer id: {}", id_res.id);
                 Ok(id_res)
             }
+            reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
+                error!("Not an expected Interval Server Error: {:?}", res.text().await);
+                Err(Self::handle_rpc_status_code_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR))
+            }
             err => Err(Self::handle_rpc_status_code_error(err))
         }
     }
@@ -82,6 +86,10 @@ impl ReqwestIpfsClient {
                 })?;
                 info!("Success list recursive pins that is pinned");
                 Ok(pins)
+            }
+            reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
+                error!("Not an expected Interval Server Error: {:?}", res.text().await);
+                Err(Self::handle_rpc_status_code_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR))
             }
             err => Err(Self::handle_rpc_status_code_error(err))
         }
@@ -148,6 +156,10 @@ impl ReqwestIpfsClient {
                 info!("Success add pin. cid: {}, pin_name: {}", cid, pin_name);
                 Ok(())
             }
+            reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
+                error!("Not an expected Interval Server Error: {:?}", res.text().await);
+                Err(Self::handle_rpc_status_code_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR))
+            }
             err => Err(Self::handle_rpc_status_code_error(err))
         }
     }
@@ -165,6 +177,10 @@ impl ReqwestIpfsClient {
             _ if status.is_success() => {
                 info!("Success remove pin. cid: {}", cid);
                 Ok(())
+            }
+            reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
+                error!("Not an expected Interval Server Error: {:?}", res.text().await);
+                Err(Self::handle_rpc_status_code_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR))
             }
             err => Err(Self::handle_rpc_status_code_error(err))
         }
@@ -184,6 +200,10 @@ impl ReqwestIpfsClient {
             _ if status.is_success() => {
                 info!("Success add bootstrap. multi_addr: {}", multi_addr);
                 Ok(())
+            }
+            reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
+                error!("Not an expected Interval Server Error: {:?}", res.text().await);
+                Err(Self::handle_rpc_status_code_error(reqwest::StatusCode::INTERNAL_SERVER_ERROR))
             }
             err => Err(Self::handle_rpc_status_code_error(err))
         }
