@@ -13,9 +13,12 @@ async fn main() {
 }
 
 fn config_tracing() {
+    let env_filter = EnvFilter::try_from_env("APP_LOG")
+        .unwrap_or_else(|_| EnvFilter::new("debug,ipfs_node_wrapper=trace,hyper=debug"));
+
     let console_subscriber = tracing_subscriber::fmt::layer()
         .with_writer(std::io::stdout)
-        .with_filter(EnvFilter::from_env("APP_LOG"));
+        .with_filter(env_filter);
 
     let file_appender = RollingFileAppender::new(
         Rotation::HOURLY,
