@@ -32,8 +32,7 @@ pub(crate) async fn bootstrap_and_check_health(state: AppState, node_model: node
         node_model.rpc_address.clone(), state.reqwest_client.clone(),
     );
     let res = target_ipfs_client.bootstrap_add(
-        &state.ipfs_metadata.ipfs_swarm_ip,
-        &state.ipfs_metadata.ipfs_swarm_port,
+        &state.ipfs_metadata.ipfs_swarm_multi_address,
         &state.ipfs_metadata.ipfs_peer_id,
     ).await;
 

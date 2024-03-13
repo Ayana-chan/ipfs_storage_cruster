@@ -24,8 +24,7 @@ static DATABASE_CONN_RETRY_INTERVAL_TIME_MS: u64 = 3000;
 pub struct IpfsMetadata {
     /// Peer id of self's IPFS node.
     pub ipfs_peer_id: String,
-    pub ipfs_swarm_ip: String,
-    pub ipfs_swarm_port: String,
+    pub ipfs_swarm_multi_address: String,
 }
 
 /// State of app. Should be cheap and safe to clone.
@@ -48,10 +47,6 @@ impl AppState {
     pub async fn from_app_config(app_config: &AppConfig) -> AppState {
         let reqwest_client = reqwest::Client::new();
 
-        let (ipfs_swarm_ip, ipfs_swarm_port) = app_config.ipfs_swarm_address
-            .rsplit_once(':')
-            .expect(&format!("Invalid swarm address: {}", app_config.ipfs_swarm_address));
-
         let db_conn = services::db::connect_db_until_success(
             &app_config.database_url,
             DATABASE_CONN_RETRY_INTERVAL_TIME_MS,
@@ -69,8 +64,7 @@ impl AppState {
         ).await;
         let ipfs_metadata = IpfsMetadata {
             ipfs_peer_id,
-            ipfs_swarm_ip: ipfs_swarm_ip.to_string(),
-            ipfs_swarm_port: ipfs_swarm_port.to_string(),
+            ipfs_swarm_multi_address: app_config.ipfs_swarm_multi_address.to_string(),
         };
 
         AppState {

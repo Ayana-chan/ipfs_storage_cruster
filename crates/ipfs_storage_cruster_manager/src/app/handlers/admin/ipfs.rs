@@ -32,8 +32,7 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
     );
 
     target_ipfs_client.bootstrap_add(
-        &state.ipfs_metadata.ipfs_swarm_ip,
-        &state.ipfs_metadata.ipfs_swarm_port,
+        &state.ipfs_metadata.ipfs_swarm_multi_address,
         &state.ipfs_metadata.ipfs_peer_id,
     ).await?;
 

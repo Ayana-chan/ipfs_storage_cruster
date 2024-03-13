@@ -10,7 +10,7 @@ use crate::app;
 pub struct AppConfig {
     pub database_url: String,
     pub ipfs_rpc_address: String,
-    pub ipfs_swarm_address: String,
+    pub ipfs_swarm_multi_address: String,
 }
 
 #[tracing::instrument(skip_all)]

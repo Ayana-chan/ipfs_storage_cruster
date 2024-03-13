@@ -1,9 +1,7 @@
 use config::Config;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{EnvFilter, Layer};
-use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::layer::SubscriberExt;
-use tracing::Level;
 use ipfs_storage_cruster_manager::app_builder;
 
 fn config_tracing(){

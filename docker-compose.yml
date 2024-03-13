@@ -11,7 +11,7 @@ services:
       APP_LOG: "trace"
       APP_DATABASE_URL: "mysql://root:1234@manager-mysql/ipfs_storage_cruster_manager"
       APP_IPFS_RPC_ADDRESS: "master-ipfs:5001"
-      APP_IPFS_SWARM_ADDRESS: "master-ipfs:4001"
+      APP_IPFS_SWARM_MULTI_ADDRESS: "/dns/master-ipfs/tcp/4001"
     ports:
       - "5000:5000" # server
 

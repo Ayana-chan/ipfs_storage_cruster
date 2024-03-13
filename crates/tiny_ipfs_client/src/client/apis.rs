@@ -189,8 +189,8 @@ impl ReqwestIpfsClient {
     // TODO DNS不能使用ip4
     /// Add an IPFS node to bootstrap list by ip address, port and peer id.
     #[tracing::instrument]
-    pub async fn bootstrap_add(&self, ip: &str, port: &str, peer_id: &str) -> IpfsClientResult<()> {
-        let multi_addr = format!("/ip4/{}/tcp/{}/p2p/{}", ip, port, peer_id);
+    pub async fn bootstrap_add(&self, swarm_multi_address: &str, peer_id: &str) -> IpfsClientResult<()> {
+        let multi_addr = format!("{}/p2p/{}", swarm_multi_address, peer_id);
         debug!("multi_addr: {}", multi_addr);
         let url_content = format!("/bootstrap/add?arg={multi_addr}",
                                   multi_addr = multi_addr);
