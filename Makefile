@@ -28,9 +28,15 @@ up:
 	docker compose up -d
 #	docker-compose up -d
 
+# clear all data and start containers
 pure-up: compose-clean up
 
-# stop docker compose
+# stop containers
+stop:
+	docker compose stop
+#	docker-compose down
+
+# stop and delete containers
 down:
 	docker compose down
 #	docker-compose down
