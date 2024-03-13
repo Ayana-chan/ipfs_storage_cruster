@@ -15,15 +15,18 @@ pub struct AppConfig {
 
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
-    info!("--- Server Start ---");
-    info!("Server listen at: {}:{}", "0.0.0.0", 5000);
+    info!("========** Server Preparing **========");
+    info!("Server would listen at: {}:{}", "0.0.0.0", 5000);
 
     info!("IPFS Node rpc at: {}", app_config.ipfs_rpc_address);
 
-    generate_server(
+    let server = generate_server(
         "0.0.0.0:5000",
-        app::generate_app_from_config(&app_config).await
-    ).await
+        app::generate_app_from_config(&app_config).await,
+    );
+
+    info!("========*** Server start successfully ***========");
+    server.await;
 }
 
 /// Tool to bind server to port

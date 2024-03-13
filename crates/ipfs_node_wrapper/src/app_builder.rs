@@ -15,9 +15,9 @@ pub struct AppConfig {
 
 #[tracing::instrument(skip_all)]
 pub async fn serve(app_config: AppConfig) {
-    info!("--- Server Start ---");
-    info!("public service listen at: {}:{}", "0.0.0.0", 3000);
-    info!("admin  service listen at: {}:{}", "0.0.0.0", 4000);
+    info!("========** Server Preparing **========");
+    info!("public service would listen at: {}:{}", "0.0.0.0", 3000);
+    info!("admin  service would listen at: {}:{}", "0.0.0.0", 4000);
 
     info!("IPFS Node gateway at: {}", app_config.ipfs_gateway_address);
     info!("IPFS Node rpc     at: {}", app_config.ipfs_rpc_address);
@@ -39,6 +39,7 @@ pub async fn serve(app_config: AppConfig) {
         admin_app::generate_admin_app(&app_state).await,
     );
 
+    info!("========*** Server start successfully ***========");
     tokio::join!(public_server, admin_server);
 }
 
