@@ -24,3 +24,19 @@ pub fn handle_db_error(e: DbErr) -> errors::ResponseError {
     errors::DB_FAIL.clone_to_error()
 }
 
+/// Judge if a DbErr is duplicated key error.
+pub fn check_duplicate_key_error(e: DbErr) -> Result<String, DbErr> {
+    let sql_err = e.sql_err();
+    match sql_err {
+        Some(sql_err) => {
+            if let SqlErr::UniqueConstraintViolation(msg) = sql_err {
+                return Ok(msg);
+            }
+            Err(e)
+        },
+        None => {
+            Err(e)
+        }
+    }
+}
+

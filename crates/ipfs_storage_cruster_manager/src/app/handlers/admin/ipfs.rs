@@ -134,7 +134,7 @@ mod tests {
         let res = Node::find().all(&conn).await.unwrap();
         println!("find all: {:#?}", res);
 
-        // dup insert
+        // dup insert with on conflict
         let new_node = node::ActiveModel {
             id: Set(new_uuid.clone()),
             peer_id: Set("abcd peer id".to_string()),
@@ -156,6 +156,29 @@ mod tests {
             .exec(&conn)
             .await.unwrap();
         assert_eq!(result.last_insert_id, new_uuid);
+
+        // dup insert with dup error check
+        let new_node = node::ActiveModel {
+            id: Set(new_uuid.clone()),
+            peer_id: Set("abcd peer id".to_string()),
+            rpc_address: Set("11.11.11.11:1234".to_string()),
+            wrapper_public_address: Set(Some("11.11.11.11:5678".to_string())),
+            wrapper_admin_address: Set(Some("11.11.11.11:9999".to_string())),
+            node_status: Set(sea_orm_active_enums::NodeStatus::Offline),
+        };
+        let result = Node::insert(new_node)
+            .exec(&conn)
+            .await;
+        match result {
+            Ok(_) => {
+                panic!("Should have dup err");
+            },
+            Err(e) => {
+                let check_res = services::db::check_duplicate_key_error(e);
+                println!("dup insert return err: {:?}", check_res);
+                assert!(check_res.is_ok(), "Should be dup err, but get {:?}", check_res);
+            }
+        }
 
         let res = Node::find().all(&conn).await.unwrap();
         println!("find all: {:#?}", res);

@@ -13,3 +13,17 @@ pub enum NodeStatus {
     #[sea_orm(string_value = "offline")]
     Offline,
 }
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "status")]
+pub enum Status {
+    #[sea_orm(string_value = "Queued")]
+    Queued,
+    #[sea_orm(string_value = "Pinning")]
+    Pinning,
+    #[sea_orm(string_value = "Pinned")]
+    Pinned,
+    #[sea_orm(string_value = "Failed")]
+    Failed,
+    #[sea_orm(string_value = "notfound")]
+    Notfound,
+}
