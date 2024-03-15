@@ -24,6 +24,7 @@ services:
       - "4001:4001" # ipfs swarm
     volumes:
       - ./compose/master-ipfs:/data/ipfs
+      - ./scripts/ipfs_clear_bootstrap.sh:/container-init.d/ipfs_clear_bootstrap.sh
 
   # ===== Node 0 =====
   wrapper-0: # TODO 新加节点时，manager主动让wrapper0连接到其对应的IPFS node，从而减少配置复杂度
@@ -47,6 +48,7 @@ services:
       - "5002:5001" # ipfs rpc api
     volumes:
       - ./compose/slave-ipfs-0:/data/ipfs
+      - ./scripts/ipfs_clear_bootstrap.sh:/container-init.d/ipfs_clear_bootstrap.sh
 
   # ===== Database =====
   manager-mysql:
