@@ -59,7 +59,8 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - ./compose/manager-mysql/init/:/docker-entrypoint-initdb.d/
+      - ./sql/ipfs_storage_cruster_manager.sql:/docker-entrypoint-initdb.d/ipfs_storage_cruster_manager.sql # init sql
+#      - ./compose/manager-mysql/init/:/docker-entrypoint-initdb.d/
       - ./compose/manager-mysql/conf/:/etc/mysql/conf.d/
       - ./compose/manager-mysql/data/:/var/lib/mysql/
     command:

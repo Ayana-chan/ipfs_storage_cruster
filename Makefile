@@ -20,11 +20,7 @@ compose-clean:
 	rm -rf ./compose
 
 # run by docker compose
-# might have to use `sudo`
 up:
-# Permission denied if not create first.
-	mkdir -p ./compose/manager-mysql/init
-	cp ./sql/ipfs_storage_cruster_manager.sql ./compose/manager-mysql/init/
 	docker compose up -d
 #	docker-compose up -d
 
