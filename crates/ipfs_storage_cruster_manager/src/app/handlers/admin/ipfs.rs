@@ -69,6 +69,7 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
 /// Re-bootstrap all nodes in database that is not `Offline`.
 #[axum_macros::debug_handler]
 pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> StandardApiResult<()> {
+    info!("Re-bootstrap All IPFS Node.");
     let node_vec: Vec<node::Model> = Node::find()
         .filter(node::Column::NodeStatus.ne(sea_orm_active_enums::NodeStatus::Offline)) // No offline
         .all(&state.db_conn)
@@ -82,10 +83,16 @@ pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> Standa
         join_set.spawn(task);
     }
 
+    let mut success_count: u32 = 0;
+    let mut fail_count: u32 = 0;
     while let Some(join_res) = join_set.join_next().await {
         match join_res {
-            Ok(_) => {
-                // do nothing
+            Ok(res) => {
+                if res.is_ok() {
+                    success_count += 1;
+                } else {
+                    fail_count += 1;
+                }
             }
             Err(join_err) => {
                 if join_err.is_panic() {
@@ -94,6 +101,7 @@ pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> Standa
             }
         }
     }
+    info!("Re-bootstrap all IPFS node finished. Success: {}, Failed: {}", success_count, fail_count);
 
     Ok(().into())
 }
@@ -172,7 +180,7 @@ mod tests {
         match result {
             Ok(_) => {
                 panic!("Should have dup err");
-            },
+            }
             Err(e) => {
                 let check_res = services::db::check_duplicate_key_error(e);
                 println!("dup insert return err: {:?}", check_res);
