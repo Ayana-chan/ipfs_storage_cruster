@@ -17,6 +17,7 @@ pub async fn get_file(
     Query(query): Query<dtos::GetFileArgs>)
     -> ApiResponseResult {
     info!("Get File cid: {}", cid);
+    // TODO timeout
     let ipfs_res = state.app_state.ipfs_client
         .get_file_by_gateway(
             &cid,

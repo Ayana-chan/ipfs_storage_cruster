@@ -22,15 +22,16 @@
 DROP TABLE IF EXISTS `node`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `node` (
-                        `id` varchar(100) NOT NULL,
-                        `peer_id` varchar(100) NOT NULL COMMENT 'ipfs peer id',
-                        `rpc_address` varchar(100) NOT NULL COMMENT 'Address of IPFS node''s rpc api',
-                        `wrapper_public_address` varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (public)',
-                        `wrapper_admin_address` varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (admin)',
-                        `node_status` enum('online','unhealthy','offline') NOT NULL,
-                        PRIMARY KEY (`id`),
-                        UNIQUE KEY `node_peer_id_uindex` (`peer_id`)
+CREATE TABLE `node`
+(
+    `id`                     varchar(100) NOT NULL,
+    `peer_id`                varchar(100) NOT NULL COMMENT 'ipfs peer id',
+    `rpc_address`            varchar(100) NOT NULL COMMENT 'Address of IPFS node''s rpc api',
+    `wrapper_public_address` varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (public)',
+    `wrapper_admin_address`  varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (admin)',
+    `node_status`            enum('online','unhealthy','offline') NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `node_peer_id_uindex` (`peer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Bootstraped IPFS nodes'' metadata';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -38,11 +39,17 @@ CREATE TABLE `node` (
 -- Dumping data for table `node`
 --
 
-LOCK TABLES `node` WRITE;
+LOCK
+TABLES `node` WRITE;
 /*!40000 ALTER TABLE `node` DISABLE KEYS */;
-INSERT INTO `node` VALUES ('aaa','aaaa','www','cccc',NULL,'online');
+INSERT INTO `node`
+VALUES ('aaa', 'aaaa', 'www', 'cccc', NULL, 'online');
+INSERT INTO `node`
+VALUES ('7b25a769-6ab3-419a-a9dc-a00ad22647e4', '12D3KooWF3mGrpGjYf7e11jXkDBdkBQW328h1Reb9onUUB3HnKuC',
+        'slave-ipfs-0:5001', '192.168.177.134:3000', 'wrapper-0:4000', 'online');
 /*!40000 ALTER TABLE `node` ENABLE KEYS */;
-UNLOCK TABLES;
+UNLOCK
+TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
