@@ -27,10 +27,7 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 #[axum_macros::debug_handler]
 pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos::AddIpfsNodeArgs>) -> StandardApiResult<()> {
     info!("Add IPFS node. {:?}", args);
-    let target_ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
-        args.rpc_address.clone(), state.reqwest_client.clone(),
-    );
-
+    let target_ipfs_client = state.get_ipfs_client_with_rpc_addr(args.rpc_address.clone());
     target_ipfs_client.bootstrap_add(
         &state.ipfs_metadata.ipfs_swarm_multi_address,
         &state.ipfs_metadata.ipfs_peer_id,

@@ -30,9 +30,7 @@ pub async fn get_peer_id_until_success(ipfs_client: &ReqwestIpfsClient, interval
 #[tracing::instrument(skip_all)]
 pub(crate) async fn bootstrap_and_check_health(state: AppState, node_model: node::Model) -> Result<node::Model, ()> {
     let _target_peer_id = node_model.peer_id.clone();
-    let target_ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
-        node_model.rpc_address.clone(), state.reqwest_client.clone(),
-    );
+    let target_ipfs_client = state.get_ipfs_client_with_rpc_addr(node_model.rpc_address.clone());
     let task = target_ipfs_client.bootstrap_add(
         &state.ipfs_metadata.ipfs_swarm_multi_address,
         &state.ipfs_metadata.ipfs_peer_id,

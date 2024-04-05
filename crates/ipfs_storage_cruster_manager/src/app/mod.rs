@@ -32,7 +32,7 @@ pub struct IpfsMetadata {
 pub struct AppState {
     /// Unified reqwest client for use.
     pub reqwest_client: reqwest::Client,
-    /// Contact self's IPFS node.
+    /// IPFS Client to contact self's IPFS node.
     pub ipfs_client: Arc<ReqwestIpfsClient>,
     /// Some metadata of self's IPFS node.
     pub ipfs_metadata: Arc<IpfsMetadata>,
@@ -51,6 +51,7 @@ impl AppState {
             &app_config.database_url,
             DATABASE_CONN_RETRY_INTERVAL_TIME_MS,
         ).await;
+
 
         let ipfs_client = ReqwestIpfsClient::new_with_reqwest_client(
             app_config.ipfs_rpc_address.to_string(),
@@ -75,6 +76,14 @@ impl AppState {
                 .build(HttpConnector::new()),
             db_conn,
         }
+    }
+
+    /// Get an IPFS client with certain RPC address.
+    pub(crate) fn get_ipfs_client_with_rpc_addr(&self, rpc_address: String) -> ReqwestIpfsClient {
+        ReqwestIpfsClient::new_with_reqwest_client(
+            rpc_address,
+            self.reqwest_client.clone(),
+        )
     }
 }
 
