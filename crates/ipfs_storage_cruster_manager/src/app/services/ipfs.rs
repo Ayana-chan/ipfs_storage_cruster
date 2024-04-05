@@ -43,14 +43,17 @@ pub(crate) async fn bootstrap_and_check_health(state: AppState, node_model: node
         task,
     ).await;
 
-    let res = res.map_err(|_e| {
-        error!("Bootstrap node for timeout. peer_id: {}", _target_peer_id);
-        ()
-    })?;
-
     let status = match res {
-        Ok(_) => sea_orm_active_enums::NodeStatus::Online,
-        Err(_) => sea_orm_active_enums::NodeStatus::Unhealthy,
+        Ok(res) => {
+            match res {
+                Ok(_) => sea_orm_active_enums::NodeStatus::Online,
+                Err(_) => sea_orm_active_enums::NodeStatus::Unhealthy,
+            }
+        }
+        Err(_e) => {
+            error!("Bootstrap node for timeout. peer_id: {}", _target_peer_id);
+            sea_orm_active_enums::NodeStatus::Unhealthy
+        }
     };
 
     let mut node_model: node::ActiveModel = node_model.into();
