@@ -1,3 +1,5 @@
+/// A client to contact `ipfs_node_wrapper`.
+
 pub mod admin;
 pub mod common;
 mod client_tools;

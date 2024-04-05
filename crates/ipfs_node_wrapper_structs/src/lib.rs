@@ -1,3 +1,5 @@
+/// Types used by `ipfs_node_wrapper`.
+
 pub mod admin;
 pub mod public;
 pub mod errors;

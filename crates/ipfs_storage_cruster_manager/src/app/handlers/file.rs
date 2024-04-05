@@ -26,6 +26,7 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
 
 // ----------------------------------------------------------------
 
+/// Add a file to ipfs, return the message of the added file.
 async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::Request) -> ApiResult<dtos::IpfsAddFileResponse> {
     // log
     let file_size = req.headers().get(http::header::CONTENT_LENGTH);

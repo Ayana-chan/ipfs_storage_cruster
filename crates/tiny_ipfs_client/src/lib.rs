@@ -1,3 +1,4 @@
+//! A tiny IPFS client with a little necessary APIs.
 
 mod dtos;
 mod models;
