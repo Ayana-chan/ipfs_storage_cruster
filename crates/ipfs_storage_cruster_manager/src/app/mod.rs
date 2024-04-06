@@ -8,12 +8,13 @@ use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use sea_orm::prelude::DatabaseConnection;
 use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app_builder::AppConfig;
+use crate::file_decision;
 
 pub mod handlers;
 pub mod errors;
 pub mod dtos;
 pub mod common;
-mod services;
+pub(crate) mod services;
 
 pub type RawHyperClient = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
@@ -38,7 +39,10 @@ pub struct AppState {
     pub ipfs_metadata: Arc<IpfsMetadata>,
     /// Used to send raw hyper request.
     pub raw_hyper_client: RawHyperClient,
+    /// MySql connection.
     pub db_conn: DatabaseConnection,
+    /// Make decisions to define file storage strategy.
+    pub file_storage_decision_maker: Arc<dyn file_decision::FileStorageDecisionMaker>,
 }
 
 impl AppState {
@@ -75,6 +79,8 @@ impl AppState {
             raw_hyper_client: hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
                 .build(HttpConnector::new()),
             db_conn,
+            // TODO 自定义决策
+            file_storage_decision_maker: Arc::new(file_decision::decision_makers::RandomFileStorageDecisionMaker::new()),
         }
     }
 
