@@ -25,12 +25,13 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
     };
     let add_pin_res = new_pin.insert(&state.db_conn).await
         .map_err(services::db::check_duplicate_key_error);
-    // match add_pin_res {
-    //     Ok(v) => {
-    //
-    //     }
-    //     Err(e) => {}
-    // }
+    if let Err(e) = add_pin_res {
+        // no need to do anything when dup key
+        let _ = e.map_err(services::db::handle_db_error)?;
+    } else {
+        // make decision and store
+        services::ipfs::store_file_to_cluster(&state).await?;
+    }
 
     // TODO pin
     let res = dtos::UploadFileResponse {

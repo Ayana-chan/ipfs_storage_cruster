@@ -130,3 +130,10 @@ pub(crate) async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::R
 
     Ok(body)
 }
+
+/// Make decision and store file with certain CID to cluster.
+#[tracing::instrument(skip_all)]
+pub(crate) async fn store_file_to_cluster(state: &AppState) -> ApiResult<()> {
+    let target_rpc_addrs = state.file_storage_decision_maker.decide_store_node(&state.db_conn, &state.reqwest_client).await?;
+    todo!()
+}
