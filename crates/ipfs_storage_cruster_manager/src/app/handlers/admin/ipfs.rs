@@ -38,7 +38,7 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
     debug!("Add IPFS node target peer id: {}", aim_peer_id);
 
     let new_node = node::ActiveModel {
-        id: Set(uuid::Uuid::new_v4().to_string()),
+        id: Set(Uuid::new_v4().to_string()),
         peer_id: Set(aim_peer_id),
         rpc_address: Set(args.rpc_address),
         wrapper_public_address: Set(Some(args.wrapper_public_address)),
