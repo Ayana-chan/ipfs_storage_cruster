@@ -19,7 +19,7 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
 
     let new_pin_id = Uuid::new_v4().to_string();
     let new_pin = pin::ActiveModel {
-        id: Set(new_pin_id),
+        id: Set(new_pin_id.clone()),
         status: Set(sea_orm_active_enums::Status::Queued),
         cid: Set(upload_res.hash.clone()),
     };
@@ -29,13 +29,24 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
         // no need to do anything when dup key
         let _ = e.map_err(services::db::handle_db_error)?;
     } else {
+        // TODO here async
         // make decision and store
-        services::ipfs::store_file_to_cluster(&state, upload_res.hash.clone()).await?;
+        let stored_node_list = services::ipfs::store_file_to_cluster(&state, upload_res.hash.clone()).await?;
+
+        // store node to database
+        let node_models: Vec<_> = stored_node_list.into_iter()
+            .map(|v| pins_stored_nodes::ActiveModel {
+                id: Set(Uuid::new_v4().to_string()),
+                pin_id: Set(new_pin_id.clone()),
+                node_id: Set(v.id),
+            }).collect();
+        PinsStoredNodes::insert_many(node_models)
+            .exec(&state.db_conn).await
+            .map_err(services::db::handle_db_error)?;
     }
 
-    // TODO pin
     let res = dtos::UploadFileResponse {
-        request_id: "todo request_id".to_string(),
+        request_id: new_pin_id,
         file_metadata: upload_res,
     };
     Ok(res.into())

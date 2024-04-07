@@ -2,4 +2,5 @@
 
 pub use super::node::Entity as Node;
 pub use super::pin::Entity as Pin;
+pub use super::pins_stored_nodes::Entity as PinsStoredNodes;
 pub use super::user_pins::Entity as UserPins;
