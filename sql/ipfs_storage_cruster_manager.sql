@@ -22,16 +22,15 @@
 DROP TABLE IF EXISTS `node`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `node`
-(
-    `id`                     varchar(100) NOT NULL,
-    `peer_id`                varchar(100) NOT NULL COMMENT 'ipfs peer id',
-    `rpc_address`            varchar(100) NOT NULL COMMENT 'Address of IPFS node''s rpc api',
-    `wrapper_public_address` varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (public)',
-    `wrapper_admin_address`  varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (admin)',
-    `node_status`            enum('online','unhealthy','offline') NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `node_peer_id_uindex` (`peer_id`)
+CREATE TABLE `node` (
+  `id` varchar(100) NOT NULL,
+  `peer_id` varchar(100) NOT NULL COMMENT 'ipfs peer id',
+  `rpc_address` varchar(100) NOT NULL COMMENT 'Address of IPFS node''s rpc api',
+  `wrapper_public_address` varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (public)',
+  `wrapper_admin_address` varchar(100) DEFAULT NULL COMMENT 'Address of node wrapper server (admin)',
+  `node_status` enum('online','unhealthy','offline') NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `node_peer_id_uindex` (`peer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Bootstraped IPFS nodes'' metadata';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -39,17 +38,86 @@ CREATE TABLE `node`
 -- Dumping data for table `node`
 --
 
-LOCK
-TABLES `node` WRITE;
+LOCK TABLES `node` WRITE;
 /*!40000 ALTER TABLE `node` DISABLE KEYS */;
-INSERT INTO `node`
-VALUES ('aaa', 'aaaa', 'www', 'cccc', NULL, 'online');
-INSERT INTO `node`
-VALUES ('7b25a769-6ab3-419a-a9dc-a00ad22647e4', '12D3KooWF3mGrpGjYf7e11jXkDBdkBQW328h1Reb9onUUB3HnKuC',
-        'slave-ipfs-0:5001', '192.168.177.134:3000', 'wrapper-0:4000', 'online');
+INSERT INTO `node` VALUES ('aaa','aaaa','www','cccc',NULL,'online');
 /*!40000 ALTER TABLE `node` ENABLE KEYS */;
-UNLOCK
-TABLES;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pin`
+--
+
+DROP TABLE IF EXISTS `pin`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pin` (
+  `id` varchar(100) NOT NULL COMMENT 'request id',
+  `status` enum('Queued','Pinning','Pinned','Failed','notfound') NOT NULL COMMENT 'pin status',
+  `cid` varchar(100) NOT NULL COMMENT 'Pin CID',
+  PRIMARY KEY (`id`),
+  KEY `pin_cid_index` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Pins';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pin`
+--
+
+LOCK TABLES `pin` WRITE;
+/*!40000 ALTER TABLE `pin` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pin` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pins_stored_nodes`
+--
+
+DROP TABLE IF EXISTS `pins_stored_nodes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pins_stored_nodes` (
+  `id` varchar(100) NOT NULL,
+  `pin_id` varchar(100) NOT NULL,
+  `node_id` varchar(100) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Record which nodes stored the data of pin.';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pins_stored_nodes`
+--
+
+LOCK TABLES `pins_stored_nodes` WRITE;
+/*!40000 ALTER TABLE `pins_stored_nodes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pins_stored_nodes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `user_pins`
+--
+
+DROP TABLE IF EXISTS `user_pins`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_pins` (
+  `id` varchar(100) NOT NULL,
+  `user_id` varchar(100) NOT NULL COMMENT 'Id of the user',
+  `pin_id` varchar(100) NOT NULL COMMENT 'Id of the pin',
+  `pin_name` varchar(100) DEFAULT NULL COMMENT 'The name of pin given by a user',
+  PRIMARY KEY (`id`),
+  KEY `user_pins_user_id_index` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Pins in users'' view';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `user_pins`
+--
+
+LOCK TABLES `user_pins` WRITE;
+/*!40000 ALTER TABLE `user_pins` DISABLE KEYS */;
+/*!40000 ALTER TABLE `user_pins` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -60,4 +128,4 @@ TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-11 13:19:27
+-- Dump completed on 2024-04-07 19:39:07
