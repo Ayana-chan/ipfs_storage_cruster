@@ -16,3 +16,5 @@ define_static_error!(IPFS_CLIENT_ERROR, "C0601", "Error when send request to IPF
 define_static_error!(IPFS_NOT_FOUND, "C0602", "IPFS not found");
 define_static_error!(IPFS_REQUEST_ERROR, "C0603", "IPFS node rejects the request");
 define_static_error!(IPFS_RESPOND_ERROR, "C0604", "IPFS node responds an error");
+define_static_error!(IPFS_NODE_CLUSTER_ERROR, "C0650", "Error about IPFS node cluster");
+define_static_error!(IPFS_NODE_CLUSTER_UNHEALTHY, "C0650", "IPFS node cluster is too unhealthy to finish the task");

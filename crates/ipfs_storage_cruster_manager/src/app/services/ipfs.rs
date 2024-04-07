@@ -8,6 +8,7 @@ use crate::app::AppState;
 use crate::utils::move_entry_between_header_map;
 use crate::app::common::ApiResult;
 use crate::app::{dtos, errors};
+use crate::app::errors::ResponseError;
 
 static RE_BOOTSTRAP_TIMEOUT_MS: u64 = 2000;
 
@@ -131,9 +132,56 @@ pub(crate) async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::R
     Ok(body)
 }
 
+// TODO Revoke storage (remove pin) when cluster unhealthy.
 /// Make decision and store file with certain CID to cluster.
 #[tracing::instrument(skip_all)]
-pub(crate) async fn store_file_to_cluster(state: &AppState) -> ApiResult<()> {
+pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiResult<()> {
     let target_rpc_addrs = state.file_storage_decision_maker.decide_store_node(&state.db_conn, &state.reqwest_client).await?;
-    todo!()
+
+    // send file to nodes
+    let mut join_set = tokio::task::JoinSet::new();
+    for rpc_addr in target_rpc_addrs.into_iter() {
+        let client = state.get_ipfs_client_with_rpc_addr(rpc_addr.clone());
+        let task = add_pin_to_node(client, cid.clone());
+        join_set.spawn(task);
+    }
+
+    while let Some(res) = join_set.join_next().await {
+        if let Ok(res) = res {
+            match res {
+                Ok(_) => {
+                    info!("Succeed add one pin of {cid}");
+                    continue;
+                }
+                Err(e) => {
+                    // stop when cluster unhealthy
+                    if e == errors::IPFS_NODE_CLUSTER_UNHEALTHY {
+                        error!("Failed add pin of {cid} to cluster");
+                        return Err(e);
+                    }
+                }
+            }
+        }
+
+        // Failed to add pin
+        let retry_target = state.file_storage_decision_maker.decide_store_node_fail_one(&state.db_conn, &state.reqwest_client).await?;
+        for rpc_addr in retry_target.into_iter() {
+            let client = state.get_ipfs_client_with_rpc_addr(rpc_addr.clone());
+            let task = add_pin_to_node(client, cid.clone());
+            join_set.spawn(task);
+        }
+    }
+
+    Ok(())
+}
+
+/// Send add pin RPC to an IPFS node.
+async fn add_pin_to_node(client: ReqwestIpfsClient, cid: String) -> ApiResult<()> {
+    let res = client.add_pin_recursive(&cid, None).await
+        .map_err(Into::<ResponseError>::into);
+    if let Err(e) = res.as_ref() {
+        let rpc_address = client.rpc_address;
+        error!("Failed to add pin of {cid} to IPFS node {rpc_address}, because: {e:?}");
+    }
+    res
 }

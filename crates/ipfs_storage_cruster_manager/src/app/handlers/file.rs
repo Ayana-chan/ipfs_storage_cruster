@@ -30,7 +30,7 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
         let _ = e.map_err(services::db::handle_db_error)?;
     } else {
         // make decision and store
-        services::ipfs::store_file_to_cluster(&state).await?;
+        services::ipfs::store_file_to_cluster(&state, upload_res.hash.clone()).await?;
     }
 
     // TODO pin

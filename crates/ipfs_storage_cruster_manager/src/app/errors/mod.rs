@@ -68,6 +68,12 @@ impl From<ResponseErrorStatic> for ResponseError {
     }
 }
 
+impl PartialEq<ResponseErrorStatic> for ResponseError {
+    fn eq(&self, other: &ResponseErrorStatic) -> bool {
+        self.code == other.code
+    }
+}
+
 /// Use `into()` to convert to `ResponseError`, which impl `IntoResponse`.
 #[derive(Clone, Debug, Serialize)]
 pub struct ResponseErrorStatic {

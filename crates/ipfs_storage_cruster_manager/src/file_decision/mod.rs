@@ -14,8 +14,16 @@ pub trait FileStorageDecisionMaker: Send + Sync + Debug {
     ///
     /// Return target `rpc_address` list.
     async fn decide_store_node(&self,
-                         db_conn: &DatabaseConnection,
-                         reqwest_client: &reqwest::Client,
+                               db_conn: &DatabaseConnection,
+                               reqwest_client: &reqwest::Client,
+    ) -> ApiResult<Vec<String>>;
+
+    /// Decide which nodes to re-store data on when a store failure occurs.
+    ///
+    /// Return `errors::IPFS_NODE_CLUSTER_UNHEALTHY` to stop store file.
+    async fn decide_store_node_fail_one(&self,
+                                        db_conn: &DatabaseConnection,
+                                        reqwest_client: &reqwest::Client,
     ) -> ApiResult<Vec<String>>;
 }
 
