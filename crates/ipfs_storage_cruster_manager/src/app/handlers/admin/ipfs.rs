@@ -59,6 +59,8 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
         .exec(&state.db_conn)
         .await.map_err(services::db::handle_db_error)?;
 
+    state.file_storage_decision_maker.on_add_new_node().await;
+
     Ok(().into())
 }
 

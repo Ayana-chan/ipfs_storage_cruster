@@ -61,6 +61,7 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
         Ok(target)
     }
 
+    #[tracing::instrument(skip_all)]
     async fn decide_store_node_fail_one(&self,
                                         db_conn: &DatabaseConnection,
                                         _reqwest_client: &Client)
@@ -70,6 +71,11 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
             return Err(errors::IPFS_NODE_CLUSTER_UNHEALTHY.clone_to_error());
         }
         Ok(target)
+    }
+
+    #[tracing::instrument(skip_all)]
+    async fn on_add_new_node(&self) {
+        info!("RandomFileStorageDecisionMaker: on_add_new_node");
     }
 }
 

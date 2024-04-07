@@ -25,6 +25,9 @@ pub trait FileStorageDecisionMaker: Send + Sync + Debug {
                                         db_conn: &DatabaseConnection,
                                         reqwest_client: &reqwest::Client,
     ) -> ApiResult<Vec<TargetIPFSNodeMessage>>;
+
+    /// Called when a new node is added to cluster.
+    async fn on_add_new_node(&self);
 }
 
 #[derive(Clone, Debug)]
