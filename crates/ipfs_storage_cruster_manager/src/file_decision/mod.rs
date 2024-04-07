@@ -12,11 +12,11 @@ pub mod decision_makers;
 pub trait FileStorageDecisionMaker: Send + Sync + Debug {
     /// Decide which nodes to store data on.
     ///
-    /// Return target `rpc_address` list.
+    /// Return target node list.
     async fn decide_store_node(&self,
                                db_conn: &DatabaseConnection,
                                reqwest_client: &reqwest::Client,
-    ) -> ApiResult<Vec<String>>;
+    ) -> ApiResult<Vec<TargetIPFSNodeMessage>>;
 
     /// Decide which nodes to re-store data on when a store failure occurs.
     ///
@@ -24,6 +24,15 @@ pub trait FileStorageDecisionMaker: Send + Sync + Debug {
     async fn decide_store_node_fail_one(&self,
                                         db_conn: &DatabaseConnection,
                                         reqwest_client: &reqwest::Client,
-    ) -> ApiResult<Vec<String>>;
+    ) -> ApiResult<Vec<TargetIPFSNodeMessage>>;
+}
+
+#[derive(Clone, Debug)]
+/// Message about IPFS node to contact.
+pub struct TargetIPFSNodeMessage {
+    /// Node's id in database.
+    pub id: String,
+    /// RPC address to contact.
+    pub rpc_address: String,
 }
 

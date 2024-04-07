@@ -136,12 +136,13 @@ pub(crate) async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::R
 /// Make decision and store file with certain CID to cluster.
 #[tracing::instrument(skip_all)]
 pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiResult<()> {
-    let target_rpc_addrs = state.file_storage_decision_maker.decide_store_node(&state.db_conn, &state.reqwest_client).await?;
+    // let final_stored_node;
 
+    let target_rpc_list = state.file_storage_decision_maker.decide_store_node(&state.db_conn, &state.reqwest_client).await?;
     // send file to nodes
     let mut join_set = tokio::task::JoinSet::new();
-    for rpc_addr in target_rpc_addrs.into_iter() {
-        let client = state.get_ipfs_client_with_rpc_addr(rpc_addr.clone());
+    for node in target_rpc_list.into_iter() {
+        let client = state.get_ipfs_client_with_rpc_addr(node.rpc_address.clone());
         let task = add_pin_to_node(client, cid.clone());
         join_set.spawn(task);
     }
@@ -164,9 +165,9 @@ pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiR
         }
 
         // Failed to add pin
-        let retry_target = state.file_storage_decision_maker.decide_store_node_fail_one(&state.db_conn, &state.reqwest_client).await?;
-        for rpc_addr in retry_target.into_iter() {
-            let client = state.get_ipfs_client_with_rpc_addr(rpc_addr.clone());
+        let retry_target_list = state.file_storage_decision_maker.decide_store_node_fail_one(&state.db_conn, &state.reqwest_client).await?;
+        for node in retry_target_list.into_iter() {
+            let client = state.get_ipfs_client_with_rpc_addr(node.rpc_address.clone());
             let task = add_pin_to_node(client, cid.clone());
             join_set.spawn(task);
         }
