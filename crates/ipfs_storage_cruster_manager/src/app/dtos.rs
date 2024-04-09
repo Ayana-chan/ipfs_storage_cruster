@@ -30,3 +30,28 @@ pub struct AddIpfsNodeArgs {
     pub wrapper_admin_address: String,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListPinsInOneNodeArgs {
+    pub node_id: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListPinsInOneNodeResponse {
+    pub node_id: String,
+    pub pins: Vec<pin::Model>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListNodesWithPinArgs {
+    pub pin_id: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListNodesWithPinResponse {
+    pub pin_id: String,
+    pub nodes: Vec<node::Model>,
+}

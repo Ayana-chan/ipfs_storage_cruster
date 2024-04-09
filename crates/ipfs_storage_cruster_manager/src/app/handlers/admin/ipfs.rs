@@ -1,3 +1,5 @@
+//! API about ipfs node management.
+
 #[allow(unused_imports)]
 use tracing::{trace, debug, info};
 use axum::extract::{State, Json};
@@ -65,7 +67,7 @@ pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos:
 }
 
 /// Re-bootstrap all nodes in database that is not `Offline`.
-#[axum_macros::debug_handler]
+// #[axum_macros::debug_handler]
 pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> StandardApiResult<()> {
     info!("Re-bootstrap All IPFS Node.");
     let node_vec: Vec<node::Model> = Node::find()
@@ -104,97 +106,3 @@ pub async fn re_bootstrap_all_ipfs_node(State(state): State<AppState>) -> Standa
     Ok(().into())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    const DB_URL: &str = "mysql://root:1234@localhost/ipfs_storage_cruster_manager";
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_db() {
-        tracing_subscriber::fmt()
-            .with_max_level(tracing::Level::TRACE)
-            .init();
-
-        let conn = Database::connect(DB_URL)
-            .await
-            .expect("Database connection failed");
-
-        let new_uuid = uuid::Uuid::new_v4().to_string();
-
-        let res = Node::find().all(&conn).await.unwrap();
-        println!("find all: {:#?}", res);
-
-        node::ActiveModel {
-            id: Set(new_uuid.clone()),
-            peer_id: Set("abcd peer id".to_string()),
-            rpc_address: Set("9.9.9.9:1234".to_string()),
-            wrapper_public_address: Set(Some("19.19.19.19:5678".to_string())),
-            wrapper_admin_address: Set(Some("19.19.19.19:9999".to_string())),
-            node_status: Set(sea_orm_active_enums::NodeStatus::Online),
-        }.insert(&conn)
-            .await.unwrap();
-        println!("insert: {}", new_uuid);
-
-        let res = Node::find().all(&conn).await.unwrap();
-        println!("find all: {:#?}", res);
-
-        // dup insert with on conflict
-        let new_node = node::ActiveModel {
-            id: Set(new_uuid.clone()),
-            peer_id: Set("abcd peer id".to_string()),
-            rpc_address: Set("88.88.88.88:1234".to_string()),
-            wrapper_public_address: Set(Some("89.89.89.89:5678".to_string())),
-            wrapper_admin_address: Set(Some("89.89.89.89:9999".to_string())),
-            node_status: Set(sea_orm_active_enums::NodeStatus::Unhealthy),
-        };
-        let dup_conflict = sea_query::OnConflict::column(node::Column::PeerId)
-            .update_columns([
-                node::Column::RpcAddress,
-                node::Column::WrapperPublicAddress,
-                node::Column::WrapperAdminAddress,
-                node::Column::NodeStatus,
-            ])
-            .to_owned();
-        let result = Node::insert(new_node)
-            .on_conflict(dup_conflict)
-            .exec(&conn)
-            .await.unwrap();
-        assert_eq!(result.last_insert_id, new_uuid);
-
-        // dup insert with dup error check
-        let new_node = node::ActiveModel {
-            id: Set(new_uuid.clone()),
-            peer_id: Set("abcd peer id".to_string()),
-            rpc_address: Set("11.11.11.11:1234".to_string()),
-            wrapper_public_address: Set(Some("11.11.11.11:5678".to_string())),
-            wrapper_admin_address: Set(Some("11.11.11.11:9999".to_string())),
-            node_status: Set(sea_orm_active_enums::NodeStatus::Offline),
-        };
-        let result = Node::insert(new_node)
-            .exec(&conn)
-            .await;
-        match result {
-            Ok(_) => {
-                panic!("Should have dup err");
-            }
-            Err(e) => {
-                let check_res = services::db::check_duplicate_key_error(e);
-                println!("dup insert return err: {:?}", check_res);
-                assert!(check_res.is_ok(), "Should be dup err, but get {:?}", check_res);
-            }
-        }
-
-        let res = Node::find().all(&conn).await.unwrap();
-        println!("find all: {:#?}", res);
-
-        let aim_opt = Node::find_by_id(new_uuid.clone()).one(&conn).await.unwrap();
-        let aim = aim_opt.unwrap();
-        aim.delete(&conn).await.unwrap();
-        println!("delete: {}", new_uuid);
-
-        let res = Node::find().all(&conn).await.unwrap();
-        println!("find all: {:#?}", res);
-    }
-}
