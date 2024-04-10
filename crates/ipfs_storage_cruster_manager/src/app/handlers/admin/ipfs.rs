@@ -9,7 +9,7 @@ use crate::app::common::StandardApiResult;
 use crate::app::{dtos, services};
 
 /// List all added IPFS nodes.
-#[axum_macros::debug_handler]
+// #[axum_macros::debug_handler]
 pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult<dtos::ListIpfsNodesResponse> {
     info!("List IPFS nodes");
     let node_vec = Node::find().all(&state.db_conn)
@@ -25,7 +25,7 @@ pub async fn list_ipfs_nodes(State(state): State<AppState>) -> StandardApiResult
 /// Let target IPFS node bootstrap self.
 /// Would set the status of node to `Online`.
 /// Upsert the database entry.
-#[axum_macros::debug_handler]
+// #[axum_macros::debug_handler]
 pub async fn add_ipfs_node(State(state): State<AppState>, Json(args): Json<dtos::AddIpfsNodeArgs>) -> StandardApiResult<()> {
     info!("Add IPFS node. {:?}", args);
     let target_ipfs_client = state.get_ipfs_client_with_rpc_addr(args.rpc_address.clone());

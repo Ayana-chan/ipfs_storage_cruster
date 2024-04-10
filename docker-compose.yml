@@ -19,9 +19,9 @@ services:
     container_name: ipfs_storage_cruster-master-ipfs
     image: ipfs/kubo:release
     ports:
-      - 8080:8080 # ipfs gateway
-      - 5001:5001 # ipfs rpc api
-      - 4001:4001 # ipfs swarm
+      - "8080:8080" # ipfs gateway
+      - "5001:5001" # ipfs rpc api
+      - "4001:4001" # ipfs swarm
     volumes:
       - ./compose/master-ipfs:/data/ipfs
       - ./scripts/ipfs_init.sh:/container-init.d/ipfs_init.sh
@@ -37,17 +37,41 @@ services:
       APP_IPFS_GATEWAY_ADDRESS: "slave-ipfs-0:8080"
       APP_IPFS_RPC_ADDRESS: "slave-ipfs-0:5001"
     ports:
-      - 3000:3000 # public
-      - 4000:4000 # admin
+      - "3000:3000" # public
+      - "4000:4000" # admin
 
   slave-ipfs-0:
     container_name: ipfs_storage_cruster-slave-ipfs-0
     image: ipfs/kubo:release
     ports:
-      - 8081:8080 # ipfs gateway
-      - 5002:5001 # ipfs rpc api
+      - "8081:8080" # ipfs gateway
+      - "5002:5001" # ipfs rpc api
     volumes:
       - ./compose/slave-ipfs-0:/data/ipfs
+      - ./scripts/ipfs_init.sh:/container-init.d/ipfs_init.sh
+
+  # ===== Node 1 =====
+  wrapper-1:
+    container_name: ipfs_storage_cruster-wrapper-1
+    image: ipfs_storage_cruster/ipfs_node_wrapper:latest
+    depends_on:
+      - slave-ipfs-1
+    environment:
+      APP_LOG: "trace,hyper=debug"
+      APP_IPFS_GATEWAY_ADDRESS: "slave-ipfs-1:8080"
+      APP_IPFS_RPC_ADDRESS: "slave-ipfs-1:5001"
+    ports:
+      - "3001:3000" # public
+      - "4001:4000" # admin
+
+  slave-ipfs-1:
+    container_name: ipfs_storage_cruster-slave-ipfs-1
+    image: ipfs/kubo:release
+    ports:
+      - "8082:8080" # ipfs gateway
+      - "5003:5001" # ipfs rpc api
+    volumes:
+      - ./compose/slave-ipfs-1:/data/ipfs
       - ./scripts/ipfs_init.sh:/container-init.d/ipfs_init.sh
 
   # ===== Database =====
@@ -59,7 +83,7 @@ services:
       MYSQL_DATABASE: ipfs_storage_cruster_manager
       TZ: Asia/Shanghai
     ports:
-      - 3306:3306
+      - "3306:3306"
     volumes:
       - ./sql/ipfs_storage_cruster_manager.sql:/docker-entrypoint-initdb.d/ipfs_storage_cruster_manager.sql # init sql
 #      - ./compose/manager-mysql/init/:/docker-entrypoint-initdb.d/
