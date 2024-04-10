@@ -53,7 +53,7 @@ DROP TABLE IF EXISTS `pin`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `pin` (
   `id` varchar(100) NOT NULL COMMENT 'request id',
-  `status` enum('Queued','Pinning','Pinned','Failed','notfound') NOT NULL COMMENT 'pin status',
+  `status` enum('Queued','Pinning','Pinned','Failed','NotFound') NOT NULL COMMENT 'pin status',
   `cid` varchar(100) NOT NULL COMMENT 'Pin CID',
   PRIMARY KEY (`id`),
   KEY `pin_cid_index` (`cid`)
@@ -128,4 +128,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-04-07 19:39:07
+-- Dump completed on 2024-04-10 17:14:29

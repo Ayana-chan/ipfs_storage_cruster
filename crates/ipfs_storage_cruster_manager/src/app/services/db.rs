@@ -3,6 +3,8 @@ use tracing::{trace, debug, info, error};
 use crate::imports::dao_imports::*;
 use crate::app::errors;
 
+pub type DbResult<T> = Result<T, DbErr>;
+
 #[tracing::instrument(skip_all)]
 pub async fn connect_db_until_success(db_url: &str, interval_time_ms: u64) -> DatabaseConnection {
     loop {

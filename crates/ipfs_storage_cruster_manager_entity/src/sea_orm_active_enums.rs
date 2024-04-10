@@ -24,6 +24,6 @@ pub enum Status {
     Pinned,
     #[sea_orm(string_value = "Failed")]
     Failed,
-    #[sea_orm(string_value = "notfound")]
-    Notfound,
+    #[sea_orm(string_value = "NotFound")]
+    NotFound,
 }

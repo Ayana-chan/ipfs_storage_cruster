@@ -32,6 +32,20 @@ pub struct AddIpfsNodeArgs {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ListPinsInOneNodeActuallyArgs {
+    pub node_id: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListPinsInOneNodeActuallyResponse {
+    pub node_id: String,
+    /// Just return CIDs.
+    pub pins_cid: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListPinsInOneNodeArgs {
     pub node_id: String,
 }

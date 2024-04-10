@@ -2,9 +2,29 @@
 
 use axum::extract::{State, Json};
 use crate::imports::dao_imports::*;
-use crate::app::AppState;
+use crate::app::{AppState, daos};
 use crate::app::common::StandardApiResult;
-use crate::app::{dtos, services};
+use crate::app::{dtos, services, errors};
+
+/// List all pins in the certain node.
+/// Just query by IPFS RPC, which returns pins that really stored in target node.
+// #[axum_macros::debug_handler]
+pub async fn list_pins_in_one_node_actually(State(state): State<AppState>, Json(args): Json<dtos::ListPinsInOneNodeActuallyArgs>)
+                                            -> StandardApiResult<dtos::ListPinsInOneNodeActuallyResponse> {
+    let rpc_addr = daos::find_ipfs_node_rpc_by_id(args.node_id.clone(), &state.db_conn).await
+        .map_err(services::db::handle_db_error)?
+        .ok_or_else(|| errors::DB_TARGET_DATA_NOT_EXIST.clone_to_error())?;
+
+    let client = state.get_ipfs_client_with_rpc_addr(rpc_addr);
+    let pins_cid = client.list_recursive_pins_pinned(false).await?;
+    let pins_cid = pins_cid.keys.into_keys().collect();
+
+    let res = dtos::ListPinsInOneNodeActuallyResponse {
+        node_id: args.node_id.clone(),
+        pins_cid
+    };
+    Ok(res.into())
+}
 
 /// List all pins in the certain node.
 /// Only query inside the database.

@@ -9,6 +9,9 @@ macro_rules! define_static_error {
     };
 }
 
+define_static_error!(DB_DATA_FAIL, "A1100", "Error about data in database");
+define_static_error!(DB_TARGET_DATA_NOT_EXIST, "A1101", "Target data doesn't exist in database");
+
 define_static_error!(DB_FAIL, "C0300", "Error about database");
 
 define_static_error!(IPFS_FAIL, "C0600", "Error about IPFS");
