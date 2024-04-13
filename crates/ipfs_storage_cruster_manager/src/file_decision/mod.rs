@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use sea_orm::DatabaseConnection;
 use axum::async_trait;
 use crate::app::common::ApiResult;
+use crate::imports::dao_imports::*;
 
 pub mod decision_makers;
 
@@ -30,8 +31,10 @@ pub trait FileStorageDecisionMaker: Send + Sync + Debug {
     async fn on_add_new_node(&self);
 }
 
-#[derive(Clone, Debug)]
 /// Message about IPFS node to contact.
+#[derive(Clone, Debug)]
+#[derive(DerivePartialModel, FromQueryResult)]
+#[sea_orm(entity = "Node")]
 pub struct TargetIPFSNodeMessage {
     /// Node's id in database.
     pub id: String,

@@ -21,22 +21,16 @@ impl RandomFileStorageDecisionMaker {
                                 db_conn: &DatabaseConnection,
     ) -> ApiResult<Vec<TargetIPFSNodeMessage>> {
         let available_nodes = Node::find()
-            .select_only()
-            .columns([node::Column::Id, node::Column::RpcAddress])
             .filter(node::Column::NodeStatus.ne(sea_orm_active_enums::NodeStatus::Offline))
+            .into_partial_model::<TargetIPFSNodeMessage>()
             .all(db_conn).await
             .map_err(services::db::handle_db_error)?;
 
         let available_node_num = available_nodes.len();
         // It's ok when `available_node_num` is less than 3.
         let decide_result = fastrand::choose_multiple(available_nodes.into_iter(), node_num);
-        let rpc_addrs = decide_result.into_iter()
-            .map(|v| TargetIPFSNodeMessage {
-                id: v.id,
-                rpc_address: v.rpc_address,
-            }).collect();
-        info!("Find {available_node_num} available IPFS nodes. Choose {node_num} node randomly. Result: {rpc_addrs:?}");
-        Ok(rpc_addrs)
+        info!("Find {available_node_num} available IPFS nodes. Choose {node_num} node randomly. Result: {decide_result:?}");
+        Ok(decide_result)
     }
 }
 
