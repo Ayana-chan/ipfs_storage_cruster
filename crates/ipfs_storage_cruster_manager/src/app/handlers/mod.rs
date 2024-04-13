@@ -110,6 +110,55 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
+    async fn try_select_with_id() {
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::TRACE)
+            .init();
+
+        let conn = Database::connect(DB_URL)
+            .await
+            .expect("Database connection failed");
+
+        let new_uuid = uuid::Uuid::new_v4().to_string();
+
+        node::ActiveModel {
+            id: Set(new_uuid.clone()),
+            peer_id: Set("abcd peer id".to_string()),
+            rpc_address: Set("1.1.1.1:1234".to_string()),
+            wrapper_public_address: Set(Some("1.1.1.1:5678".to_string())),
+            wrapper_admin_address: Set(Some("1.1.1.1:9999".to_string())),
+            node_status: Set(sea_orm_active_enums::NodeStatus::Online),
+        }.insert(&conn)
+            .await.unwrap();
+        println!("insert: {}", new_uuid);
+
+        // simple partial select would return ColumnNotFound on missing fields
+        let find_res = Node::find_by_id(new_uuid.clone())
+            .select_only()
+            .columns([node::Column::Id, node::Column::RpcAddress])
+            .one(&conn).await;
+        assert!(find_res.is_err());
+        println!("find by id res: {:?}", find_res);
+
+        #[derive(DerivePartialModel, FromQueryResult, Debug)]
+        #[sea_orm(entity = "Node")]
+        #[allow(dead_code)]
+        struct PartialNode {
+            rpc_address: String,
+        }
+        let find_res = Node::find_by_id(new_uuid.clone())
+            .into_partial_model::<PartialNode>()
+            .one(&conn).await;
+        println!("find by id res with partial model: {:?}", find_res);
+
+        let aim_opt = Node::find_by_id(new_uuid.clone()).one(&conn).await.unwrap();
+        let aim = aim_opt.unwrap();
+        aim.delete(&conn).await.unwrap();
+        println!("delete: {}", new_uuid);
+    }
+
+    #[tokio::test]
+    #[ignore]
     async fn try_join_sql() {
         let node_id = "aaaid";
         let sql = Pin::find()
@@ -118,7 +167,7 @@ mod tests {
                 Pin::belongs_to(PinsStoredNodes)
                     .from(pin::Column::Id)
                     .to(pins_stored_nodes::Column::PinId)
-                    .into()
+                    .into(),
             )
             .filter(pins_stored_nodes::Column::NodeId.eq(node_id))
             .build(DbBackend::MySql)

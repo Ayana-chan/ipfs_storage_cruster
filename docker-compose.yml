@@ -60,16 +60,10 @@ services:
       APP_LOG: "trace,hyper=debug"
       APP_IPFS_GATEWAY_ADDRESS: "slave-ipfs-1:8080"
       APP_IPFS_RPC_ADDRESS: "slave-ipfs-1:5001"
-    ports:
-      - "3001:3000" # public
-      - "4001:4000" # admin
 
   slave-ipfs-1:
     container_name: ipfs_storage_cruster-slave-ipfs-1
     image: ipfs/kubo:release
-    ports:
-      - "8082:8080" # ipfs gateway
-      - "5003:5001" # ipfs rpc api
     volumes:
       - ./compose/slave-ipfs-1:/data/ipfs
       - ./scripts/ipfs_init.sh:/container-init.d/ipfs_init.sh

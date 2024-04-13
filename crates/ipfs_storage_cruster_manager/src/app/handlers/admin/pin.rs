@@ -1,7 +1,7 @@
 //! API about pins.
 
-use axum::extract::{State, Json};
-use tracing::{debug, trace};
+use axum::extract::{State, Query};
+use tracing::debug;
 use crate::imports::dao_imports::*;
 use crate::app::{AppState, daos};
 use crate::app::common::StandardApiResult;
@@ -10,7 +10,7 @@ use crate::app::{dtos, services, errors};
 /// List all pins in the certain node.
 /// Just query by IPFS RPC, which returns pins that actually stored in target node.
 // #[axum_macros::debug_handler]
-pub async fn list_pins_in_one_node_actually(State(state): State<AppState>, Json(args): Json<dtos::ListPinsInOneNodeActuallyArgs>)
+pub async fn list_pins_in_one_node_actually(State(state): State<AppState>, Query(args): Query<dtos::ListPinsInOneNodeActuallyArgs>)
                                             -> StandardApiResult<dtos::ListPinsInOneNodeActuallyResponse> {
     let rpc_addr = daos::find_ipfs_node_rpc_by_id(args.node_id.clone(), &state.db_conn).await
         .map_err(services::db::handle_db_error)?
@@ -18,8 +18,8 @@ pub async fn list_pins_in_one_node_actually(State(state): State<AppState>, Json(
     debug!("Find pins actually in node by RPC address: {rpc_addr:?}");
 
     let client = state.get_ipfs_client_with_rpc_addr(rpc_addr);
-    let pins_cid = client.list_recursive_pins_pinned(false).await?;
-    let pins_cid = pins_cid.keys.into_keys().collect();
+    let pins = client.list_recursive_pins_pinned(false).await?;
+    let pins_cid = pins.keys.into_keys().collect();
 
     let res = dtos::ListPinsInOneNodeActuallyResponse {
         node_id: args.node_id.clone(),
@@ -31,7 +31,7 @@ pub async fn list_pins_in_one_node_actually(State(state): State<AppState>, Json(
 /// List all pins in the certain node.
 /// Only query inside the database.
 // #[axum_macros::debug_handler]
-pub async fn list_pins_in_one_node(State(state): State<AppState>, Json(args): Json<dtos::ListPinsInOneNodeArgs>)
+pub async fn list_pins_in_one_node(State(state): State<AppState>, Query(args): Query<dtos::ListPinsInOneNodeArgs>)
                                    -> StandardApiResult<dtos::ListPinsInOneNodeResponse> {
     let pins = Pin::find()
         .join(
@@ -56,7 +56,7 @@ pub async fn list_pins_in_one_node(State(state): State<AppState>, Json(args): Js
 /// List all nodes that store the certain pin.
 /// Only query inside the database.
 // #[axum_macros::debug_handler]
-pub async fn list_nodes_with_pin(State(state): State<AppState>, Json(args): Json<dtos::ListNodesWithPinArgs>)
+pub async fn list_nodes_with_pin(State(state): State<AppState>, Query(args): Query<dtos::ListNodesWithPinArgs>)
                                  -> StandardApiResult<dtos::ListNodesWithPinResponse> {
     let nodes = Node::find()
         .join(
