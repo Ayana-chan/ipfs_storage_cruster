@@ -139,7 +139,6 @@ pub(crate) async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::R
 /// Return the list of nodes that stores the file.
 #[tracing::instrument(skip_all)]
 pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiResult<Vec<TargetIPFSNodeMessage>> {
-    //TODO 重复的cid略过
     let target_node_list = state.file_storage_decision_maker.decide_store_node(&state.db_conn, &state.reqwest_client).await?;
     debug!("Firstly store pin {cid} in nodes: {target_node_list:?}");
     // send file to nodes
