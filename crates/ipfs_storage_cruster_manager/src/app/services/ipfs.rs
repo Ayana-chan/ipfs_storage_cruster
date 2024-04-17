@@ -139,10 +139,12 @@ pub(crate) async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::R
 /// Return the list of nodes that stores the file.
 #[tracing::instrument(skip_all)]
 pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiResult<Vec<TargetIPFSNodeMessage>> {
-    let target_rpc_list = state.file_storage_decision_maker.decide_store_node(&state.db_conn, &state.reqwest_client).await?;
+    //TODO 重复的cid略过
+    let target_node_list = state.file_storage_decision_maker.decide_store_node(&state.db_conn, &state.reqwest_client).await?;
+    debug!("Firstly store pin {cid} in nodes: {target_node_list:?}");
     // send file to nodes
     let mut join_set = tokio::task::JoinSet::new();
-    for node in target_rpc_list.into_iter() {
+    for node in target_node_list.into_iter() {
         let client = state.reqwest_client.clone();
         let task = add_pin_to_node(client, node, cid.clone());
         join_set.spawn(task);
@@ -153,14 +155,14 @@ pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiR
         if let Ok(res) = res {
             match res {
                 Ok(v) => {
-                    info!("Succeed add one pin of {cid} to {:?}", v);
+                    debug!("Succeed add pin {cid} to {:?}", v);
                     final_stored_nodes.push(v);
                     continue;
                 }
                 Err(e) => {
                     // stop when cluster unhealthy
                     if e == errors::IPFS_NODE_CLUSTER_UNHEALTHY {
-                        error!("Failed add pin of {cid} to cluster");
+                        error!("Failed add pin {cid} to cluster");
                         return Err(e);
                     }
                 }
@@ -168,14 +170,16 @@ pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiR
         }
 
         // Failed to add pin, retry
-        let retry_target_list = state.file_storage_decision_maker.decide_store_node_fail_one(&state.db_conn, &state.reqwest_client).await?;
-        for node in retry_target_list.into_iter() {
+        let retry_target_node_list = state.file_storage_decision_maker.decide_store_node_fail_one(&state.db_conn, &state.reqwest_client).await?;
+        debug!("Retry to add pin {cid} to nodes: {retry_target_node_list:?}");
+        for node in retry_target_node_list.into_iter() {
             let client = state.reqwest_client.clone();
             let task = add_pin_to_node(client, node, cid.clone());
             join_set.spawn(task);
         }
     }
 
+    info!("Store pin {cid} in nodes: {final_stored_nodes:?}");
     Ok(final_stored_nodes)
 }
 
