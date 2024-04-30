@@ -55,6 +55,8 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
         Ok(target)
     }
 
+    // TODO 可能会选到同一个节点
+    // TODO 如果决策本身要较长时间的话，可能会拉慢重试的速度
     #[tracing::instrument(skip_all)]
     async fn decide_store_node_fail_one(&self,
                                         db_conn: &DatabaseConnection,
@@ -67,6 +69,7 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
         Ok(target)
     }
 
+    /// TODO 有新加节点的钩子函数必然导致要删除和迁移的函数，不如不写
     #[tracing::instrument(skip_all)]
     async fn on_add_new_node(&self) {
         info!("RandomFileStorageDecisionMaker: on_add_new_node");

@@ -25,6 +25,7 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
     };
     let add_pin_res = new_pin.insert(&state.db_conn).await
         .map_err(services::db::check_duplicate_key_error);
+    // TODO insert users_pins
     if let Err(e) = add_pin_res {
         // no need to do anything when dup key
         // throw other error

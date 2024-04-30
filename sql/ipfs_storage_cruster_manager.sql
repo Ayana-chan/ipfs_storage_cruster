@@ -94,29 +94,29 @@ LOCK TABLES `pins_stored_nodes` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `user_pins`
+-- Table structure for table `users_pins`
 --
 
-DROP TABLE IF EXISTS `user_pins`;
+DROP TABLE IF EXISTS `users_pins`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `user_pins` (
+CREATE TABLE `users_pins` (
   `id` varchar(100) NOT NULL,
   `user_id` varchar(100) NOT NULL COMMENT 'Id of the user',
   `pin_id` varchar(100) NOT NULL COMMENT 'Id of the pin',
   `pin_name` varchar(100) DEFAULT NULL COMMENT 'The name of pin given by a user',
   PRIMARY KEY (`id`),
-  KEY `user_pins_user_id_index` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Pins in users'' view';
+  KEY `users_pins_user_id_index` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Pins belong users';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `user_pins`
+-- Dumping data for table `users_pins`
 --
 
-LOCK TABLES `user_pins` WRITE;
-/*!40000 ALTER TABLE `user_pins` DISABLE KEYS */;
-/*!40000 ALTER TABLE `user_pins` ENABLE KEYS */;
+LOCK TABLES `users_pins` WRITE;
+/*!40000 ALTER TABLE `users_pins` DISABLE KEYS */;
+/*!40000 ALTER TABLE `users_pins` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -128,4 +128,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-04-10 17:14:29
+-- Dump completed on 2024-04-30 17:49:46
