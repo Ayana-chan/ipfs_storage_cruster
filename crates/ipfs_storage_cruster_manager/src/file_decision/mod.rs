@@ -14,28 +14,29 @@ pub trait FileStorageDecisionMaker: Send + Sync + Debug {
     /// Decide which nodes to store data on.
     ///
     /// Return target node list.
+    /// Returning an empty vec would cause an error (`IPFS_NODE_CLUSTER_UNHEALTHY`).
     async fn decide_store_node(&self,
+                               cid: &String,
                                db_conn: &DatabaseConnection,
                                reqwest_client: &reqwest::Client,
-    ) -> ApiResult<Vec<TargetIPFSNodeMessage>>;
+    ) -> ApiResult<Vec<TargetIpfsNodeMessage>>;
 
     /// Decide which nodes to re-store data on when a store failure occurs.
     ///
     /// Return `errors::IPFS_NODE_CLUSTER_UNHEALTHY` to stop store file.
+    /// Could return empty vec.
     async fn decide_store_node_fail_one(&self,
+                                        cid: &String,
                                         db_conn: &DatabaseConnection,
                                         reqwest_client: &reqwest::Client,
-    ) -> ApiResult<Vec<TargetIPFSNodeMessage>>;
-
-    /// Called when a new node is added to cluster.
-    async fn on_add_new_node(&self);
+    ) -> ApiResult<Vec<TargetIpfsNodeMessage>>;
 }
 
 /// Message about IPFS node to contact.
 #[derive(Clone, Debug)]
 #[derive(DerivePartialModel, FromQueryResult)]
 #[sea_orm(entity = "Node")]
-pub struct TargetIPFSNodeMessage {
+pub struct TargetIpfsNodeMessage {
     /// Node's id in database.
     pub id: String,
     /// RPC address to contact.

@@ -24,6 +24,7 @@ sea-orm = { version = "0.12", features = ["sqlx-mysql", "runtime-tokio-rustls"] 
 uuid = { version = "1.7.0", features = ["v4", "fast-rng"] }
 #validator = { version = "0.17.0", features = ["derive"] }
 fastrand = "2.0"
+scc = "2.1"
 
 [dev-dependencies]
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

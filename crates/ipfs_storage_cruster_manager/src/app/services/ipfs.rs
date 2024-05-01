@@ -9,7 +9,7 @@ use crate::utils::move_entry_between_header_map;
 use crate::app::common::ApiResult;
 use crate::app::{dtos, errors};
 use crate::app::errors::ResponseError;
-use crate::file_decision::TargetIPFSNodeMessage;
+use crate::file_decision::TargetIpfsNodeMessage;
 
 static RE_BOOTSTRAP_TIMEOUT_MS: u64 = 2000;
 
@@ -138,8 +138,14 @@ pub(crate) async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::R
 ///
 /// Return the list of nodes that stores the file.
 #[tracing::instrument(skip_all)]
-pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiResult<Vec<TargetIPFSNodeMessage>> {
-    let target_node_list = state.file_storage_decision_maker.decide_store_node(&state.db_conn, &state.reqwest_client).await?;
+pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiResult<Vec<TargetIpfsNodeMessage>> {
+    let target_node_list = state.file_storage_decision_maker
+        .decide_store_node(&cid, &state.db_conn, &state.reqwest_client)
+        .await?;
+    // error when empty nodes
+    if target_node_list.is_empty() {
+        return Err(errors::IPFS_NODE_CLUSTER_UNHEALTHY.clone_to_error());
+    }
     debug!("Firstly store pin {cid} in nodes: {target_node_list:?}");
     // send file to nodes
     let mut join_set = tokio::task::JoinSet::new();
@@ -169,7 +175,9 @@ pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiR
         }
 
         // Failed to add pin, retry
-        let retry_target_node_list = state.file_storage_decision_maker.decide_store_node_fail_one(&state.db_conn, &state.reqwest_client).await?;
+        let retry_target_node_list = state.file_storage_decision_maker
+            .decide_store_node_fail_one(&cid, &state.db_conn, &state.reqwest_client)
+            .await?;
         debug!("Retry to add pin {cid} to nodes: {retry_target_node_list:?}");
         for node in retry_target_node_list.into_iter() {
             let client = state.reqwest_client.clone();
@@ -185,7 +193,7 @@ pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiR
 /// Send add pin RPC to an IPFS node.
 ///
 /// Return `TargetIPFSNodeMessage` when success.
-async fn add_pin_to_node(client: reqwest::Client, node_message: TargetIPFSNodeMessage, cid: String) -> ApiResult<TargetIPFSNodeMessage> {
+async fn add_pin_to_node(client: reqwest::Client, node_message: TargetIpfsNodeMessage, cid: String) -> ApiResult<TargetIpfsNodeMessage> {
     let client = ReqwestIpfsClient::new_with_reqwest_client(node_message.rpc_address.clone(), client);
     let res = client.add_pin_recursive(&cid, None).await
         .map_err(Into::<ResponseError>::into);
