@@ -45,7 +45,7 @@ pub trait FileDownloadDecisionMaker: Send + Sync + Debug {
                                   cid: &str,
                                   db_conn: &DatabaseConnection,
                                   reqwest_client: &reqwest::Client,
-    ) -> ApiResult<Vec<TargetPublicWrapperMessage>>;
+    ) -> ApiResult<TargetPublicWrapperMessage>;
 }
 
 /// Message (admin) about IPFS node to contact.

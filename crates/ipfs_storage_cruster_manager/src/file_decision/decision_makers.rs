@@ -44,8 +44,8 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
             .into_partial_model::<TargetAdminIpfsNodeMessage>()
             .all(db_conn).await
             .map_err(services::db::handle_db_error)?;
-
         let available_node_num = available_nodes.len();
+
         // It's ok when `available_node_num` is less than node_num.
         let decide_result = fastrand::choose_multiple(available_nodes.into_iter(), STORE_NODE_NUM);
 
@@ -83,8 +83,8 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
                     .into_partial_model::<TargetAdminIpfsNodeMessage>()
                     .all(db_conn).await
                     .map_err(services::db::handle_db_error)?;
-
                 let available_node_num = available_nodes.len();
+
                 let decide_result = fastrand::choice(available_nodes);
 
                 if let Some(decide_result) = decide_result {
@@ -132,12 +132,26 @@ impl Debug for RandomFileDownloadDecisionMaker {
 
 #[async_trait]
 impl FileDownloadDecisionMaker for RandomFileDownloadDecisionMaker {
+    #[tracing::instrument(skip_all)]
     async fn decide_download_node(&self,
-                                  cid: &str,
+                                  _cid: &str,
                                   db_conn: &DatabaseConnection,
-                                  reqwest_client: &Client
-    ) -> ApiResult<Vec<TargetPublicWrapperMessage>> {
-        todo!()
+                                  _reqwest_client: &Client
+    ) -> ApiResult<TargetPublicWrapperMessage> {
+        let available_nodes = Node::find()
+            .filter(node::Column::NodeStatus.ne(sea_orm_active_enums::NodeStatus::Offline))
+            .into_partial_model::<TargetPublicWrapperMessage>()
+            .all(db_conn).await
+            .map_err(services::db::handle_db_error)?;
+        let available_node_num = available_nodes.len();
+
+        let decide_result = fastrand::choice(available_nodes);
+        if let Some(decide_result) = decide_result {
+            info!("Find {available_node_num} available IPFS nodes. Result: {decide_result:?}");
+            return Ok(decide_result)
+        } else {
+            Err(errors::SYSTEM_EXECUTION_ERROR.clone_to_error())
+        }
     }
 }
 
