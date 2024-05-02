@@ -35,7 +35,8 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
         // make decision and store
         let stored_node_list = services::ipfs::store_file_to_cluster(&state, upload_res.hash.clone()).await?;
 
-        // store node to database
+        // TODO modify pin's status.
+        // store decision to database
         let node_models: Vec<_> = stored_node_list.into_iter()
             .map(|v| pins_stored_nodes::ActiveModel {
                 id: Set(Uuid::new_v4().to_string()),

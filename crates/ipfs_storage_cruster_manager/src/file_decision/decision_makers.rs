@@ -34,7 +34,7 @@ impl Debug for RandomFileStorageDecisionMaker {
 impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
     #[tracing::instrument(skip_all)]
     async fn decide_store_node(&self,
-                               cid: &String,
+                               cid: &str,
                                db_conn: &DatabaseConnection,
                                _reqwest_client: &Client)
                                -> ApiResult<Vec<TargetIpfsNodeMessage>> {
@@ -64,7 +64,7 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
     // TODO 哪个节点失败了？
     #[tracing::instrument(skip_all)]
     async fn decide_store_node_fail_one(&self,
-                                        cid: &String,
+                                        cid: &str,
                                         db_conn: &DatabaseConnection,
                                         _reqwest_client: &Client)
                                         -> ApiResult<Vec<TargetIpfsNodeMessage>> {
@@ -102,6 +102,15 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
                 }
             }
         }
+    }
+
+    async fn finish_storage(&self, cid: &str) -> ApiResult<()> {
+        let res = self.task_map.remove_async(cid).await;
+        if res.is_none() {
+            warn!("finish_storage called  when the cid {cid} is not in task_map");
+            return Err(errors::SYSTEM_EXECUTION_ERROR.clone_to_error());
+        }
+        Ok(())
     }
 }
 

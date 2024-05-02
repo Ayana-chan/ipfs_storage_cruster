@@ -16,7 +16,7 @@ pub trait FileStorageDecisionMaker: Send + Sync + Debug {
     /// Return target node list.
     /// Returning an empty vec would cause an error (`IPFS_NODE_CLUSTER_UNHEALTHY`).
     async fn decide_store_node(&self,
-                               cid: &String,
+                               cid: &str,
                                db_conn: &DatabaseConnection,
                                reqwest_client: &reqwest::Client,
     ) -> ApiResult<Vec<TargetIpfsNodeMessage>>;
@@ -26,10 +26,13 @@ pub trait FileStorageDecisionMaker: Send + Sync + Debug {
     /// Return `errors::IPFS_NODE_CLUSTER_UNHEALTHY` to stop store file.
     /// Could return empty vec.
     async fn decide_store_node_fail_one(&self,
-                                        cid: &String,
+                                        cid: &str,
                                         db_conn: &DatabaseConnection,
                                         reqwest_client: &reqwest::Client,
     ) -> ApiResult<Vec<TargetIpfsNodeMessage>>;
+
+    /// Finish Storage.
+    async fn finish_storage(&self, cid: &str) -> ApiResult<()>;
 }
 
 /// Message about IPFS node to contact.
