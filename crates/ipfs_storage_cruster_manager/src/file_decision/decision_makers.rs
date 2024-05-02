@@ -8,9 +8,9 @@ use tracing::{error, info, warn};
 use crate::imports::dao_imports::*;
 use crate::app::common::ApiResult;
 use crate::app::{services, errors};
-use crate::file_decision::{FileStorageDecisionMaker, TargetIpfsNodeMessage};
+use crate::file_decision::{FileDownloadDecisionMaker, FileStorageDecisionMaker, TargetAdminIpfsNodeMessage, TargetPublicWrapperMessage};
 
-/// Default decision maker of `FileStoreDecision`.
+/// Simple decision maker of `FileStoreDecision`.
 pub struct RandomFileStorageDecisionMaker {
     /// Store the status of tasks. HashSet<String> is the set of stored nodes.
     task_map: scc::HashMap<String, HashSet<String>>,
@@ -37,11 +37,11 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
                                cid: &str,
                                db_conn: &DatabaseConnection,
                                _reqwest_client: &Client)
-                               -> ApiResult<Vec<TargetIpfsNodeMessage>> {
+                               -> ApiResult<Vec<TargetAdminIpfsNodeMessage>> {
         const STORE_NODE_NUM: usize = 2;
         let available_nodes = Node::find()
             .filter(node::Column::NodeStatus.ne(sea_orm_active_enums::NodeStatus::Offline))
-            .into_partial_model::<TargetIpfsNodeMessage>()
+            .into_partial_model::<TargetAdminIpfsNodeMessage>()
             .all(db_conn).await
             .map_err(services::db::handle_db_error)?;
 
@@ -67,7 +67,7 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
                                         cid: &str,
                                         db_conn: &DatabaseConnection,
                                         _reqwest_client: &Client)
-                                        -> ApiResult<Vec<TargetIpfsNodeMessage>> {
+                                        -> ApiResult<Vec<TargetAdminIpfsNodeMessage>> {
         // retry would be executed one by one
         let pre_decision_entry = self.task_map.get_async(cid).await;
         match pre_decision_entry {
@@ -80,7 +80,7 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
                 let available_nodes = Node::find()
                     .filter(node::Column::NodeStatus.ne(sea_orm_active_enums::NodeStatus::Offline))
                     .filter(node::Column::Id.is_not_in(pre_decision))
-                    .into_partial_model::<TargetIpfsNodeMessage>()
+                    .into_partial_model::<TargetAdminIpfsNodeMessage>()
                     .all(db_conn).await
                     .map_err(services::db::handle_db_error)?;
 
@@ -104,6 +104,7 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     async fn finish_storage(&self, cid: &str) -> ApiResult<()> {
         let res = self.task_map.remove_async(cid).await;
         if res.is_none() {
@@ -111,6 +112,32 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
             return Err(errors::SYSTEM_EXECUTION_ERROR.clone_to_error());
         }
         Ok(())
+    }
+}
+
+/// Simple decision maker of `FileStoreDecision`.
+pub struct RandomFileDownloadDecisionMaker {}
+
+impl RandomFileDownloadDecisionMaker {
+    pub fn new() -> Self {
+        RandomFileDownloadDecisionMaker {}
+    }
+}
+
+impl Debug for RandomFileDownloadDecisionMaker {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Random File Download Decision Maker")
+    }
+}
+
+#[async_trait]
+impl FileDownloadDecisionMaker for RandomFileDownloadDecisionMaker {
+    async fn decide_download_node(&self,
+                                  cid: &str,
+                                  db_conn: &DatabaseConnection,
+                                  reqwest_client: &Client
+    ) -> ApiResult<Vec<TargetPublicWrapperMessage>> {
+        todo!()
     }
 }
 

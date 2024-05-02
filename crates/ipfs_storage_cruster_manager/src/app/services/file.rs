@@ -6,7 +6,7 @@ use tiny_ipfs_client::ReqwestIpfsClient;
 use crate::app::{AppState, dtos, errors};
 use crate::app::common::ApiResult;
 use crate::app::errors::ResponseError;
-use crate::file_decision::TargetIpfsNodeMessage;
+use crate::file_decision::TargetAdminIpfsNodeMessage;
 use crate::utils::move_entry_between_header_map;
 
 /// Add a file to ipfs by stream, return the message of the added file.
@@ -67,7 +67,7 @@ pub(crate) async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::R
 ///
 /// Return the list of nodes that stores the file.
 #[tracing::instrument(skip_all)]
-pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiResult<Vec<TargetIpfsNodeMessage>> {
+pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiResult<Vec<TargetAdminIpfsNodeMessage>> {
     let target_node_list = state.file_storage_decision_maker
         .decide_store_node(&cid, &state.db_conn, &state.reqwest_client)
         .await?;
@@ -122,7 +122,7 @@ pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiR
 /// Send add pin RPC to an IPFS node.
 ///
 /// Return `TargetIPFSNodeMessage` when success.
-async fn add_pin_to_node(client: reqwest::Client, node_message: TargetIpfsNodeMessage, cid: String) -> ApiResult<TargetIpfsNodeMessage> {
+async fn add_pin_to_node(client: reqwest::Client, node_message: TargetAdminIpfsNodeMessage, cid: String) -> ApiResult<TargetAdminIpfsNodeMessage> {
     let client = ReqwestIpfsClient::new_with_reqwest_client(node_message.rpc_address.clone(), client);
     let res = client.add_pin_recursive(&cid, None).await
         .map_err(Into::<ResponseError>::into);

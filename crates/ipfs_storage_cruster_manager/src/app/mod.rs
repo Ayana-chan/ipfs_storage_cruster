@@ -44,6 +44,7 @@ pub struct AppState {
     pub db_conn: DatabaseConnection,
     /// Make decisions to define file storage strategy.
     pub file_storage_decision_maker: Arc<dyn file_decision::FileStorageDecisionMaker>,
+    pub file_download_decision_maker: Arc<dyn file_decision::FileDownloadDecisionMaker>,
 }
 
 impl AppState {
@@ -82,6 +83,7 @@ impl AppState {
             db_conn,
             // TODO 自定义决策
             file_storage_decision_maker: Arc::new(file_decision::decision_makers::RandomFileStorageDecisionMaker::new()),
+            file_download_decision_maker: Arc::new(file_decision::decision_makers::RandomFileDownloadDecisionMaker::new()),
         }
     }
 

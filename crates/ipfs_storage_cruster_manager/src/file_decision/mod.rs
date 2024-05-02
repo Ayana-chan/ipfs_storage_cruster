@@ -19,7 +19,7 @@ pub trait FileStorageDecisionMaker: Send + Sync + Debug {
                                cid: &str,
                                db_conn: &DatabaseConnection,
                                reqwest_client: &reqwest::Client,
-    ) -> ApiResult<Vec<TargetIpfsNodeMessage>>;
+    ) -> ApiResult<Vec<TargetAdminIpfsNodeMessage>>;
 
     /// Decide which nodes to re-store data on when a store failure occurs.
     ///
@@ -29,20 +29,43 @@ pub trait FileStorageDecisionMaker: Send + Sync + Debug {
                                         cid: &str,
                                         db_conn: &DatabaseConnection,
                                         reqwest_client: &reqwest::Client,
-    ) -> ApiResult<Vec<TargetIpfsNodeMessage>>;
+    ) -> ApiResult<Vec<TargetAdminIpfsNodeMessage>>;
 
     /// Finish Storage.
     async fn finish_storage(&self, cid: &str) -> ApiResult<()>;
 }
 
-/// Message about IPFS node to contact.
+/// A trait to make decisions to define file download strategy.
+///
+/// A maker should be as stateless as possible.
+#[async_trait]
+pub trait FileDownloadDecisionMaker: Send + Sync + Debug {
+    /// Decide which node to download data from.
+    async fn decide_download_node(&self,
+                                  cid: &str,
+                                  db_conn: &DatabaseConnection,
+                                  reqwest_client: &reqwest::Client,
+    ) -> ApiResult<Vec<TargetPublicWrapperMessage>>;
+}
+
+/// Message (admin) about IPFS node to contact.
 #[derive(Clone, Debug)]
 #[derive(DerivePartialModel, FromQueryResult)]
 #[sea_orm(entity = "Node")]
-pub struct TargetIpfsNodeMessage {
+pub struct TargetAdminIpfsNodeMessage {
     /// Node's id in database.
     pub id: String,
     /// RPC address to contact.
     pub rpc_address: String,
 }
 
+/// Message (public) about Wrapper to contact.
+#[derive(Clone, Debug)]
+#[derive(DerivePartialModel, FromQueryResult)]
+#[sea_orm(entity = "Node")]
+pub struct TargetPublicWrapperMessage {
+    /// Node's id in database.
+    pub id: String,
+    /// Public address of Wrapper to contact.
+    pub wrapper_public_address: String,
+}
