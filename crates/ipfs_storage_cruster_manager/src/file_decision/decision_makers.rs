@@ -38,7 +38,7 @@ impl FileStorageDecisionMaker for RandomFileStorageDecisionMaker {
                                db_conn: &DatabaseConnection,
                                _reqwest_client: &Client)
                                -> ApiResult<Vec<TargetIpfsNodeMessage>> {
-        const STORE_NODE_NUM: usize = 3;
+        const STORE_NODE_NUM: usize = 2;
         let available_nodes = Node::find()
             .filter(node::Column::NodeStatus.ne(sea_orm_active_enums::NodeStatus::Offline))
             .into_partial_model::<TargetIpfsNodeMessage>()

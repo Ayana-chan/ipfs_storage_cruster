@@ -40,7 +40,7 @@ CREATE TABLE `node` (
 
 LOCK TABLES `node` WRITE;
 /*!40000 ALTER TABLE `node` DISABLE KEYS */;
-INSERT INTO `node` VALUES ('aaa','aaaa','www','cccc',NULL,'online');
+INSERT INTO `node` VALUES ('fake_id','fake_id','fake_rpc','fake_pub',NULL,'online');
 /*!40000 ALTER TABLE `node` ENABLE KEYS */;
 UNLOCK TABLES;
 
