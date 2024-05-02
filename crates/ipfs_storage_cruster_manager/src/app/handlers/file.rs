@@ -58,7 +58,15 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
 
 /// Get the advice that which Wrapper to download the file.
 ///
-/// Return the url of target Wrapper.
+/// Return the url of target Wrapper (no scheme like "http://").
+// #[axum_macros::debug_handler]
 pub async fn download_file_advice(State(state): State<AppState>, Json(args): Json<dtos::DownloadFileAdviceArgs>) -> StandardApiResult<dtos::DownloadFileAdviceResponse> {
-    todo!()
+    let target_wrapper = state.file_download_decision_maker
+        .decide_download_node(&args.cid, &state.db_conn, &state.reqwest_client).await?;
+    let target_wrapper_pub_addr = target_wrapper.wrapper_public_address;
+    let target_url = target_wrapper_pub_addr + "/api/" + &args.cid;
+    let res = dtos::DownloadFileAdviceResponse {
+        url: target_url,
+    };
+    Ok(res.into())
 }

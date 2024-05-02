@@ -1,4 +1,4 @@
-use axum::routing::post;
+use axum::routing::{get, post};
 use axum::Router;
 
 mod file;
@@ -11,6 +11,7 @@ pub fn generate_router() -> Router<AppState> {
     Router::new()
         .nest("/admin", admin::generate_admin_router())
         .route("/file", post(upload_file))
+        .route("/advice", get(download_file_advice))
 }
 
 #[cfg(test)]
