@@ -16,6 +16,18 @@ pub struct UploadFileResponse {
     pub file_metadata: IpfsAddFileResponse,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadFileAdviceArgs {
+    pub cid: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadFileAdviceResponse {
+    pub url: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListIpfsNodesResponse {

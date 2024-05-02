@@ -1,4 +1,5 @@
 use axum::extract::State;
+use axum::Json;
 use sea_orm::ActiveValue::Set;
 #[allow(unused_imports)]
 use tracing::{info, debug, trace, warn, error};
@@ -55,3 +56,9 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
     Ok(res.into())
 }
 
+/// Get the advice that which Wrapper to download the file.
+///
+/// Return the url of target Wrapper.
+pub async fn download_file_advice(State(state): State<AppState>, Json(args): Json<dtos::DownloadFileAdviceArgs>) -> StandardApiResult<dtos::DownloadFileAdviceResponse> {
+    todo!()
+}
