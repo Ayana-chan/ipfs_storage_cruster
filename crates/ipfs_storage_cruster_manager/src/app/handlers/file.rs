@@ -15,7 +15,7 @@ use crate::app::services;
 /// Seems no request size limitation.
 // #[axum_macros::debug_handler]
 pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Request) -> StandardApiResult<dtos::UploadFileResponse> {
-    let upload_res = services::ipfs::add_file_to_ipfs(&state, req).await?;
+    let upload_res = services::file::add_file_to_ipfs(&state, req).await?;
 
     let new_pin_id = Uuid::new_v4().to_string();
     let new_pin = pin::ActiveModel {
@@ -33,7 +33,7 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
     } else {
         // TODO here async
         // make decision and store
-        let stored_node_list = services::ipfs::store_file_to_cluster(&state, upload_res.hash.clone()).await?;
+        let stored_node_list = services::file::store_file_to_cluster(&state, upload_res.hash.clone()).await?;
 
         // TODO modify pin's status.
         // store decision to database
