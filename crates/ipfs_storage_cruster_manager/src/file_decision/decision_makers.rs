@@ -7,7 +7,7 @@ use sea_orm::DatabaseConnection;
 use tracing::{error, info, warn};
 use crate::imports::dao_imports::*;
 use crate::app::common::ApiResult;
-use crate::app::{services, errors};
+use crate::app::{services, errors, daos};
 use crate::file_decision::{FileDownloadDecisionMaker, FileStorageDecisionMaker, TargetAdminIpfsNodeMessage, TargetPublicWrapperMessage};
 
 /// Simple decision maker of `FileStoreDecision`.
@@ -134,23 +134,20 @@ impl Debug for RandomFileDownloadDecisionMaker {
 impl FileDownloadDecisionMaker for RandomFileDownloadDecisionMaker {
     #[tracing::instrument(skip_all)]
     async fn decide_download_node(&self,
-                                  _cid: &str,
+                                  cid: &str,
                                   db_conn: &DatabaseConnection,
                                   _reqwest_client: &Client
     ) -> ApiResult<TargetPublicWrapperMessage> {
-        let available_nodes = Node::find()
-            .filter(node::Column::NodeStatus.ne(sea_orm_active_enums::NodeStatus::Offline))
-            .into_partial_model::<TargetPublicWrapperMessage>()
-            .all(db_conn).await
-            .map_err(services::db::handle_db_error)?;
+        let available_nodes = daos::find_nodes_with_pin_cid(cid, db_conn)
+            .await.map_err(services::db::handle_db_error)?;
         let available_node_num = available_nodes.len();
 
         let decide_result = fastrand::choice(available_nodes);
         if let Some(decide_result) = decide_result {
             info!("Find {available_node_num} available IPFS nodes. Result: {decide_result:?}");
-            return Ok(decide_result)
+            Ok(decide_result)
         } else {
-            Err(errors::SYSTEM_EXECUTION_ERROR.clone_to_error())
+            Err(errors::IPFS_NODE_CLUSTER_UNHEALTHY.clone_to_error())
         }
     }
 }

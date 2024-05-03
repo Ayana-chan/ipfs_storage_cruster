@@ -162,7 +162,7 @@ mod tests {
     #[ignore]
     async fn try_join_sql() {
         let node_id = "aaaid";
-        let sql = Pin::find()
+        let sql_1 = Pin::find()
             .join(
                 JoinType::InnerJoin,
                 Pin::belongs_to(PinsStoredNodes)
@@ -173,7 +173,27 @@ mod tests {
             .filter(pins_stored_nodes::Column::NodeId.eq(node_id))
             .build(DbBackend::MySql)
             .to_string();
-        println!("{sql}");
+        println!("{sql_1}");
+
+        let sql_2 = Node::find()
+            .join(
+                JoinType::InnerJoin,
+                Node::belongs_to(PinsStoredNodes)
+                    .from(node::Column::Id)
+                    .to(pins_stored_nodes::Column::NodeId)
+                    .into(),
+            )
+            .join(
+                JoinType::InnerJoin,
+                PinsStoredNodes::belongs_to(Pin)
+                    .from(pins_stored_nodes::Column::PinId)
+                    .to(pin::Column::Id)
+                    .into(),
+            )
+            .filter(pin::Column::Cid.eq("example_cid"))
+            .build(DbBackend::MySql)
+            .to_string();
+        println!("{sql_2}");
     }
 }
 
