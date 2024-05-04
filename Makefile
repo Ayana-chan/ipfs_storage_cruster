@@ -40,3 +40,8 @@ down:
 logs:
 	docker compose logs -f
 #	docker-compose logs -f
+
+# ======= For Develop =======
+
+manager-entity:
+	$(MAKE) -C crates/ipfs_storage_cruster_manager_entity

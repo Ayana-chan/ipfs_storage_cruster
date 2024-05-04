@@ -40,7 +40,7 @@ CREATE TABLE `node` (
 
 LOCK TABLES `node` WRITE;
 /*!40000 ALTER TABLE `node` DISABLE KEYS */;
-INSERT INTO `node` VALUES ('fake_id','fake_id','fake_rpc','fake_pub',NULL,'online');
+INSERT INTO `node` VALUES ('fake_id','fake_peer_id','fake_rpc','fake_pub',NULL,'online');
 /*!40000 ALTER TABLE `node` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -56,7 +56,7 @@ CREATE TABLE `pin` (
   `status` enum('Queued','Pinning','Pinned','Failed','NotFound') NOT NULL COMMENT 'pin status',
   `cid` varchar(100) NOT NULL COMMENT 'Pin CID',
   PRIMARY KEY (`id`),
-  KEY `pin_cid_index` (`cid`)
+  UNIQUE KEY `pin_cid_uindex` (`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Pins';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -128,4 +128,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-04-30 17:49:46
+-- Dump completed on 2024-05-04 16:18:44

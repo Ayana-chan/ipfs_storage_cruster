@@ -11,6 +11,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
     pub status: Status,
+    #[sea_orm(unique)]
     pub cid: String,
 }
 
