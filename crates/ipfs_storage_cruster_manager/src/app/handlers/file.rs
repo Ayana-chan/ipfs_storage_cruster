@@ -29,6 +29,7 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
     // TODO insert users_pins
     if let Err(e) = add_pin_res {
         // no need to do anything when dup key
+        info!("cid {} has been stored, skip it", upload_res.hash.clone());
         // throw other error
         let _ = e.map_err(services::db::handle_db_error)?;
     } else {
@@ -49,6 +50,7 @@ pub async fn upload_file(State(state): State<AppState>, req: axum::extract::Requ
             .map_err(services::db::handle_db_error)?;
     }
 
+    info!("Finish storing cid {}", upload_res.hash.clone());
     let res = dtos::UploadFileResponse {
         request_id: new_pin_id,
         file_metadata: upload_res,

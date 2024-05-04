@@ -58,7 +58,7 @@ pub(crate) async fn add_file_to_ipfs(state: &AppState, mut req: axum::extract::R
             error!("Unexpected IPFS response when add file");
             errors::IPFS_FAIL.clone_to_error()
         })?;
-    info!("Add file succeed. {:?}", body);
+    info!("Add file to master IPFS node succeed. {:?}", body);
 
     Ok(body)
 }
@@ -89,7 +89,7 @@ pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiR
         if let Ok(res) = res {
             match res {
                 Ok(v) => {
-                    debug!("Succeed add pin {cid} to {:?}", v);
+                    info!("Succeed add pin {cid} to {:?}", v);
                     final_stored_nodes.push(v);
                     continue;
                 }
@@ -115,7 +115,10 @@ pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiR
         }
     }
 
-    info!("Store pin {cid} in nodes: {final_stored_nodes:?}");
+    info!("Finally store pin {cid} in nodes: {final_stored_nodes:?}");
+    state.file_storage_decision_maker
+        .finish_storage(&cid)
+        .await?;
     Ok(final_stored_nodes)
 }
 
@@ -123,6 +126,7 @@ pub(crate) async fn store_file_to_cluster(state: &AppState, cid: String) -> ApiR
 ///
 /// Return `TargetIPFSNodeMessage` when success.
 async fn add_pin_to_node(client: reqwest::Client, node_message: TargetAdminIpfsNodeMessage, cid: String) -> ApiResult<TargetAdminIpfsNodeMessage> {
+    trace!("Begin storing cid {cid} to {node_message:?}");
     let client = ReqwestIpfsClient::new_with_reqwest_client(node_message.rpc_address.clone(), client);
     let res = client.add_pin_recursive(&cid, None).await
         .map_err(Into::<ResponseError>::into);

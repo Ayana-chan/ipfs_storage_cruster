@@ -8,7 +8,7 @@ services:
       - master-ipfs
       - manager-mysql
     environment:
-      APP_LOG: "info,hyper=info"
+      APP_LOG: "info,hyper=info,sqlx=warn"
       APP_DATABASE_URL: "mysql://root:1234@manager-mysql/ipfs_storage_cruster_manager"
       APP_IPFS_RPC_ADDRESS: "master-ipfs:5001"
       APP_IPFS_SWARM_MULTI_ADDRESS: "/dns/master-ipfs/tcp/4001"
@@ -64,6 +64,8 @@ services:
       APP_LOG: "info,hyper=debug"
       APP_IPFS_GATEWAY_ADDRESS: "slave-ipfs-1:8080"
       APP_IPFS_RPC_ADDRESS: "slave-ipfs-1:5001"
+    ports:
+      - "3001:3000" # public
     volumes:
       - ./compose/wrapper-1/logs:/logs
 
@@ -84,6 +86,8 @@ services:
       APP_LOG: "info,hyper=debug"
       APP_IPFS_GATEWAY_ADDRESS: "slave-ipfs-2:8080"
       APP_IPFS_RPC_ADDRESS: "slave-ipfs-2:5001"
+    ports:
+      - "3002:3000" # public
     volumes:
       - ./compose/wrapper-2/logs:/logs
 
