@@ -16,3 +16,5 @@
 # How to Build and Deploy
 
 Run `make build-all` at root directory of this project to build two docker image. It may take some time to download dependencies (Update xxx Index), but they won't be downloaded next time if the dependency tree is not changed.
+
+Run `docker compose up` or `docker-compose up` to run project by docker compose (3 salve node). See `Makefile` for more information.
