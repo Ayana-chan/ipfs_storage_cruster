@@ -1,3 +1,14 @@
+# Introduction
+
+Architecture:
+![](img/architecture%20diagram.svg)
+
+Upload process:
+![](img/add%20file%20process.svg)
+
+Download process:
+![](img/download%20file%20process.svg)
+
 # Crates Introduction
 
 - **deserialize_form_style_query_parameter**: A tiny tool to deserialize complex query param. Used in ipfs_pin_service_axum_api_framework which is not used.
